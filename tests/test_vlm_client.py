@@ -4,8 +4,11 @@
 """
 from __future__ import annotations
 
+import _bootstrap  # noqa: F401 - 直接运行测试文件时注入项目根目录。
 import pytest
+import tempfile
 from types import SimpleNamespace
+from pathlib import Path
 from PIL import Image
 
 from src.utils.vlm_client import VLMClient
@@ -81,3 +84,27 @@ def test_vlm_client_live_describe_image(tmp_path):
     response = vlm.describe_image(image_path, "描述这张图片")
     assert isinstance(response, str)
     assert len(response) > 0
+
+
+def main() -> None:
+    """直接点击运行本文件时，顺序执行测试并打印结果。"""
+
+    print("开始运行 VLMClient 测试...")
+    test_vlm_client_can_be_created()
+    print("1. 初始化测试通过")
+    with tempfile.TemporaryDirectory() as temp_dir:
+        tmp_path = Path(temp_dir)
+        test_vlm_client_image_to_data_url(tmp_path)
+        print("2. 图片转 data URL 测试通过")
+        test_vlm_client_normalize_image_ref(tmp_path)
+        print("3. 图片引用规范化测试通过")
+        test_vlm_client_describe_image(tmp_path)
+        print("4. 模拟图片描述测试通过")
+        print("5. 开始真实 VLM API 调用测试...")
+        test_vlm_client_live_describe_image(tmp_path)
+        print("6. 真实 VLM API 调用测试通过")
+    print("VLMClient 测试全部完成")
+
+
+if __name__ == "__main__":
+    main()

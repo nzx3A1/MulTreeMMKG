@@ -1,6 +1,8 @@
 """src/parser 与 src/skeleton 阶段二模块的单元测试。"""
 from __future__ import annotations
 
+import _bootstrap  # noqa: F401 - 直接运行测试文件时注入项目根目录。
+
 from src.parser.markdown_parser import parse_markdown
 from src.parser.mineru_loader import load_paper
 from src.parser.section_splitter import split_sections

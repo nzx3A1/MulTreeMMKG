@@ -5,6 +5,8 @@
 """
 from __future__ import annotations
 
+import _bootstrap  # noqa: F401 - 直接运行测试文件时注入项目根目录。
+
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 

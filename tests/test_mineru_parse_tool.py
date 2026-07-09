@@ -1,6 +1,7 @@
 """MinerU 工具脚本的本地单 PDF 场景测试。"""
 from __future__ import annotations
 
+import _bootstrap  # noqa: F401 - 直接运行测试文件时注入项目根目录。
 import json
 import zipfile
 from pathlib import Path

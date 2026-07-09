@@ -4,6 +4,7 @@
 """
 from __future__ import annotations
 
+import _bootstrap  # noqa: F401 - 直接运行测试文件时注入项目根目录。
 import pytest
 from types import SimpleNamespace
 
@@ -62,3 +63,23 @@ def test_llm_client_live_chat():
     response = llm.chat([{"role": "user", "content": "你好"}])
     assert isinstance(response, str)
     assert len(response) > 0
+
+
+def main() -> None:
+    """直接点击运行本文件时，顺序执行测试并打印结果。"""
+
+    print("开始运行 LLMClient 测试...")
+    test_llm_client_can_be_created()
+    print("1. 初始化测试通过")
+    test_llm_client_chat()
+    print("2. 模拟 chat 调用测试通过，返回 hello")
+    test_llm_client_chat_json()
+    print("3. 模拟 chat_json 调用测试通过，返回 {'ok': True}")
+    print("4. 开始真实 API 调用测试...")
+    test_llm_client_live_chat()
+    print("5. 真实 API 调用测试通过")
+    print("LLMClient 测试全部完成")
+
+
+if __name__ == "__main__":
+    main()
