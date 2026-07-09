@@ -1,0 +1,18 @@
+# Python 缓存与测试缓存不进入仓库，避免提交运行时噪声。
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# 本地环境、日志、模型输出和 MinerU 中间产物通常体积较大或包含敏感信息。
+.env
+logs/
+output/
+data/
+data/raw_pdf/
+data/mineru_output/
+
+# 常见编辑器与系统文件。
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
