@@ -41,8 +41,15 @@ class VLMClient:
             return value
         return VLMClient.image_to_data_url(value)
 
+    def _thinking_disabled_extra_body(self) -> dict[str, Any]:
+        """为视觉模型生成默认关闭思考的厂商兼容参数。"""
+
+        if self.config.model.lower().startswith("minimax"):
+            return {"thinking": {"type": "disabled"}}
+        return {"enable_thinking": False}
+
     def describe_image(self, image_path: str | Path, prompt: str, **kwargs: Any) -> str:
-        """给定图像和提示词，返回模型描述或抽取结果。"""
+        """给定图像和提示词，默认关闭思考后返回模型描述或抽取结果。"""
 
         image_url = self.normalize_image_ref(image_path)
         messages = [
@@ -54,4 +61,7 @@ class VLMClient:
                 ],
             }
         ]
-        return self._llm.chat(messages, **kwargs)
+        extra_body = self._thinking_disabled_extra_body()
+        # 调用方显式 extra_body 的同名字段优先，以便在必要时手动开启思考。
+        extra_body.update(kwargs.pop("extra_body", {}))
+        return self._llm.chat(messages, extra_body=extra_body, **kwargs)

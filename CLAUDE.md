@@ -37,25 +37,6 @@ pytest tests/test_parser.py                    # 单文件
 pytest tests/test_parser.py::test_mineru_loader_returns_normalized_doc  # 单测试
 ```
 
-## 流水线 12 阶段与对应文件
-
-| 阶段 | 输出 JSON | 主要模块 |
-| ---- | --------- | -------- |
-| 01 MinerU 解析 | `stage_01_mineru_parse.json` | `src/parser/mineru_loader.py` |
-| 02 章节树 | `stage_02_section_tree.json` | `src/parser/markdown_parser.py`、`src/parser/section_splitter.py` |
-| 03 文档骨架图 | `stage_03_document_skeleton_graph.json` | `src/skeleton/document_skeleton_builder.py` |
-| 04 章节摘要 | `stage_04_section_summary.json` | `src/summarizer/bottom_up_summarizer.py` |
-| 05 多模态 chunk | `stage_05_modal_chunks.json` | `src/skeleton/chunk_builder.py` |
-| 06 文本抽取 | `stage_06_text_extraction.json` | `src/extractors/text_extractor.py` |
-| 07 表格抽取 | `stage_07_table_extraction.json` | `src/extractors/table_extractor.py` |
-| 08 图像抽取 | `stage_08_image_extraction.json` | `src/extractors/image_extractor.py` |
-| 09 公式抽取 | `stage_09_formula_extraction.json` | `src/extractors/formula_extractor.py` |
-| 10 跨模态对齐去重 | `stage_10_modal_alignment_dedup.json` | `src/alignment/{entity_aligner,relation_aligner,deduplicator}.py` |
-| 11 关系发现 | `stage_11_relation_discovery.json` | `src/discovery/relation_discovery.py` |
-| 12 增强融合图 | `stage_12_enhanced_graph.json` | `src/graph/{graph_merger,graph_validator,graph_schema}.py` |
-| — 最终图 | `final_graph.json` | `src/graph/neo4j_writer.py` 写入 Neo4j |
-
-所有阶段产物统一写入 `output/`；运行日志写入 `logs/`。
 
 ## 架构与模块职责
 
@@ -83,24 +64,6 @@ pytest tests/test_parser.py::test_mineru_loader_returns_normalized_doc  # 单测
 - **多模态分治**：四路独立抽取再统一融合。
 - **阶段持久化**：每阶段独立 JSON，便于调试、回溯、评估与断点续跑。
 - **统一图谱格式**：所有阶段图谱 JSON 采用统一的 `nodes` / `relations` / `metadata` 结构。
-
-### 数据流向
-
-```
-data/raw_pdf/*.pdf
-  → [MinerU] data/mineru_output/<paper_id>/
-  → output/stage_01_mineru_parse.json
-  → output/stage_02_section_tree.json
-  → output/stage_03_document_skeleton_graph.json
-  → output/stage_04_section_summary.json
-  → output/stage_05_modal_chunks.json
-  → output/stage_{06,07,08,09}_*_extraction.json
-  → output/stage_10_modal_alignment_dedup.json
-  → output/stage_11_relation_discovery.json
-  → output/stage_12_enhanced_graph.json
-  → output/final_graph.json
-  → Neo4j (petrommkg-schema / petrommkg-document)
-```
 
 ## 外部服务与配置
 

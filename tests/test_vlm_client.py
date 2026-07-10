@@ -17,7 +17,13 @@ from src.utils.vlm_client import VLMClient
 class _FakeChatCompletions:
     """模拟 OpenAI chat.completions.create 返回结构。"""
 
+    def __init__(self):
+        """保存最后一次请求参数，供视觉模型思考开关测试使用。"""
+
+        self.last_kwargs = None
+
     def create(self, **kwargs):
+        self.last_kwargs = kwargs
         message = SimpleNamespace(content="这是一张图片")
         return SimpleNamespace(choices=[SimpleNamespace(message=message)])
 
@@ -69,6 +75,8 @@ def test_vlm_client_describe_image(tmp_path):
 
     response = vlm.describe_image(image_path, "描述这张图片")
     assert response == "这是一张图片"
+    request = fake_client.chat.completions.last_kwargs
+    assert request["extra_body"]["enable_thinking"] is False
 
 
 @pytest.mark.live

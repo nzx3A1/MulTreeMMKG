@@ -14,7 +14,13 @@ from src.utils.llm_client import LLMClient
 class _FakeChatCompletions:
     """模拟 OpenAI chat.completions.create 返回结构。"""
 
+    def __init__(self):
+        """保存最后一次请求参数，供默认思考开关测试使用。"""
+
+        self.last_kwargs = None
+
     def create(self, **kwargs):
+        self.last_kwargs = kwargs
         content = '{"ok": true}' if kwargs.get("response_format") else "hello"
         message = SimpleNamespace(content=content)
         return SimpleNamespace(choices=[SimpleNamespace(message=message)])
@@ -43,6 +49,8 @@ def test_llm_client_chat():
 
     response = llm.chat([{"role": "user", "content": "hi"}])
     assert response == "hello"
+    request = fake_client.chat.completions.last_kwargs
+    assert request["extra_body"]["thinking"] == {"type": "disabled"}
 
 
 def test_llm_client_chat_json():

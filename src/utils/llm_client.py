@@ -36,16 +36,35 @@ class LLMClient:
         )
         return self._client
 
-    def chat(self, messages: List[Dict[str, Any]], **kwargs: Any) -> str:
-        """发送对话消息并返回模型文本输出。"""
+    @staticmethod
+    def _thinking_disabled_extra_body(model: str) -> Dict[str, Any]:
+        """为支持混合思考的兼容模型生成默认关闭思考的请求参数。"""
 
+        normalized_model = model.lower()
+        if normalized_model.startswith("minimax"):
+            # MiniMax-M3 可真正关闭；M2.x 会接受但由服务端决定是否保留思考。
+            return {"thinking": {"type": "disabled"}}
+        if normalized_model.startswith("qwen"):
+            # Qwen OpenAI 兼容接口要求把非标准参数放在 extra_body 中。
+            return {"enable_thinking": False}
+        return {}
+
+    def chat(self, messages: List[Dict[str, Any]], **kwargs: Any) -> str:
+        """发送对话消息并返回模型文本输出，默认关闭支持该能力的模型思考。"""
+
+        model = kwargs.pop("model", self.config.model)
+        extra_body = self._thinking_disabled_extra_body(model)
+        # 调用方显式传参优先，可按需重新开启思考或补充厂商特有参数。
+        extra_body.update(kwargs.pop("extra_body", {}))
         request = {
-            "model": kwargs.pop("model", self.config.model),
+            "model": model,
             "messages": messages,
             "temperature": kwargs.pop("temperature", self.config.temperature),
             "max_tokens": kwargs.pop("max_tokens", self.config.max_tokens),
             **kwargs,
         }
+        if extra_body:
+            request["extra_body"] = extra_body
         response = self._get_client().chat.completions.create(**request)
         return response.choices[0].message.content or ""
 
@@ -55,5 +74,4 @@ class LLMClient:
         kwargs.setdefault("response_format", {"type": "json_object"})
         content = self.chat(messages, **kwargs)
         return json.loads(content)
-
 

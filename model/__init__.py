@@ -6,8 +6,7 @@
 from .alignment import AlignedEntity, AlignedRelation, AlignmentCluster, AlignmentResult
 from .base import ID, MMKGBaseModel, Provenance, SourceModality, Timestamp
 from .chunk import Chunk, ChunkBase, ChunkList, FormulaChunk, ImageChunk, TableChunk, TextChunk
-from .content import Caption, ContentBlock, ContentRole, Formula, Image, Table, TextBlock
-from .document import Block, BlockType, Paper, PaperMeta, Section, SectionTree
+from .document import Document, DocumentMetadata, DocumentSection
 from .entity import Entity
 from .event import Event, EventType
 from .extraction import (
@@ -18,7 +17,6 @@ from .extraction import (
     TextExtractionResult,
 )
 from .graph import GraphEdge, GraphMetadata, GraphNode, KnowledgeGraph
-from .pipeline import PipelineStage, RunMetadata, StageOutput, StageStatus
 from .relation import Relation
 from .skeleton import (
     DocumentSkeleton,
@@ -34,19 +32,9 @@ __all__ = [
     "Provenance",
     "SourceModality",
     "Timestamp",
-    "ContentRole",
-    "ContentBlock",
-    "TextBlock",
-    "Table",
-    "Image",
-    "Formula",
-    "Caption",
-    "BlockType",
-    "Block",
-    "PaperMeta",
-    "Paper",
-    "Section",
-    "SectionTree",
+    "DocumentMetadata",
+    "DocumentSection",
+    "Document",
     "ChunkBase",
     "TextChunk",
     "TableChunk",
@@ -76,8 +64,4 @@ __all__ = [
     "GraphEdge",
     "GraphMetadata",
     "KnowledgeGraph",
-    "StageStatus",
-    "StageOutput",
-    "PipelineStage",
-    "RunMetadata",
 ]
