@@ -142,6 +142,16 @@ def test_document_context_sorts_and_indexes_all_chunks() -> None:
     assert set(context.representative_chunk_ids) == {"c1", "c2"}
 
 
+def test_query_terms_keep_nouns_and_filter_english_citation_noise() -> None:
+    """query_terms 应保留中英文专业名词，并过滤作者名、介词和年代单位。"""
+
+    context = build_document_context(_north_china_craton_chunks())
+    terms = set(context.domain_terms)
+
+    assert {"华北克拉通", "鄂尔多斯盆地", "构造演化", "U-Pb"} <= terms
+    assert terms.isdisjoint({"Wu", "Zhai", "Santosh", "Zhao", "and", "et", "al", "Ga"})
+
+
 def test_document_context_rejects_mixed_documents() -> None:
     """一次调用混入多篇论文时应明确报错，避免上下文和 Schema 先验污染。"""
 
@@ -235,9 +245,9 @@ def test_repository_falls_back_to_full_cosine_when_vector_index_is_missing() -> 
 
 
 def _north_china_craton_chunks() -> list[dict[str, Any]]:
-    """返回用户提供的华北克拉通论文 Chunk，供真实两级 Schema 选择演示。"""
+    """返回华北克拉通 Chunk，并补齐第三阶段生成的章节总结与 schemaKeys。"""
 
-    return [
+    chunks = [
         {
             "id": "0:text:0",
             "order": 0,
@@ -257,6 +267,17 @@ def _north_china_craton_chunks() -> list[dict[str, Any]]:
             "text": "在1．80～1．75 Ga 期间，华北克拉通形成了广泛发育的双峰式火成岩组合，如熊耳群的双峰式火山－侵入岩。 最近，作者在位于鄂尔多斯盆地西南缘的陇县骑安沟地区，识别出一套新的由玄武安山岩与花岗斑岩组成的典型双峰式火成岩组合，对该套火成岩的岩石学特征 地球化学组成进行了研究，并进行了锆石 U-Pb 定年分析，厘定其成因机制及形成时代，进而为华北克拉通西部－鄂尔多斯盆地在中元古代的构造演化过程提供了重要证据，同时探究了其与南缘熊耳群岩浆事件及哥伦比亚超大陆裂解的关系。",
         },
     ]
+    section_context = {
+        "document_id": "document-1",
+        "section_id": "0",
+        "section_title": "华北克拉通西南缘中元古代构造演化",
+        "section_summary": "本小节以华北克拉通西南缘为研究对象，聚焦1.8-1.6 Ga构造事件的性质与动力学机制。通过识别陇县骑安沟地区新发现的玄武安山岩与花岗斑岩双峰式火成岩组合，结合岩石学、地球化学及锆石U-Pb定年分析，厘定其成因与形成时代，为探讨华北克拉通西部-鄂尔多斯盆地中元古代构造演化及其与哥伦比亚超大陆裂解的关系提供关键证据。",
+        "schemaKeys": ["盆地", "构造单元", "隆起", "研究区", "地质时代", "岩性", "实验", "分析方法"],
+        "document_schema_keys": ["盆地", "研究区", "断裂带", "地质时代", "岩性", "矿物", "露头", "样品", "实验", "分析方法"],
+    }
+    for chunk in chunks:
+        chunk.update(section_context)
+    return chunks
 
 
 def _print_schema_selection_result(result: Any) -> None:

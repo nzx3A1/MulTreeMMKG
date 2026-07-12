@@ -5,16 +5,36 @@ import re
 from collections import Counter, defaultdict
 from typing import Any, Mapping, Sequence
 
+import jieba
+import jieba.posseg as pseg
+
 from .schema_models import DocumentContext
 
 
-TERM_PATTERN = re.compile(
-    r"[A-Za-z]+(?:[-_/][A-Za-z0-9]+)*|[\u4e00-\u9fffA-Za-z0-9δΔ]+?(?:盆地|坳陷|洼陷|隆起|斜坡|断裂带|断层|区块|研究区|组|段|层|界面|砂岩|泥岩|灰岩|白云岩|储层|烃源岩|盖层|圈闭|油田|气田|油藏|气藏|井|裂缝|孔隙|有机质|干酪根|同位素|样品|实验|测井|地震剖面)"
+CITATION_PATTERN = re.compile(r"[（(][^()（）]{0,240}?(?:19|20)\d{2}[^()（）]{0,120}?[）)]")
+TECHNICAL_ENGLISH_PATTERN = re.compile(
+    r"\b(?:[A-Z]{2,10}\d*|[A-Za-z]{1,6}(?:[-/][A-Za-z0-9]{1,8})+)\b"
 )
+CHINESE_PATTERN = re.compile(r"[\u4e00-\u9fff]")
+NOUN_FLAGS = {"n", "ng", "ns", "nt", "nz"}
+ENGLISH_STOP_TERMS = {
+    "GA", "MA", "KA", "PA", "KM", "CM", "MM", "WU", "ET", "AL",
+    "AND", "OR", "THE", "OF", "IN", "TO", "FOR", "WITH", "BY",
+}
+CHINESE_STOP_TERMS = {
+    "作者", "前人", "研究", "结果", "阶段", "时期", "过程", "特点", "特征",
+    "关系", "意义", "地区", "区域", "方面", "问题", "本文", "本次", "这个",
+    "条主", "经历", "大量", "典型", "记录", "西南", "东北", "中央", "区域性",
+}
 
-TERM_BOUNDARY_PATTERN = re.compile(
-    r"(?:包含|含有|组成|属于|隶属|位于|分布于|发育于|发育在|控制|影响|指示|表明|生成|产生|覆盖|分析|测试|采自|取自|具有|主要由|以及|和|与|及)"
-)
+# 为石油地质与构造地质常见复合名词提高分词完整性，避免拆成无意义单字。
+for _domain_word in (
+    "华北克拉通", "鄂尔多斯盆地", "裂谷盆地", "构造演化", "构造环境",
+    "构造单元", "构造带", "断裂带", "地质时代", "双峰式火成岩",
+    "火成岩组合", "岩浆活动", "地球化学", "锆石", "分析方法",
+    "烃源岩", "储集层", "沉积环境", "岩石结构", "有机质",
+):
+    jieba.add_word(_domain_word, freq=2_000_000, tag="nz")
 
 
 def _as_mapping(chunk: Any) -> dict[str, Any]:
@@ -32,10 +52,25 @@ def _as_mapping(chunk: Any) -> dict[str, Any]:
 
 
 def extract_domain_terms(text: str, *, limit: int = 80) -> tuple[str, ...]:
-    """使用石油地质后缀和中英文模式提取可解释的专业候选词。"""
+    """使用 jieba 词性标注提取中文名词，并严格过滤英文技术标识。"""
 
-    separated = TERM_BOUNDARY_PATTERN.sub(" ", str(text or ""))
-    counter = Counter(match.group(0).strip() for match in TERM_PATTERN.finditer(separated))
+    cleaned = CITATION_PATTERN.sub(" ", str(text or ""))
+    counter: Counter[str] = Counter()
+    for token in pseg.cut(cleaned):
+        word = token.word.strip(" \t\r\n，。；：、（）()[]【】“”‘’")
+        if (
+            len(word) >= 2
+            and CHINESE_PATTERN.search(word)
+            and token.flag in NOUN_FLAGS
+            and token.flag != "nr"
+            and word not in CHINESE_STOP_TERMS
+        ):
+            counter[word] += 1
+
+    for match in TECHNICAL_ENGLISH_PATTERN.finditer(cleaned):
+        word = match.group(0)
+        if word.upper() not in ENGLISH_STOP_TERMS:
+            counter[word] += 1
     ordered = sorted(counter, key=lambda term: (-counter[term], -len(term), term))
     return tuple(ordered[:limit])
 
