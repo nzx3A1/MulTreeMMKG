@@ -1018,3 +1018,424 @@ SET
   r.relationEn = row.relationEn,
   r.relationZh = row.relationZh,
   r.updatedAt = datetime();
+
+
+
+
+
+
+  // =====================================================
+// 14. 通用表格、图片与公式概念实体
+// 可直接追加到现有 Schema CQL 后执行
+// =====================================================
+
+UNWIND [
+
+  // ----------------
+  // 表格结构实体
+  // ----------------
+  {
+    schema: "Table",
+    zhName: "表格",
+    category: "通用表格图片与公式",
+    description: "由行、列、表头和单元格组成的结构化数据载体，用于表达样品、参数、实验结果、统计值和对比信息。",
+    examples: ["样品参数表", "储层物性统计表", "地球化学参数表"]
+  },
+  {
+    schema: "TableHeader",
+    zhName: "表头",
+    category: "通用表格图片与公式",
+    description: "用于说明表格字段、数据维度或分组含义的标题单元，可对应单级表头或多级表头。",
+    examples: ["样品编号", "孔隙度/%", "地层层位"]
+  },
+  {
+    schema: "TableRow",
+    zhName: "表格行",
+    category: "通用表格图片与公式",
+    description: "表格中的横向记录单元，通常表示一个样品、对象、实验条件或统计记录。",
+    examples: ["样品S1所在行", "长7段数据行", "实验组记录行"]
+  },
+  {
+    schema: "TableColumn",
+    zhName: "表格列",
+    category: "通用表格图片与公式",
+    description: "表格中的纵向字段单元，通常表示一种属性、参数、条件、单位或分类维度。",
+    examples: ["TOC列", "孔隙度列", "温度列"]
+  },
+  {
+    schema: "TableCell",
+    zhName: "表格单元格",
+    category: "通用表格图片与公式",
+    description: "表格行列交叉位置的最小数据单元，可存储文本、数值、范围、单位或对象名称。",
+    examples: ["TOC=2.1%", "孔隙度=8.3%", "长7段"]
+  },
+
+  // ----------------
+  // 图片与图表结构实体
+  // ----------------
+  {
+    schema: "Figure",
+    zhName: "图片/图件",
+    category: "通用表格图片与公式",
+    description: "论文或报告中的通用视觉内容载体，包括照片、示意图、地质图、剖面图、统计图和组合图。",
+    examples: ["图1研究区位置图", "图5成藏模式图", "图8岩心照片"]
+  },
+  {
+    schema: "FigurePanel",
+    zhName: "子图",
+    category: "通用表格图片与公式",
+    description: "组合图片中具有相对独立内容的子图区域，通常使用a、b、c等编号进行区分。",
+    examples: ["图3a", "图3b", "左侧子图"]
+  },
+  {
+    schema: "FigureElement",
+    zhName: "图片元素",
+    category: "通用表格图片与公式",
+    description: "图片内部可识别的视觉对象，如断层线、井位、曲线、岩心、矿物颗粒、箭头或区域边界。",
+    examples: ["F1断层线", "苏6井井位", "红色趋势曲线"]
+  },
+  {
+    schema: "Chart",
+    zhName: "统计图/曲线图",
+    category: "通用表格图片与公式",
+    description: "通过坐标轴、数据系列和图例表达数值变化、相关性、分布或对比关系的图件。",
+    examples: ["孔隙度—渗透率交会图", "等温吸附曲线", "柱状统计图"]
+  },
+  {
+    schema: "Axis",
+    zhName: "坐标轴",
+    category: "通用表格图片与公式",
+    description: "统计图中表达变量、取值范围和单位的坐标维度，包括横轴、纵轴和辅助坐标轴。",
+    examples: ["横轴温度/℃", "纵轴吸附量/mmol·g⁻¹", "深度轴"]
+  },
+  {
+    schema: "Legend",
+    zhName: "图例",
+    category: "通用表格图片与公式",
+    description: "用于解释图片中颜色、符号、线型、填充或数据系列含义的视觉说明单元。",
+    examples: ["红线代表长7段", "三角形代表泥岩样品", "蓝色区域代表湖相"]
+  },
+  {
+    schema: "VisualAnnotation",
+    zhName: "图中标注",
+    category: "通用表格图片与公式",
+    description: "图片中的文字、箭头、编号、框选区域或其他用于解释视觉对象的标记。",
+    examples: ["异常高值区", "油气运移方向箭头", "井号标注"]
+  },
+  {
+    schema: "DataSeries",
+    zhName: "数据系列",
+    category: "通用表格图片与公式",
+    description: "表格或图表中由一组有序数据点组成的数据集合，可表示曲线、样品组、时间序列或参数序列。",
+    examples: ["温度—吸附量序列", "不同样品TOC序列", "深度—孔隙度曲线"]
+  },
+
+  // ----------------
+  // 公式结构实体
+  // ----------------
+  {
+    schema: "Formula",
+    zhName: "公式",
+    category: "通用表格图片与公式",
+    description: "以数学符号表达参数定义、计算方法、变量关系、模型约束或评价指标的结构化表达。",
+    examples: ["孔隙度计算公式", "Langmuir方程", "等量吸附热公式"]
+  },
+  {
+    schema: "Symbol",
+    zhName: "公式符号",
+    category: "通用表格图片与公式",
+    description: "公式中用于表示参数、变量、常量、系数或运算对象的字符或符号。",
+    examples: ["φ", "q_st", "T", "R"]
+  },
+  {
+    schema: "Variable",
+    zhName: "变量",
+    category: "通用表格图片与公式",
+    description: "公式中取值可以变化的符号，通常对应实验条件、测量参数、计算结果或自变量。",
+    examples: ["温度T", "压力P", "吸附量V"]
+  },
+  {
+    schema: "Constant",
+    zhName: "常量",
+    category: "通用表格图片与公式",
+    description: "公式中取值固定或在指定条件下保持不变的符号或系数。",
+    examples: ["气体常数R", "圆周率π", "经验常数C"]
+  },
+  {
+    schema: "Parameter",
+    zhName: "参数",
+    category: "通用表格图片与公式",
+    description: "能够被测量、计算、统计或用于描述对象性质的量，可具有数值、单位、范围和实验条件。",
+    examples: ["孔隙度", "渗透率", "TOC", "温度", "压力"]
+  },
+  {
+    schema: "Unit",
+    zhName: "单位",
+    category: "通用表格图片与公式",
+    description: "用于表示参数或数值计量尺度的标准单位。",
+    examples: ["%", "mD", "MPa", "℃", "mmol/g"]
+  },
+  {
+    schema: "Caption",
+    zhName: "标题/图题/表题",
+    category: "通用表格图片与公式",
+    description: "用于说明表格、图片、子图或公式编号、主题和内容范围的文本描述。",
+    examples: ["表1 样品基本参数", "图5 成藏模式", "公式（3）"]
+  }
+
+] AS row
+
+MERGE (c:EntityConcept {schema: row.schema})
+SET
+  c.zhName = row.zhName,
+  c.category = row.category,
+  c.description = row.description,
+  c.examples = row.examples,
+  c.updatedAt = datetime()
+
+MERGE (cat:ConceptCategory {name: row.category})
+SET
+  cat.description = "描述论文中通用表格结构、图片视觉结构、统计图数据、公式符号、参数及跨模态证据关系。",
+  cat.updatedAt = datetime()
+
+MERGE (c)-[:BELONGS_TO_CATEGORY]->(cat);
+
+
+// =====================================================
+// 15. 通用表格、图片与公式内部关系
+// =====================================================
+
+UNWIND [
+
+  // ----------------
+  // 表格内部关系
+  // ----------------
+  {source:"Table", relationEn:"HAS_CAPTION", relationZh:"具有标题", target:"Caption"},
+  {source:"Table", relationEn:"HAS_HEADER", relationZh:"具有表头", target:"TableHeader"},
+  {source:"Table", relationEn:"HAS_ROW", relationZh:"具有表格行", target:"TableRow"},
+  {source:"Table", relationEn:"HAS_COLUMN", relationZh:"具有表格列", target:"TableColumn"},
+  {source:"Table", relationEn:"HAS_CELL", relationZh:"具有单元格", target:"TableCell"},
+  {source:"Table", relationEn:"HAS_DATA_SERIES", relationZh:"具有数据系列", target:"DataSeries"},
+
+  {source:"TableHeader", relationEn:"PART_OF", relationZh:"属于", target:"Table"},
+  {source:"TableHeader", relationEn:"DEFINES_COLUMN", relationZh:"定义表格列", target:"TableColumn"},
+  {source:"TableHeader", relationEn:"REPRESENTS", relationZh:"表示", target:"Parameter"},
+  {source:"TableHeader", relationEn:"HAS_UNIT", relationZh:"具有单位", target:"Unit"},
+
+  {source:"TableRow", relationEn:"PART_OF", relationZh:"属于", target:"Table"},
+  {source:"TableRow", relationEn:"CONTAINS_CELL", relationZh:"包含单元格", target:"TableCell"},
+
+  {source:"TableColumn", relationEn:"PART_OF", relationZh:"属于", target:"Table"},
+  {source:"TableColumn", relationEn:"CONTAINS_CELL", relationZh:"包含单元格", target:"TableCell"},
+  {source:"TableColumn", relationEn:"REPRESENTS", relationZh:"表示", target:"Parameter"},
+  {source:"TableColumn", relationEn:"HAS_UNIT", relationZh:"具有单位", target:"Unit"},
+
+  {source:"TableCell", relationEn:"PART_OF", relationZh:"属于", target:"Table"},
+  {source:"TableCell", relationEn:"LOCATED_IN_ROW", relationZh:"位于表格行", target:"TableRow"},
+  {source:"TableCell", relationEn:"LOCATED_IN_COLUMN", relationZh:"位于表格列", target:"TableColumn"},
+  {source:"TableCell", relationEn:"REPRESENTS", relationZh:"表示", target:"Parameter"},
+  {source:"TableCell", relationEn:"HAS_UNIT", relationZh:"具有单位", target:"Unit"},
+  {source:"TableCell", relationEn:"MEMBER_OF_SERIES", relationZh:"属于数据系列", target:"DataSeries"},
+
+  // ----------------
+  // 图片内部关系
+  // ----------------
+  {source:"Figure", relationEn:"HAS_CAPTION", relationZh:"具有图题", target:"Caption"},
+  {source:"Figure", relationEn:"HAS_PANEL", relationZh:"具有子图", target:"FigurePanel"},
+  {source:"Figure", relationEn:"HAS_ELEMENT", relationZh:"具有图片元素", target:"FigureElement"},
+  {source:"Figure", relationEn:"HAS_ANNOTATION", relationZh:"具有图中标注", target:"VisualAnnotation"},
+
+  {source:"FigurePanel", relationEn:"PART_OF", relationZh:"属于", target:"Figure"},
+  {source:"FigurePanel", relationEn:"HAS_CAPTION", relationZh:"具有子图标题", target:"Caption"},
+  {source:"FigurePanel", relationEn:"CONTAINS", relationZh:"包含", target:"FigureElement"},
+  {source:"FigurePanel", relationEn:"HAS_ANNOTATION", relationZh:"具有图中标注", target:"VisualAnnotation"},
+
+  {source:"FigureElement", relationEn:"PART_OF", relationZh:"属于", target:"Figure"},
+  {source:"FigureElement", relationEn:"LOCATED_IN", relationZh:"位于", target:"FigurePanel"},
+
+  {source:"Chart", relationEn:"IS_TYPE_OF", relationZh:"属于类型", target:"Figure"},
+  {source:"Chart", relationEn:"HAS_AXIS", relationZh:"具有坐标轴", target:"Axis"},
+  {source:"Chart", relationEn:"HAS_LEGEND", relationZh:"具有图例", target:"Legend"},
+  {source:"Chart", relationEn:"HAS_DATA_SERIES", relationZh:"具有数据系列", target:"DataSeries"},
+  {source:"Chart", relationEn:"HAS_ANNOTATION", relationZh:"具有图中标注", target:"VisualAnnotation"},
+
+  {source:"Axis", relationEn:"PART_OF", relationZh:"属于", target:"Chart"},
+  {source:"Axis", relationEn:"REPRESENTS", relationZh:"表示", target:"Parameter"},
+  {source:"Axis", relationEn:"HAS_UNIT", relationZh:"具有单位", target:"Unit"},
+
+  {source:"Legend", relationEn:"PART_OF", relationZh:"属于", target:"Chart"},
+  {source:"Legend", relationEn:"DESCRIBES", relationZh:"描述", target:"DataSeries"},
+  {source:"Legend", relationEn:"DESCRIBES", relationZh:"描述", target:"FigureElement"},
+
+  {source:"VisualAnnotation", relationEn:"ANNOTATES", relationZh:"标注", target:"Figure"},
+  {source:"VisualAnnotation", relationEn:"ANNOTATES", relationZh:"标注", target:"FigurePanel"},
+  {source:"VisualAnnotation", relationEn:"ANNOTATES", relationZh:"标注", target:"FigureElement"},
+  {source:"VisualAnnotation", relationEn:"ANNOTATES", relationZh:"标注", target:"DataSeries"},
+
+  {source:"DataSeries", relationEn:"REPRESENTS", relationZh:"表示", target:"Parameter"},
+  {source:"DataSeries", relationEn:"SHOWN_IN", relationZh:"显示于", target:"Chart"},
+  {source:"DataSeries", relationEn:"RECORDED_IN", relationZh:"记录于", target:"Table"},
+
+  // ----------------
+  // 公式内部关系
+  // ----------------
+  {source:"Formula", relationEn:"HAS_CAPTION", relationZh:"具有公式标题或编号", target:"Caption"},
+  {source:"Formula", relationEn:"HAS_SYMBOL", relationZh:"具有符号", target:"Symbol"},
+  {source:"Formula", relationEn:"HAS_VARIABLE", relationZh:"具有变量", target:"Variable"},
+  {source:"Formula", relationEn:"HAS_CONSTANT", relationZh:"具有常量", target:"Constant"},
+  {source:"Formula", relationEn:"DEFINES", relationZh:"定义", target:"Parameter"},
+  {source:"Formula", relationEn:"COMPUTES", relationZh:"计算", target:"Parameter"},
+  {source:"Formula", relationEn:"DEPENDS_ON", relationZh:"依赖", target:"Parameter"},
+  {source:"Formula", relationEn:"FITS", relationZh:"拟合", target:"DataSeries"},
+
+  {source:"Variable", relationEn:"IS_TYPE_OF", relationZh:"属于类型", target:"Symbol"},
+  {source:"Constant", relationEn:"IS_TYPE_OF", relationZh:"属于类型", target:"Symbol"},
+
+  {source:"Symbol", relationEn:"REPRESENTS", relationZh:"表示", target:"Parameter"},
+  {source:"Symbol", relationEn:"HAS_UNIT", relationZh:"具有单位", target:"Unit"},
+  {source:"Symbol", relationEn:"PART_OF", relationZh:"属于", target:"Formula"},
+
+  {source:"Parameter", relationEn:"REPRESENTED_BY", relationZh:"由符号表示", target:"Symbol"},
+  {source:"Parameter", relationEn:"HAS_UNIT", relationZh:"具有单位", target:"Unit"},
+  {source:"Parameter", relationEn:"COMPUTED_BY", relationZh:"由公式计算", target:"Formula"},
+  {source:"Parameter", relationEn:"RECORDED_IN", relationZh:"记录于", target:"Table"},
+  {source:"Parameter", relationEn:"VISUALIZED_IN", relationZh:"可视化于", target:"Chart"}
+
+] AS row
+
+MATCH (s:EntityConcept {schema: row.source})
+MATCH (t:EntityConcept {schema: row.target})
+
+MERGE (s)-[r:SCHEMA_RELATION {
+  key: row.source + "_" + row.relationEn + "_" + row.target
+}]->(t)
+
+SET
+  r.relationEn = row.relationEn,
+  r.relationZh = row.relationZh,
+  r.updatedAt = datetime();
+
+
+// =====================================================
+// 16. 表格、图片、公式与原有领域实体的关系
+// =====================================================
+
+UNWIND [
+
+  // ----------------
+  // 表格与领域对象关系
+  // ----------------
+  {source:"Table", relationEn:"REPORTS", relationZh:"报告", target:"Sample"},
+  {source:"Table", relationEn:"REPORTS", relationZh:"报告", target:"Experiment"},
+  {source:"Table", relationEn:"REPORTS", relationZh:"报告", target:"AnalyticalMethod"},
+  {source:"Table", relationEn:"DESCRIBES", relationZh:"描述", target:"Formation"},
+  {source:"Table", relationEn:"DESCRIBES", relationZh:"描述", target:"StratigraphicMember"},
+  {source:"Table", relationEn:"DESCRIBES", relationZh:"描述", target:"ReservoirInterval"},
+  {source:"Table", relationEn:"DESCRIBES", relationZh:"描述", target:"Lithology"},
+  {source:"Table", relationEn:"DESCRIBES", relationZh:"描述", target:"SourceRock"},
+  {source:"Table", relationEn:"DESCRIBES", relationZh:"描述", target:"Reservoir"},
+  {source:"Table", relationEn:"DESCRIBES", relationZh:"描述", target:"Hydrocarbon"},
+  {source:"Table", relationEn:"QUANTIFIES", relationZh:"量化", target:"OrganicMatter"},
+  {source:"Table", relationEn:"QUANTIFIES", relationZh:"量化", target:"PoreStructure"},
+  {source:"Table", relationEn:"QUANTIFIES", relationZh:"量化", target:"OilGasReservoir"},
+
+  {source:"Experiment", relationEn:"PRODUCES", relationZh:"产生", target:"Table"},
+  {source:"AnalyticalMethod", relationEn:"PRODUCES", relationZh:"产生", target:"Table"},
+  {source:"Sample", relationEn:"RECORDED_IN", relationZh:"记录于", target:"Table"},
+
+  {source:"Parameter", relationEn:"DESCRIBES", relationZh:"描述", target:"Sample"},
+  {source:"Parameter", relationEn:"DESCRIBES", relationZh:"描述", target:"Lithology"},
+  {source:"Parameter", relationEn:"DESCRIBES", relationZh:"描述", target:"SourceRock"},
+  {source:"Parameter", relationEn:"DESCRIBES", relationZh:"描述", target:"Reservoir"},
+  {source:"Parameter", relationEn:"DESCRIBES", relationZh:"描述", target:"Seal"},
+  {source:"Parameter", relationEn:"DESCRIBES", relationZh:"描述", target:"Hydrocarbon"},
+  {source:"Parameter", relationEn:"DESCRIBES", relationZh:"描述", target:"PoreStructure"},
+
+  {source:"Experiment", relationEn:"MEASURES", relationZh:"测量", target:"Parameter"},
+  {source:"AnalyticalMethod", relationEn:"MEASURES", relationZh:"测量", target:"Parameter"},
+
+  // ----------------
+  // 图片与领域对象关系
+  // ----------------
+  {source:"Figure", relationEn:"SHOWS", relationZh:"展示", target:"Basin"},
+  {source:"Figure", relationEn:"SHOWS", relationZh:"展示", target:"StructuralUnit"},
+  {source:"Figure", relationEn:"SHOWS", relationZh:"展示", target:"Depression"},
+  {source:"Figure", relationEn:"SHOWS", relationZh:"展示", target:"Sag"},
+  {source:"Figure", relationEn:"SHOWS", relationZh:"展示", target:"Uplift"},
+  {source:"Figure", relationEn:"SHOWS", relationZh:"展示", target:"Slope"},
+  {source:"Figure", relationEn:"SHOWS", relationZh:"展示", target:"Fault"},
+  {source:"Figure", relationEn:"SHOWS", relationZh:"展示", target:"FaultZone"},
+  {source:"Figure", relationEn:"SHOWS", relationZh:"展示", target:"Block"},
+  {source:"Figure", relationEn:"SHOWS", relationZh:"展示", target:"Formation"},
+  {source:"Figure", relationEn:"SHOWS", relationZh:"展示", target:"StratigraphicMember"},
+  {source:"Figure", relationEn:"SHOWS", relationZh:"展示", target:"ReservoirInterval"},
+  {source:"Figure", relationEn:"SHOWS", relationZh:"展示", target:"Lithology"},
+  {source:"Figure", relationEn:"SHOWS", relationZh:"展示", target:"Mineral"},
+  {source:"Figure", relationEn:"SHOWS", relationZh:"展示", target:"SedimentaryFacies"},
+  {source:"Figure", relationEn:"SHOWS", relationZh:"展示", target:"DepositionalSystem"},
+  {source:"Figure", relationEn:"SHOWS", relationZh:"展示", target:"SourceRock"},
+  {source:"Figure", relationEn:"SHOWS", relationZh:"展示", target:"Reservoir"},
+  {source:"Figure", relationEn:"SHOWS", relationZh:"展示", target:"Seal"},
+  {source:"Figure", relationEn:"SHOWS", relationZh:"展示", target:"Trap"},
+  {source:"Figure", relationEn:"SHOWS", relationZh:"展示", target:"MigrationPathway"},
+  {source:"Figure", relationEn:"SHOWS", relationZh:"展示", target:"OilGasReservoir"},
+  {source:"Figure", relationEn:"SHOWS", relationZh:"展示", target:"PoreStructure"},
+  {source:"Figure", relationEn:"SHOWS", relationZh:"展示", target:"Fracture"},
+  {source:"Figure", relationEn:"SHOWS", relationZh:"展示", target:"Cavity"},
+  {source:"Figure", relationEn:"SHOWS", relationZh:"展示", target:"Well"},
+  {source:"Figure", relationEn:"SHOWS", relationZh:"展示", target:"Core"},
+  {source:"Figure", relationEn:"SHOWS", relationZh:"展示", target:"ThinSection"},
+  {source:"Figure", relationEn:"SHOWS", relationZh:"展示", target:"Sample"},
+
+  {source:"SeismicProfile", relationEn:"IS_TYPE_OF", relationZh:"属于类型", target:"Figure"},
+  {source:"GeologicalMap", relationEn:"IS_TYPE_OF", relationZh:"属于类型", target:"Figure"},
+  {source:"Core", relationEn:"SHOWN_IN", relationZh:"显示于", target:"Figure"},
+  {source:"ThinSection", relationEn:"SHOWN_IN", relationZh:"显示于", target:"Figure"},
+  {source:"WellLog", relationEn:"SHOWN_IN", relationZh:"显示于", target:"Chart"},
+  {source:"ProductionTest", relationEn:"VISUALIZED_IN", relationZh:"可视化于", target:"Chart"},
+  {source:"Experiment", relationEn:"PRODUCES", relationZh:"产生", target:"Figure"},
+  {source:"AnalyticalMethod", relationEn:"PRODUCES", relationZh:"产生", target:"Chart"},
+
+  // ----------------
+  // 公式与领域对象关系
+  // ----------------
+  {source:"Formula", relationEn:"USED_BY", relationZh:"被……使用", target:"Experiment"},
+  {source:"Formula", relationEn:"USED_BY", relationZh:"被……使用", target:"AnalyticalMethod"},
+  {source:"Formula", relationEn:"EVALUATES", relationZh:"评价", target:"SourceRock"},
+  {source:"Formula", relationEn:"EVALUATES", relationZh:"评价", target:"Reservoir"},
+  {source:"Formula", relationEn:"EVALUATES", relationZh:"评价", target:"Seal"},
+  {source:"Formula", relationEn:"EVALUATES", relationZh:"评价", target:"Hydrocarbon"},
+  {source:"Formula", relationEn:"EVALUATES", relationZh:"评价", target:"PoreStructure"},
+
+  {source:"Experiment", relationEn:"USES_FORMULA", relationZh:"使用公式", target:"Formula"},
+  {source:"AnalyticalMethod", relationEn:"USES_FORMULA", relationZh:"使用公式", target:"Formula"},
+
+  // ----------------
+  // 跨模态证据关系
+  // ----------------
+  {source:"Table", relationEn:"PROVIDES_EVIDENCE_FOR", relationZh:"为……提供证据", target:"Figure"},
+  {source:"Table", relationEn:"PROVIDES_DATA_FOR", relationZh:"为……提供数据", target:"Chart"},
+  {source:"Table", relationEn:"VALIDATES", relationZh:"验证", target:"Formula"},
+
+  {source:"Chart", relationEn:"VISUALIZES", relationZh:"可视化", target:"Table"},
+  {source:"Chart", relationEn:"VISUALIZES", relationZh:"可视化", target:"Parameter"},
+  {source:"Chart", relationEn:"SUPPORTS", relationZh:"支持", target:"Formula"},
+
+  {source:"Formula", relationEn:"EXPLAINS", relationZh:"解释", target:"DataSeries"},
+  {source:"Formula", relationEn:"QUANTIFIES", relationZh:"量化", target:"Parameter"},
+  {source:"Formula", relationEn:"VALIDATED_BY", relationZh:"由……验证", target:"Table"},
+  {source:"Formula", relationEn:"VISUALIZED_IN", relationZh:"可视化于", target:"Chart"}
+
+] AS row
+
+MATCH (s:EntityConcept {schema: row.source})
+MATCH (t:EntityConcept {schema: row.target})
+
+MERGE (s)-[r:SCHEMA_RELATION {
+  key: row.source + "_" + row.relationEn + "_" + row.target
+}]->(t)
+
+SET
+  r.relationEn = row.relationEn,
+  r.relationZh = row.relationZh,
+  r.updatedAt = datetime();

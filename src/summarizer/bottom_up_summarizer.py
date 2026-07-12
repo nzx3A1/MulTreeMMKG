@@ -9,10 +9,11 @@ from __future__ import annotations
 import argparse
 import copy
 import html
+import json
 import os
 import re
 import sys
-from concurrent.futures import ThreadPoolExecutor
+import time
 from dataclasses import replace
 from pathlib import Path
 from typing import Any, Iterable, Mapping, MutableMapping, Protocol, Sequence
@@ -55,6 +56,7 @@ class SummaryModelRouter:
         vision_client: ChatClient,
         text_model: str,
         fallback_text_client: ChatClient | None = None,
+        request_interval_secs: float = 0.0,
     ) -> None:
         """保存主、备用文本客户端与视觉客户端，文字章节优先走高速模型。"""
 
@@ -62,6 +64,17 @@ class SummaryModelRouter:
         self._vision_client = vision_client
         self._text_model = text_model
         self._fallback_text_client = fallback_text_client or text_client
+        self._request_interval_secs = max(0.0, request_interval_secs)
+        self._last_request_at: float | None = None
+
+    def _wait_for_rate_limit(self) -> None:
+        """在调用大模型前等待，保证相邻请求达到配置的最小时间间隔。"""
+
+        if self._last_request_at is not None:
+            remaining = self._request_interval_secs - (time.monotonic() - self._last_request_at)
+            if remaining > 0:
+                time.sleep(remaining)
+        self._last_request_at = time.monotonic()
 
     @staticmethod
     def _contains_image(messages: Sequence[Mapping[str, Any]]) -> bool:
@@ -76,6 +89,7 @@ class SummaryModelRouter:
     def chat(self, messages: list[dict[str, Any]], **kwargs: Any) -> str:
         """将含图请求发送给视觉模型，其余请求发送给 MiniMax 高速文本模型。"""
 
+        self._wait_for_rate_limit()
         if self._contains_image(messages):
             return self._vision_client.chat(messages, **kwargs)
         # MiniMax 官方仅允许 M3 关闭 thinking；M2.x 传入该参数也不会生效。
@@ -88,6 +102,7 @@ class SummaryModelRouter:
     def retry_after_empty(self, messages: list[dict[str, Any]], **kwargs: Any) -> str:
         """主模型只返回思考或空内容时重试；文本请求切换到关闭思考的 M3 兜底。"""
 
+        self._wait_for_rate_limit()
         if self._contains_image(messages):
             return self._vision_client.chat(messages, **kwargs)
         return self._fallback_text_client.chat(messages, **kwargs)
@@ -105,17 +120,16 @@ MAX_SECTION_CONTEXT_CHARS = int(os.getenv("SUMMARY_MAX_CONTEXT_CHARS", "12000"))
 MAX_IMAGES_PER_SECTION = int(os.getenv("SUMMARY_MAX_IMAGES_PER_SECTION", "3"))
 """单章最多传入的图片数；图注始终保留，图片只作为必要的视觉补充。"""
 
-SUMMARY_MODEL = os.getenv("SUMMARY_MODEL", "MiniMax-M2.7-highspeed")
-"""文本摘要默认模型；可改为 MiniMax-M3 以启用关闭思考模式。"""
-
-SUMMARY_FALLBACK_MODEL = os.getenv("SUMMARY_FALLBACK_MODEL", "MiniMax-M3")
-"""高速模型只输出思考或空内容时使用的文本兜底模型。"""
-
-SUMMARY_MAX_TOKENS = int(os.getenv("SUMMARY_MAX_TOKENS", "800"))
-"""摘要输出长度上限；与压缩型提示词匹配，避免沿用全局 8192 token 配额。"""
-
-DEFAULT_SUMMARY_WORKERS = int(os.getenv("SUMMARY_WORKERS", "3"))
-"""默认并发请求数；同一层级互不依赖的章节可同时生成摘要。"""
+SCHEMA_KEYS = (
+    "盆地", "构造单元", "凹陷/坳陷", "洼陷", "隆起", "斜坡", "构造带", "断层", "断裂带", "区块", "研究区",
+    "地质时代", "组", "段", "亚段/小层", "层/单层", "目的层/储层段", "地层界面", "不整合面", "层序单元",
+    "层序界面", "体系域", "岩性", "矿物", "岩石结构/组构", "沉积构造", "沉积相", "亚相", "微相", "沉积环境",
+    "沉积体系", "成岩作用", "成岩阶段", "成岩相", "含油气系统/成藏系统", "烃源岩", "储层/储集层", "盖层",
+    "圈闭", "运移通道", "输导体系", "成藏过程", "油气田", "油气藏", "烃类/油气", "流体界面", "孔隙结构",
+    "裂缝", "溶蚀孔洞/洞穴", "甜点", "有机质", "干酪根类型", "生物标志化合物", "同位素", "地震剖面", "井",
+    "测井资料", "岩心", "薄片", "露头", "地质图", "测试/试采", "样品", "实验", "分析方法",
+)
+"""章节 schemaKeys 的唯一合法词表；模型输出会再次经过程序校验。"""
 
 
 def _section_count(sections: Sequence[Mapping[str, Any]]) -> int:
@@ -164,6 +178,19 @@ def _finish_section_progress(progress: Any, section: Mapping[str, Any]) -> None:
     progress.update(1)
     progress.set_postfix_str(f"当前：{title}", refresh=False)
     logger.info(f"章节摘要已完成（{progress.n}/{progress.total}）：{title}")
+
+
+def _run_section_with_progress(
+    section: MutableMapping[str, Any],
+    client: ChatClient,
+    progress: Any,
+) -> str:
+    """在线程真正取得任务时打印开始信息，并在该章节完成后立即更新进度。"""
+
+    _start_section_progress(progress, section)
+    summary = _summarize_section(section, client)
+    _finish_section_progress(progress, section)
+    return summary
 
 
 def _clean_text(value: Any) -> str:
@@ -269,7 +296,42 @@ def _summary_prompt(
     else:
         template = LEAF_PROMPT
         content = "文本、表格、公式和图片将作为本消息后续内容块提供。"
-    return template.format(title=title or "未命名章节", content=content)
+    prompt = template.format(title=title or "未命名章节", content=content)
+    schema_options = json.dumps(SCHEMA_KEYS, ensure_ascii=False)
+    return f"""{prompt}
+
+Output Format:
+请严格只输出一个 JSON 对象，不要使用 Markdown 代码块：
+{{"summary":"一个自然段摘要","schemaKeys":["最相关词1","最相关词2"]}}
+schemaKeys 只选择与本章节内容直接相关的词，可多选；没有相关词时返回空数组。每个词必须原样取自以下白名单，不得创造、拆分或改写：
+{schema_options}
+"""
+
+
+def _parse_summary_result(value: Any) -> tuple[str, list[str]]:
+    """解析模型的结构化结果，并仅保留白名单内且顺序稳定的 schemaKeys。"""
+
+    cleaned = _clean_text(value)
+    if not cleaned:
+        return "", []
+    json_text = re.sub(r"^```(?:json)?\s*|\s*```$", "", cleaned, flags=re.IGNORECASE)
+    try:
+        payload = json.loads(json_text)
+    except (json.JSONDecodeError, TypeError):
+        # 兼容旧模型或测试替身的纯文本响应，避免升级后破坏既有调用方。
+        return cleaned, []
+    if not isinstance(payload, Mapping):
+        return "", []
+    summary = _clean_text(payload.get("summary"))
+    raw_keys = payload.get("schemaKeys")
+    valid_keys: list[str] = []
+    if isinstance(raw_keys, list):
+        allowed = set(SCHEMA_KEYS)
+        for key in raw_keys:
+            normalized = str(key).strip()
+            if normalized in allowed and normalized not in valid_keys:
+                valid_keys.append(normalized)
+    return summary, valid_keys
 
 
 def _call_model(
@@ -278,8 +340,8 @@ def _call_model(
     child_summaries: Sequence[tuple[str, str]],
     chunks: Sequence[Mapping[str, Any]],
     is_document: bool = False,
-) -> str:
-    """向视觉语言模型发送章节材料并规范化其摘要结果。"""
+) -> tuple[str, list[str]]:
+    """向模型发送章节材料，返回清理后的摘要与经过白名单校验的 schemaKeys。"""
 
     content: list[dict[str, Any]] = [{
         "type": "text",
@@ -291,7 +353,7 @@ def _call_model(
         result = client.chat(messages)
     except Exception as exc:  # 调用失败时保留章节上下文，便于定位坏图片或网络问题。
         raise SummaryGenerationError(f"章节《{title or '未命名章节'}》摘要生成失败：{exc}") from exc
-    summary = _clean_text(result)
+    summary, schema_keys = _parse_summary_result(result)
     if not summary:
         logger.warning(f"章节《{title or '未命名章节'}》首次模型响应为空或仅含思考内容，正在自动重试。")
         try:
@@ -301,10 +363,10 @@ def _call_model(
                 result = client.chat(messages)
         except Exception as exc:
             raise SummaryGenerationError(f"章节《{title or '未命名章节'}》摘要重试失败：{exc}") from exc
-        summary = _clean_text(result)
+        summary, schema_keys = _parse_summary_result(result)
     if not summary:
         raise SummaryGenerationError(f"章节《{title or '未命名章节'}》摘要生成失败：重试后模型仍返回空内容。")
-    return summary
+    return summary, schema_keys
 
 
 def _summarize_section(section: MutableMapping[str, Any], client: ChatClient) -> str:
@@ -328,9 +390,12 @@ def _summarize_section(section: MutableMapping[str, Any], client: ChatClient) ->
     # 空章节不调用模型，仍写入 summary 以满足输出树中每个章节都有该字段的约定。
     if not child_summaries and not valid_chunks:
         section["summary"] = "本章节未包含可用于生成摘要的内容。"
+        section["schemaKeys"] = []
         logger.warning(f"章节《{section_title}》没有可摘要内容，已写入提示文本。")
     else:
-        section["summary"] = _call_model(client, str(section.get("title") or ""), child_summaries, valid_chunks)
+        section["summary"], section["schemaKeys"] = _call_model(
+            client, str(section.get("title") or ""), child_summaries, valid_chunks
+        )
     return str(section["summary"])
 
 
@@ -338,9 +403,8 @@ def summarize_document_tree(
     stage02: Mapping[str, Any],
     llm_client: ChatClient | None = None,
     show_progress: bool = True,
-    max_workers: int = DEFAULT_SUMMARY_WORKERS,
 ) -> dict[str, Any]:
-    """为第二阶段目录树添加章节和全文 ``summary``，并返回独立的深拷贝结果。"""
+    """为第二阶段目录树添加章节和全文的 ``summary``、``schemaKeys``，并返回独立深拷贝。"""
 
     result = copy.deepcopy(dict(stage02))
     document = result.get("document")
@@ -349,21 +413,22 @@ def summarize_document_tree(
     sections = document.get("sections")
     if not isinstance(sections, list):
         raise ValueError("document.sections 必须是列表。")
-    if max_workers < 1:
-        raise ValueError("max_workers 必须大于或等于 1。")
-
     valid_sections = [section for section in sections if isinstance(section, MutableMapping)]
     # 纯文本请求使用 MiniMax 高速模型，含图片请求保留原有视觉模型，兼顾吞吐量和多模态能力。
     client = llm_client or SummaryModelRouter(
-        text_client=LLMClient(config=replace(settings.llm, model=SUMMARY_MODEL, max_tokens=SUMMARY_MAX_TOKENS)),
-        vision_client=LLMClient(config=replace(settings.vlm, max_tokens=SUMMARY_MAX_TOKENS)),
-        text_model=SUMMARY_MODEL,
-        fallback_text_client=LLMClient(config=replace(settings.llm, model=SUMMARY_FALLBACK_MODEL, max_tokens=SUMMARY_MAX_TOKENS)),
+        text_client=LLMClient(config=replace(settings.llm, model=settings.summary.model, max_tokens=settings.summary.max_tokens)),
+        vision_client=LLMClient(config=replace(settings.vlm, max_tokens=settings.summary.max_tokens)),
+        text_model=settings.summary.model,
+        fallback_text_client=LLMClient(
+            config=replace(settings.llm, model=settings.summary.fallback_model, max_tokens=settings.summary.max_tokens)
+        ),
+        request_interval_secs=settings.summary.request_interval_secs,
     )
     section_total = _section_count(valid_sections)
     logger.info(
-        f"开始自底向上摘要：共 {section_total} 个章节，文本模型={SUMMARY_MODEL}，兜底模型={SUMMARY_FALLBACK_MODEL}，"
-        f"并发数={max_workers}，单次输出上限={SUMMARY_MAX_TOKENS} tokens。"
+        f"开始自底向上摘要：共 {section_total} 个章节，文本模型={settings.summary.model}，"
+        f"兜底模型={settings.summary.fallback_model}，串行执行，"
+        f"请求间隔={settings.summary.request_interval_secs} 秒，单次输出上限={settings.summary.max_tokens} tokens。"
     )
     progress = tqdm(
         total=section_total,
@@ -374,18 +439,10 @@ def summarize_document_tree(
     )
     top_summaries: list[tuple[str, str]] = []
     try:
-        # 同一高度的章节没有上下游依赖，可安全并发；父章节会在下一批次等待子摘要完成。
-        with ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="summary") as executor:
-            for section_batch in _sections_grouped_by_height(valid_sections):
-                ordered_batch = _ordered(section_batch)
-                futures = []
-                for section in ordered_batch:
-                    _start_section_progress(progress, section)
-                    futures.append((section, executor.submit(_summarize_section, section, client)))
-                # 按稳定章节顺序收集结果，使日志和进度条输出可预测。
-                for section, future in futures:
-                    future.result()
-                    _finish_section_progress(progress, section)
+        # 按章节高度自底向上串行执行，避免同时向大模型服务发送多个请求。
+        for section_batch in _sections_grouped_by_height(valid_sections):
+            for section in _ordered(section_batch):
+                _run_section_with_progress(section, client, progress)
 
         for section in _ordered(valid_sections):
             top_summaries.append((str(section.get("title") or section.get("id") or "未命名章节"), str(section["summary"])))
@@ -393,10 +450,13 @@ def summarize_document_tree(
         document_title = str(document.get("title") or "全文")
         if top_summaries:
             logger.info("章节摘要全部完成，开始生成全文摘要。")
-            document["summary"] = _call_model(client, document_title, top_summaries, [], is_document=True)
+            document["summary"], document["schemaKeys"] = _call_model(
+                client, document_title, top_summaries, [], is_document=True
+            )
             logger.info(f"全文摘要已完成：{document_title}")
         else:
             document["summary"] = "文档未包含可用于生成摘要的章节。"
+            document["schemaKeys"] = []
             logger.warning("文档未包含章节，未调用模型生成全文摘要。")
     finally:
         progress.close()
@@ -408,7 +468,6 @@ def summarize_stage02_file(
     output_path: str | Path = DEFAULT_OUTPUT_PATH,
     llm_client: ChatClient | None = None,
     show_progress: bool = True,
-    max_workers: int = DEFAULT_SUMMARY_WORKERS,
 ) -> dict[str, Any]:
     """读取阶段二 JSON、生成自底向上摘要，并以 UTF-8 JSON 写入第三阶段文件。"""
 
@@ -416,7 +475,7 @@ def summarize_stage02_file(
     if not isinstance(stage02, Mapping):
         raise ValueError("第二阶段输入 JSON 根节点必须是对象。")
     logger.info(f"读取第二阶段目录树：{Path(input_path).resolve()}")
-    result = summarize_document_tree(stage02, llm_client=llm_client, show_progress=show_progress, max_workers=max_workers)
+    result = summarize_document_tree(stage02, llm_client=llm_client, show_progress=show_progress)
     write_json(output_path, result)
     logger.info(f"摘要结果已写入：{Path(output_path).resolve()}")
     return result
@@ -426,11 +485,10 @@ def summarize_bottom_up(
     stage02: Mapping[str, Any],
     llm_client: ChatClient | None = None,
     show_progress: bool = True,
-    max_workers: int = DEFAULT_SUMMARY_WORKERS,
 ) -> dict[str, Any]:
     """保留原有函数名，作为 ``summarize_document_tree`` 的兼容入口。"""
 
-    return summarize_document_tree(stage02, llm_client=llm_client, show_progress=show_progress, max_workers=max_workers)
+    return summarize_document_tree(stage02, llm_client=llm_client, show_progress=show_progress)
 
 
 def main() -> None:
@@ -441,9 +499,8 @@ def main() -> None:
     parser.add_argument("--input", type=Path, default=project_root / "output" / "stage_02_document_tree.json", help="第二阶段目录树 JSON")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT_PATH, help="写入带 summary 的目录树 JSON")
     parser.add_argument("--no-progress", action="store_true", help="关闭 tqdm 章节进度条")
-    parser.add_argument("--workers", type=int, default=DEFAULT_SUMMARY_WORKERS, help="同层级章节摘要的并发请求数，默认 3")
     args = parser.parse_args()
-    result = summarize_stage02_file(args.input, args.output, show_progress=not args.no_progress, max_workers=args.workers)
+    result = summarize_stage02_file(args.input, args.output, show_progress=not args.no_progress)
     print(f"第三步摘要完成：{sum(1 for _ in _iter_sections(result['document']['sections']))} 个章节，输出文件：{args.output.resolve()}")
 
 

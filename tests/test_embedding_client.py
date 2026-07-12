@@ -32,6 +32,7 @@ def test_embedding_client_encode_one(mock_requests_post):
 
     embedding = EmbeddingClient()
     vector = embedding.encode_one("test")
+    print(vector)
     assert len(vector) == 1024
 
 

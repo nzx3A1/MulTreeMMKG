@@ -20,7 +20,7 @@ class Neo4jSchemaDatabaseConfig:
 
     uri: str = "bolt://localhost:7687"
     username: str = "neo4j"
-    password: str = "123456"
+    password: str = "123456789"
     database: str = "petrommkg-schema"
 
 @dataclass(frozen=True)
@@ -29,7 +29,7 @@ class Neo4jDocumentDatabaseConfig:
 
     uri: str = "bolt://localhost:7687"
     username: str = "neo4j"
-    password: str = "123456"
+    password: str = "123456789"
     database: str = "petrommkg-document"
 
 @dataclass(frozen=True)

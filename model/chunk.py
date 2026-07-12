@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional, TypeAlias, Union
 
 from pydantic import Field
 
-from .base import ID, MMKGBaseModel, Provenance, SourceModality
+from .base import ID, MMKGBaseModel, SourceModality
 
 
 class ChunkBase(MMKGBaseModel):

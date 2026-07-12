@@ -5,12 +5,34 @@ JSON 适配和对象构建逻辑位于 :mod:`src.skeleton.document_tree_builder`
 """
 from __future__ import annotations
 
+from enum import Enum
 from typing import Iterator, List, Optional
 
 from pydantic import Field, PrivateAttr
 
 from .base import ID, MMKGBaseModel
-from .chunk import Chunk, ChunkBase
+from .chunk import Chunk
+
+# 定义文档骨架节点类型和关系类型，用于图谱写入时定义节点标签和边类型。
+class SkeletonNodeType(str, Enum):
+    """文档骨架节点类型。"""
+
+    PAPER = "Paper"           # 论文文档节点
+    SECTION = "Section"       # 一级章节节点
+    SUBSECTION = "SubSection" # 二级或三级章节节点
+    CHUNK = "Chunk"           # 最小内容块节点
+    FIGURE = "Figure"         # 图片节点
+    TABLE = "Table"           # 表格节点
+    FORMULA = "Formula"       # 公式节点
+
+
+class SkeletonEdgeType(str, Enum):
+    """文档骨架关系类型。"""
+
+    HAS_SECTION = "HAS_SECTION"   # 文档包含章节
+    HAS_CHUNK = "HAS_CHUNK"       # 章节包含 Chunk
+    NEXT = "NEXT"                 # 顺序关系
+    SOURCE_FROM = "SOURCE_FROM"   # 实体来源 Chunk
 
 
 class DocumentMetadata(MMKGBaseModel):

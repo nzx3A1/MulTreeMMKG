@@ -104,3 +104,4 @@ class EmbeddingClient:
         if left_norm == 0.0 or right_norm == 0.0:
             return 0.0
         return dot / (left_norm * right_norm)
+

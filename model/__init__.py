@@ -4,32 +4,14 @@
 也不会影响调用方。
 """
 from .alignment import AlignedEntity, AlignedRelation, AlignmentCluster, AlignmentResult
-from .base import ID, MMKGBaseModel, Provenance, SourceModality, Timestamp
+from .base import ID, MMKGBaseModel, SourceModality, Timestamp
 from .chunk import Chunk, ChunkBase, ChunkList, FormulaChunk, ImageChunk, TableChunk, TextChunk
-from .document import Document, DocumentMetadata, DocumentSection
-from .entity import Entity
-from .event import Event, EventType
-from .extraction import (
-    ExtractionResult,
-    FormulaExtractionResult,
-    ImageExtractionResult,
-    TableExtractionResult,
-    TextExtractionResult,
-)
-from .graph import GraphEdge, GraphMetadata, GraphNode, KnowledgeGraph
-from .relation import Relation
-from .skeleton import (
-    DocumentSkeleton,
-    SkeletonEdge,
-    SkeletonEdgeType,
-    SkeletonNode,
-    SkeletonNodeType,
-)
+from .document import Document, DocumentMetadata, DocumentSection, SkeletonEdgeType, SkeletonNodeType
+from .graph import Entity, Event, EventType, Graph, GraphMetadata, KnowledgeGraph, Relation
 
 __all__ = [
     "ID",
     "MMKGBaseModel",
-    "Provenance",
     "SourceModality",
     "Timestamp",
     "DocumentMetadata",
@@ -46,22 +28,13 @@ __all__ = [
     "Relation",
     "Event",
     "EventType",
-    "ExtractionResult",
-    "TextExtractionResult",
-    "TableExtractionResult",
-    "ImageExtractionResult",
-    "FormulaExtractionResult",
     "AlignedEntity",
     "AlignmentCluster",
     "AlignedRelation",
     "AlignmentResult",
     "SkeletonNodeType",
     "SkeletonEdgeType",
-    "SkeletonNode",
-    "SkeletonEdge",
-    "DocumentSkeleton",
-    "GraphNode",
-    "GraphEdge",
+    "Graph",
     "GraphMetadata",
     "KnowledgeGraph",
 ]

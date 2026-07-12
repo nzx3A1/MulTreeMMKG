@@ -37,9 +37,9 @@ _load_env_file(PROJECT_ROOT / ".env")
 class OpenAICompatibleConfig:
     """OpenAI 兼容聊天模型配置。"""
 
-    base_url: str = "https://api.minimaxi.com/v1"
-    api_key: str = "sk-cp-bdhae6J8LMsO4lgK9zH4SDcTUkjRPkZqB9waNC6unS--GIKH99HESOSJNjhWZjemIXbs-97DDOotP8O46oV5tfyjru0HYaf6f9372mnZK2ireENH0M1niUs"
-    model: str = "MiniMax-M3"
+    base_url: str = "https://api.siliconflow.cn/v1"
+    api_key: str = "sk-lwctfhzpjhwclurfgdtpkwynqkawporxgvrhkjrtbuujayij"
+    model: str = "deepseek-ai/DeepSeek-V4-Flash"
     temperature: float = 0.0
     max_tokens: int = 8192
     timeout_secs: float = 120.0
@@ -48,9 +48,9 @@ class OpenAICompatibleConfig:
 class OpenAIVLMCompatibleConfig:
     """OpenAI 兼容视觉模型配置。"""
 
-    base_url: str = "https://ws-qxohtk9wmrvcddu0.cn-beijing.maas.aliyuncs.com/compatible-mode/v1"
-    api_key: str = "sk-ws-H.RPRYPMD.MflL.MEYCIQDva8op7aHb5DZ0cdM1B2ATcEq39cn6eSMA1-gYdIxbagIhAOYtVkeCUlkySXzti__apd4Mpq6N6t06ugZ9sH1UmJmo"
-    model: str = "qwen3.6-27b"
+    base_url: str = "https://api.siliconflow.cn/v1"
+    api_key: str = OpenAICompatibleConfig.api_key
+    model: str = "Qwen/Qwen3.5-27B"
     temperature: float = 0.0
     max_tokens: int = 8192
     timeout_secs: float = 120.0
@@ -61,8 +61,8 @@ class EmbeddingConfig:
 
     base_url: str = "https://api.siliconflow.cn/v1/embeddings"
     api_key: str = "sk-lwctfhzpjhwclurfgdtpkwynqkawporxgvrhkjrtbuujayij"
-    model: str = "BAAI/bge-large-zh-v1.5"
-    dimensions: int | None = 1024
+    model: str = "Pro/BAAI/bge-m3"
+    dimensions: int | None = None
     batch_size: int = 32
     timeout_secs: float = 60.0
 
@@ -77,6 +77,16 @@ class MinerUConfig:
 
 
 @dataclass(frozen=True)
+class SummaryConfig:
+    """自底向上章节总结使用的模型与输出长度配置。"""
+
+    model: str = "deepseek-ai/DeepSeek-V4-Flash"
+    fallback_model: str = "deepseek-ai/DeepSeek-V4-Flash"
+    max_tokens: int = 2000
+    request_interval_secs: float = 1.0
+
+
+@dataclass(frozen=True)
 class ModelSettings:
     """模型相关配置聚合。"""
 
@@ -84,6 +94,7 @@ class ModelSettings:
     vlm: OpenAIVLMCompatibleConfig
     embedding: EmbeddingConfig
     mineru: MinerUConfig
+    summary: SummaryConfig
 
 
 def load_model_settings() -> ModelSettings:
@@ -99,7 +110,8 @@ def load_model_settings() -> ModelSettings:
     )
     vlm = OpenAIVLMCompatibleConfig(
         base_url=os.getenv("VLM_BASE_URL", OpenAIVLMCompatibleConfig.base_url),
-        api_key=os.getenv("VLM_API_KEY", OpenAIVLMCompatibleConfig.api_key),
+        # 未单独配置视觉密钥时复用文本模型密钥，保证同一 SiliconFlow 账户下配置一致。
+        api_key=os.getenv("VLM_API_KEY", llm.api_key),
         model=os.getenv("VLM_MODEL", OpenAIVLMCompatibleConfig.model),
         temperature=float(os.getenv("VLM_TEMPERATURE", "0")),
         max_tokens=int(os.getenv("VLM_MAX_TOKENS", str(OpenAIVLMCompatibleConfig.max_tokens))),
@@ -118,7 +130,14 @@ def load_model_settings() -> ModelSettings:
         batch_url=os.getenv("MINERU_BATCH_URL", MinerUConfig.batch_url),
         timeout_secs=float(os.getenv("MINERU_TIMEOUT_SECS", "120")),
     )
-    return ModelSettings(llm=llm, vlm=vlm, embedding=embedding, mineru=mineru)
+    # 摘要模型配置统一在模型配置模块加载，摘要器不再自行读取模型相关环境变量。
+    summary = SummaryConfig(
+        model=os.getenv("SUMMARY_MODEL", SummaryConfig.model),
+        fallback_model=os.getenv("SUMMARY_FALLBACK_MODEL", SummaryConfig.fallback_model),
+        max_tokens=int(os.getenv("SUMMARY_MAX_TOKENS", str(SummaryConfig.max_tokens))),
+        request_interval_secs=float(os.getenv("SUMMARY_REQUEST_INTERVAL_SECS", str(SummaryConfig.request_interval_secs))),
+    )
+    return ModelSettings(llm=llm, vlm=vlm, embedding=embedding, mineru=mineru, summary=summary)
 
 
 settings = load_model_settings()

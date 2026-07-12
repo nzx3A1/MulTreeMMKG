@@ -82,8 +82,31 @@ def test_summarize_document_tree_marks_empty_section_without_calling_model() -> 
     assert len(client.calls) == 1
 
 
-def test_summarize_document_tree_runs_independent_sections_concurrently() -> None:
-    """同一层级的三个叶子章节应最多三路并发，全文摘要必须等待它们全部结束。"""
+def test_summarize_document_tree_adds_only_whitelisted_schema_keys() -> None:
+    """结构化响应中的 schemaKeys 应去重，并过滤模型生成的非白名单词。"""
+
+    class StructuredClient:
+        """返回包含合法、重复和非法 schemaKeys 的结构化测试响应。"""
+
+        def chat(self, messages: list[dict[str, Any]], **kwargs: Any) -> str:
+            """模拟模型按约定返回 JSON 对象。"""
+
+            return '{"summary":"研究储层裂缝特征。","schemaKeys":["储层/储集层","裂缝","裂缝","非法词"]}'
+
+    result = summarize_document_tree({
+        "document": {
+            "title": "Paper",
+            "sections": [{"id": "1", "title": "储层", "chunks": [{"id": "t", "modality": "text", "text": "裂缝"}], "children": []}],
+        }
+    }, llm_client=StructuredClient(), show_progress=False)
+
+    section = result["document"]["sections"][0]
+    assert section["summary"] == "研究储层裂缝特征。"
+    assert section["schemaKeys"] == ["储层/储集层", "裂缝"]
+
+
+def test_summarize_document_tree_runs_sections_serially() -> None:
+    """同一层级的章节应逐个执行，全文摘要必须等待它们全部结束。"""
 
     class ConcurrentClient:
         """通过短暂阻塞记录调用峰值，用于验证线程池的实际并发度。"""
@@ -115,9 +138,9 @@ def test_summarize_document_tree_runs_independent_sections_concurrently() -> Non
                 for index in range(3)
             ],
         }
-    }, llm_client=client, show_progress=False, max_workers=3)
+    }, llm_client=client, show_progress=False)
 
-    assert client.max_active == 3
+    assert client.max_active == 1
     assert result["document"]["summary"] == "summary"
 
 

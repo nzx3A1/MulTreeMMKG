@@ -10,9 +10,11 @@ output/
 data/
 data/raw_pdf/
 data/mineru_output/
-
+config/model_config.py
 # 常见编辑器与系统文件。
 .idea/
 .vscode/
 .DS_Store
 Thumbs.db
+**/*.json
+
