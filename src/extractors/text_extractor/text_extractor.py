@@ -333,7 +333,8 @@ def extract_from_text(
     """
     # 阶段 1：构建文档上下文（Chunk 排序、章节索引、jieba 术语提取、主题画像）
     document = build_document_context(chunks)
-    selector = schema_selector or SchemaSelector()
+    # 中文说明：默认选择器复用当前文本模型，每篇论文只额外执行一次 Top3 主概念树主题分析。
+    selector = schema_selector or SchemaSelector(llm_client=llm_client)
     logger.info(
         f"文本抽取流程启动：document_id={document.document_id or 'unknown'}，"
         f"Chunk数={len(document.chunks)}，章节数={len(document.section_chunks)}，"

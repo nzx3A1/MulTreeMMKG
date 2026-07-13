@@ -6,7 +6,6 @@ __pycache__/
 # 本地环境、日志、模型输出和 MinerU 中间产物通常体积较大或包含敏感信息。
 .env
 logs/
-output/
 data/
 data/raw_pdf/
 data/mineru_output/

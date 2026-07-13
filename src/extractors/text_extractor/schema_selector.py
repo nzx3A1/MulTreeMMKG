@@ -1,6 +1,7 @@
 """整篇论文两级 Schema 选择算法。"""
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass, replace
 from typing import Any, Mapping, Sequence
@@ -8,6 +9,7 @@ from typing import Any, Mapping, Sequence
 import jieba
 
 from src.utils.embedding_client import EmbeddingClient
+from src.utils.llm_client import safe_json_loads
 
 from .document_context import build_document_context, extract_domain_terms
 from .schema_models import (
@@ -19,23 +21,6 @@ from .schema_models import (
 )
 from .schema_repository import Neo4jSchemaRepository
 
-
-RELATION_TRIGGERS = {
-    "CONTAINS": ("包含", "含有", "组成"),
-    "PART_OF": ("属于", "隶属", "组成部分"),
-    "LOCATED_IN": ("位于", "分布于", "发育在"),
-    "DEVELOPED_IN": ("发育于", "发育在", "赋存于"),
-    "CONTROLS": ("控制", "制约"),
-    "AFFECTS": ("影响", "作用于"),
-    "INDICATES": ("指示", "表明", "反映"),
-    "GENERATES": ("生成", "产生", "生烃"),
-    "COVERS": ("覆盖", "上覆"),
-    "OVERLIES": ("上覆", "位于其上"),
-    "UNDERLIES": ("下伏", "位于其下"),
-    "INTERPRETS": ("解释", "识别"),
-    "ANALYZES": ("分析", "测试"),
-    "COLLECTED_FROM": ("采自", "取自"),
-}
 
 # 统一常见地质同义词与简称，弥补正文表述和 Schema 中文名不完全一致的问题。
 CONCEPT_ALIASES = {
@@ -52,14 +37,17 @@ CONCEPT_ALIASES = {
 
 @dataclass(frozen=True)
 class SchemaSelectorConfig:
-    """集中保存文档级和 Chunk 级选择预算及冷启动阈值。"""
+    """集中保存核心概念树、跨树先验和 Chunk 一跳扩展预算。"""
 
     document_top_k: int = 30
-    chunk_vector_top_k: int = 12
+    core_tree_top_k: int = 3
+    chunk_vector_top_k: int = 10
+    chunk_candidate_top_k: int = 10
+    max_one_hop_nodes: int = 15
     min_vector_score: float = 0.55
     seed_score: float = 0.40
     neighbor_min_score: float = 0.35
-    max_schema_nodes: int = 15
+    max_schema_nodes: int = 0
     max_schema_edges: int = 35
     max_expansion_edges: int = 200
     medium_confidence: float = 0.55
@@ -214,23 +202,25 @@ def _merge_concept(base: SchemaConcept, candidate: SchemaConcept) -> SchemaConce
 
 
 class SchemaSelector:
-    """先选择整篇论文候选池，再为每个 Chunk 选择受预算约束的局部子图。"""
+    """按“核心概念树 + 跨树先验 + Chunk 精召回”流程只筛选概念节点。"""
 
     def __init__(
         self,
         *,
         repository: Neo4jSchemaRepository | None = None,
         embedding_client: EmbeddingClient | None = None,
+        llm_client: Any | None = None,
         config: SchemaSelectorConfig | None = None,
     ) -> None:
-        """注入 Schema 仓储和向量客户端，使算法可离线测试与替换模型。"""
+        """注入只读 Schema 仓储、向量客户端和可选主题分析模型。"""
 
         self.embedding_client = embedding_client or EmbeddingClient()
         self.repository = repository or Neo4jSchemaRepository(embedding_client=self.embedding_client)
+        self.llm_client = llm_client
         self.config = config or SchemaSelectorConfig()
 
     def prepare_document(self, chunks: Sequence[Any]) -> DocumentSchemaContext:
-        """一次接收整篇论文 Chunk，生成文档候选池和全部 Chunk 的局部 Schema。"""
+        """一次接收整篇论文 Chunk，先建立文档先验，再为每个原始 Chunk 选择概念。"""
 
         document = build_document_context(chunks)
         if not document.chunks:
@@ -242,88 +232,175 @@ class SchemaSelector:
         }
         return DocumentSchemaContext(document, document_pool, chunk_schemas)
 
-    def select_document_schema_pool(self, document: DocumentContext) -> RelevantSchema:
-        """依据整篇论文主题画像选择 20～35 个概念构成文档级软先验池。"""
+    def _analyze_document_topic(
+        self,
+        document: DocumentContext,
+        categories: Sequence[str],
+    ) -> tuple[tuple[str, ...], tuple[str, ...], bool]:
+        """让 LLM 从白名单概念树中选 Top3，并在不可用时回退到确定性评分。"""
 
-        query_text = document.topic_profile
-        query_vector = self.embedding_client.encode_one(query_text)
-        vector_candidates, fallback = self.repository.vector_search(
-            query_vector,
-            top_k=self.config.document_top_k,
-            min_score=self.config.min_vector_score,
+        if self.llm_client is None:
+            return (), document.domain_terms, False
+        prompt = {
+            "task": "document_schema_topic_analysis",
+            "instruction": (
+                "根据文档主题画像提取领域关键词，并只能从 available_categories 中选择最相关的"
+                " Top3 主概念树。严格返回 JSON："
+                '{"domain_keywords": ["关键词"], "top_categories": ["概念树"]}。'
+            ),
+            "available_categories": list(categories),
+            "document_topic_profile": document.topic_profile,
+        }
+        messages = [{"role": "user", "content": json.dumps(prompt, ensure_ascii=False)}]
+        try:
+            if callable(getattr(self.llm_client, "chat_json", None)):
+                payload = self.llm_client.chat_json(messages)
+            else:
+                payload = safe_json_loads(self.llm_client.chat(messages))
+        except Exception:
+            return (), document.domain_terms, True
+        if not isinstance(payload, Mapping):
+            return (), document.domain_terms, True
+        allowed = set(categories)
+        selected = tuple(
+            dict.fromkeys(
+                str(item).strip()
+                for item in payload.get("top_categories") or payload.get("top3_concept_trees") or []
+                if str(item).strip() in allowed
+            )
+        )[: self.config.core_tree_top_k]
+        keywords = tuple(
+            dict.fromkeys(
+                str(item).strip()
+                for item in payload.get("domain_keywords") or []
+                if str(item).strip()
+            )
         )
-        all_concepts = self.repository.all_concepts()
-        merged = {concept.schema: concept for concept in vector_candidates}
-        schema_key_schemas: set[str] = set()
-        for concept in all_concepts:
-            lexical, exact = _lexical_score(query_text, document.domain_terms, concept)
-            schema_key_score, schema_key_exact = _schema_key_score(document.document_schema_keys, concept)
-            if lexical <= 0.0 and schema_key_score <= 0.0 and concept.schema not in merged:
-                continue
-            current = merged.get(concept.schema, concept)
-            current = _merge_concept(current, concept)
+        return selected, keywords or document.domain_terms, not bool(selected)
+
+    def _score_document_concepts(
+        self,
+        document: DocumentContext,
+        concepts: Sequence[SchemaConcept],
+        vector_candidates: Sequence[SchemaConcept],
+        query_text: str,
+        query_terms: Sequence[str],
+    ) -> tuple[dict[str, SchemaConcept], set[str]]:
+        """融合关键词、向量、示例词和 schemaKeys，仅计算概念节点的文档相关度。"""
+
+        vector_map = {item.schema: item for item in vector_candidates}
+        scored: dict[str, SchemaConcept] = {}
+        exact_schemas: set[str] = set()
+        for concept in concepts:
+            current = _merge_concept(vector_map.get(concept.schema, concept), concept)
+            lexical, exact = _lexical_score(query_text, query_terms, current)
+            schema_key_score, schema_key_exact = _schema_key_score(document.document_schema_keys, current)
             section_hits = sum(
                 1
                 for title in document.section_titles
-                if _lexical_score(title, extract_domain_terms(title), concept)[0] > 0
+                if _lexical_score(title, extract_domain_terms(title), current)[0] > 0
             )
             coverage = section_hits / max(1, len(document.section_titles))
-            document_score = _weighted_score(
+            final_score = _weighted_score(
                 {
                     "vector": current.vector_score,
                     "lexical": lexical,
                     "coverage": coverage,
                     "schema_key": schema_key_score,
                 },
-                {"vector": 0.50, "lexical": 0.15, "coverage": 0.10, "schema_key": 0.25},
+                {"vector": 0.45, "lexical": 0.25, "coverage": 0.10, "schema_key": 0.20},
             )
             reasons = list(current.selection_reasons)
             if current.vector_score > 0:
-                reasons.append("Neo4j 向量 Top-K 召回")
+                reasons.append("文档级向量召回")
             if lexical > 0:
-                reasons.append("文档词法命中")
-            if exact:
-                reasons.append("文档精确命中")
+                reasons.append("文档关键词、示例词或名称命中")
             if schema_key_score > 0:
                 reasons.append("文档 schemaKeys 命中")
-            if schema_key_exact:
-                schema_key_schemas.add(concept.schema)
-                reasons.append("文档 schemaKeys 精确命中")
-            merged[concept.schema] = replace(
+            if exact or schema_key_exact:
+                exact_schemas.add(current.schema)
+                reasons.append("文档精确命中")
+            scored[current.schema] = replace(
                 current,
                 lexical_score=lexical,
                 context_score=coverage,
                 schema_key_score=schema_key_score,
-                document_score=document_score,
-                final_score=document_score,
+                document_score=final_score,
+                final_score=final_score,
                 selection_reasons=tuple(dict.fromkeys(reasons)),
             )
+        return scored, exact_schemas
 
-        for schema, concept in list(merged.items()):
-            if concept.final_score == 0.0:
-                score = 0.50 * concept.vector_score
-                reasons = concept.selection_reasons
-                if concept.vector_score > 0:
-                    reasons = tuple(dict.fromkeys(reasons + ("Neo4j 向量 Top-K 召回",)))
-                merged[schema] = replace(
-                    concept,
-                    document_score=score,
-                    final_score=score,
-                    selection_reasons=reasons,
-                )
-        ranked = sorted(
-            merged.values(),
-            key=lambda item: (item.schema not in schema_key_schemas, -item.final_score, item.schema),
+    def select_document_schema_pool(self, document: DocumentContext) -> RelevantSchema:
+        """生成 Top3 核心树全量节点和 20～35 个跨树文档先验概念。"""
+
+        all_concepts = self.repository.all_concepts()
+        categories = tuple(sorted({item.category for item in all_concepts if item.category}))
+        model_categories, model_terms, model_fallback = self._analyze_document_topic(document, categories)
+        query_terms = tuple(dict.fromkeys((*model_terms, *document.document_schema_keys, *document.domain_terms)))
+        query_text = f"{document.topic_profile}\n领域关键词：{'、'.join(query_terms)}"
+        query_vector = self.embedding_client.encode_one(query_text)
+        vector_candidates, vector_fallback = self.repository.vector_search(
+            query_vector,
+            top_k=max(self.config.document_top_k, self.config.core_tree_top_k),
+            min_score=self.config.min_vector_score,
         )
-        selected = tuple(ranked[: self.config.document_top_k])
+        scored, exact_schemas = self._score_document_concepts(
+            document, all_concepts, vector_candidates, query_text, query_terms,
+        )
+
+        # 中文说明：若模型少选或未选概念树，按树内头部概念分数补足 Top3，避免流程中断。
+        category_scores: dict[str, float] = {}
+        for category in categories:
+            values = sorted(
+                (item.final_score for item in scored.values() if item.category == category),
+                reverse=True,
+            )
+            category_scores[category] = sum(values[:3]) / max(1, min(3, len(values)))
+        core_categories = list(model_categories)
+        for category in sorted(categories, key=lambda item: (-category_scores[item], item)):
+            if category not in core_categories:
+                core_categories.append(category)
+            if len(core_categories) >= self.config.core_tree_top_k:
+                break
+        core_category_set = set(core_categories)
+
+        core_nodes = [
+            replace(
+                concept,
+                selection_reasons=tuple(dict.fromkeys(concept.selection_reasons + ("Top3 核心概念树全量保留",))),
+            )
+            for concept in scored.values()
+            if concept.category in core_category_set
+        ]
+        cross_tree = [concept for concept in scored.values() if concept.category not in core_category_set]
+        cross_tree.sort(
+            key=lambda item: (item.schema not in exact_schemas, -item.final_score, item.schema)
+        )
+        cross_limit = max(0, min(35, self.config.document_top_k))
+        document_prior = [
+            replace(
+                concept,
+                selection_reasons=tuple(dict.fromkeys(concept.selection_reasons + ("跨树 Document Schema Prior",))),
+            )
+            for concept in cross_tree[:cross_limit]
+        ]
+        selected = sorted(
+            (*core_nodes, *document_prior),
+            key=lambda item: (item.category not in core_category_set, -item.final_score, item.schema),
+        )
+        if self.config.max_schema_nodes > 0:
+            selected = selected[: self.config.max_schema_nodes]
         relations = self.repository.induced_relations([item.schema for item in selected])
-        confidence = self._selection_confidence(selected, relations, document.domain_terms)
+        confidence = self._selection_confidence(selected, relations, query_terms)
         return RelevantSchema(
-            concepts=selected,
+            concepts=tuple(selected),
             relations=relations,
-            query_terms=document.domain_terms,
+            core_categories=tuple(core_categories),
+            query_terms=query_terms,
             selection_confidence=confidence,
-            fallback_used=fallback,
+            fallback_used=model_fallback or vector_fallback,
+            selector_version="core_tree_prior_v2",
         )
 
     def select_chunk_schema(
@@ -332,197 +409,160 @@ class SchemaSelector:
         document: DocumentContext,
         document_pool: RelevantSchema,
     ) -> RelevantSchema:
-        """融合当前正文、局部上下文和文档先验，选择结构闭合的 Chunk Schema。"""
+        """合并核心树、Chunk 跨树 TopK 与受控一跳扩展，最终只按节点集合取关系。"""
 
         chunk_id = str(chunk.get("id") or "")
         local_context = document.local_context(chunk_id)
-        query_text = build_chunk_query_text(chunk, local_context)
         body = _normalized_text(str(chunk.get("text") or ""))
         context_text = " ".join(
             (
                 local_context["section_title"],
+                local_context["section_summary"],
                 local_context["previous_tail"],
                 local_context["next_head"],
             )
         )
-        terms = extract_domain_terms(body)
+        query_text = build_chunk_query_text(chunk, local_context)
+        terms = extract_domain_terms(f"{body} {context_text}")
         schema_keys = document.section_schema_keys.get(str(chunk.get("section_id") or ""), ())
         query_vector = self.embedding_client.encode_one(query_text)
-        vector_candidates, fallback = self.repository.vector_search(
+        vector_candidates, vector_fallback = self.repository.vector_search(
             query_vector,
-            top_k=self.config.chunk_vector_top_k,
+            top_k=min(10, self.config.chunk_vector_top_k),
             min_score=self.config.min_vector_score,
         )
-
-        all_concepts = self.repository.all_concepts()
-        document_scores = {
-            concept.schema: concept.document_score or concept.final_score
-            for concept in document_pool.concepts
-        }
-        merged = {concept.schema: concept for concept in vector_candidates}
-        exact_schemas: set[str] = set()
-        for concept in all_concepts:
-            lexical, exact = _lexical_score(body, terms, concept)
-            context_score, _ = _lexical_score(context_text, extract_domain_terms(context_text), concept)
-            schema_key_score, schema_key_exact = _schema_key_score(schema_keys, concept)
-            if lexical <= 0 and context_score <= 0 and schema_key_score <= 0 and concept.schema not in merged:
+        vector_map = {item.schema: item for item in vector_candidates}
+        document_map = document_pool.concept_map
+        core_categories = set(document_pool.core_categories)
+        core_nodes: list[SchemaConcept] = []
+        for item in document_pool.concepts:
+            if item.category not in core_categories:
                 continue
-            current = _merge_concept(merged.get(concept.schema, concept), concept)
-            document_score = document_scores.get(concept.schema, 0.0)
+            lexical, exact = _lexical_score(body, terms, item)
+            context_score, _ = _lexical_score(context_text, extract_domain_terms(context_text), item)
+            schema_key_score, schema_key_exact = _schema_key_score(schema_keys, item)
+            reasons = list(item.selection_reasons)
+            if lexical > 0:
+                reasons.append("Chunk 正文关键词、示例词或名称命中")
+            if context_score > 0:
+                reasons.append("章节摘要或前后文命中")
+            if schema_key_score > 0:
+                reasons.append("章节 schemaKeys 命中")
+            if schema_key_exact:
+                reasons.append("章节 schemaKeys 精确命中")
+            if exact or schema_key_exact:
+                reasons.append("Chunk 精确命中")
+            core_nodes.append(
+                replace(
+                    item,
+                    lexical_score=max(item.lexical_score, lexical),
+                    context_score=max(item.context_score, context_score),
+                    schema_key_score=max(item.schema_key_score, schema_key_score),
+                    selection_reasons=tuple(dict.fromkeys(reasons)),
+                )
+            )
+        candidates: list[SchemaConcept] = []
+        exact_schemas: set[str] = set()
+        for concept in self.repository.all_concepts():
+            if concept.category in core_categories:
+                continue
+            current = _merge_concept(vector_map.get(concept.schema, concept), concept)
+            lexical, exact = _lexical_score(body, terms, current)
+            context_score, _ = _lexical_score(context_text, extract_domain_terms(context_text), current)
+            schema_key_score, schema_key_exact = _schema_key_score(schema_keys, current)
+            prior_score = document_map.get(concept.schema, SchemaConcept(concept.schema)).document_score
+            if not any((current.vector_score, lexical, context_score, schema_key_score, prior_score)):
+                continue
             final_score = _weighted_score(
                 {
                     "vector": current.vector_score,
                     "lexical": lexical,
                     "context": context_score,
-                    "document": document_score,
+                    "document": prior_score,
                     "schema_key": schema_key_score,
                 },
-                {"vector": 0.35, "lexical": 0.15, "context": 0.10, "document": 0.15, "schema_key": 0.25},
+                {"vector": 0.35, "lexical": 0.20, "context": 0.10, "document": 0.15, "schema_key": 0.20},
             )
             reasons = list(current.selection_reasons)
             if current.vector_score > 0:
-                reasons.append("Neo4j 向量 Top-K 召回")
+                reasons.append("Chunk 向量召回")
             if lexical > 0:
-                reasons.append("正文词法命中")
+                reasons.append("Chunk 正文关键词、示例词或名称命中")
             if context_score > 0:
-                reasons.append("章节或相邻上下文命中")
-            if document_score > 0:
-                reasons.append("文档候选池先验")
+                reasons.append("章节摘要或前后文命中")
+            if prior_score > 0:
+                reasons.append("Document Schema Prior")
             if schema_key_score > 0:
                 reasons.append("章节 schemaKeys 命中")
-            if schema_key_exact:
-                exact_schemas.add(concept.schema)
-                reasons.append("章节 schemaKeys 精确命中")
-            if exact:
-                exact_schemas.add(concept.schema)
-                reasons.append("正文精确命中")
-            merged[concept.schema] = replace(
-                current,
-                lexical_score=lexical,
-                context_score=context_score,
-                schema_key_score=schema_key_score,
-                document_score=document_score,
-                final_score=final_score,
-                selection_reasons=tuple(dict.fromkeys(reasons)),
+            if exact or schema_key_exact:
+                exact_schemas.add(current.schema)
+                reasons.append("Chunk 精确命中")
+            candidates.append(
+                replace(
+                    current,
+                    lexical_score=lexical,
+                    context_score=context_score,
+                    schema_key_score=schema_key_score,
+                    document_score=prior_score,
+                    final_score=final_score,
+                    selection_reasons=tuple(dict.fromkeys(reasons)),
+                )
             )
-
-        seeds = [
-            concept
-            for concept in merged.values()
-            if concept.final_score >= self.config.seed_score or concept.schema in exact_schemas
-        ]
-        if not seeds:
-            seeds = sorted(merged.values(), key=lambda item: (-item.final_score, item.schema))[:3]
-        return self._expand_and_prune(
-            seeds,
-            merged,
-            body,
-            terms,
-            exact_schemas,
-            fallback,
+        candidates.sort(
+            key=lambda item: (item.schema not in exact_schemas, -item.final_score, item.schema)
         )
+        chunk_seeds = candidates[: min(10, self.config.chunk_candidate_top_k)]
 
-    def _expand_and_prune(
-        self,
-        seeds: Sequence[SchemaConcept],
-        candidates: Mapping[str, SchemaConcept],
-        body: str,
-        terms: Sequence[str],
-        exact_schemas: set[str],
-        fallback: bool,
-    ) -> RelevantSchema:
-        """对种子执行一跳扩展，并在节点和边预算下选择高收益闭合子图。"""
-
-        neighbor_concepts, relations = self.repository.neighborhood(
-            [seed.schema for seed in seeds],
+        neighbor_concepts, _ = self.repository.neighborhood(
+            [item.schema for item in chunk_seeds],
             limit=self.config.max_expansion_edges,
         )
-        pool = dict(candidates)
+        selected_names = {item.schema for item in (*core_nodes, *chunk_seeds)}
+        expansion: list[SchemaConcept] = []
         for neighbor in neighbor_concepts:
+            if neighbor.schema in selected_names:
+                continue
             lexical, exact = _lexical_score(body, terms, neighbor)
-            base = _merge_concept(pool.get(neighbor.schema, neighbor), neighbor)
-            if base.final_score == 0.0:
-                base = replace(
-                    base,
-                    lexical_score=lexical,
-                    final_score=0.25 * lexical,
-                    selection_reasons=("Schema 一跳扩展",),
-                )
+            context_score, _ = _lexical_score(context_text, extract_domain_terms(context_text), neighbor)
+            support = max(lexical, context_score)
+            if support <= 0 and neighbor.category not in core_categories:
+                support = 0.20
             if exact:
                 exact_schemas.add(neighbor.schema)
-            pool[neighbor.schema] = base
-
-        seed_names = {item.schema for item in seeds}
-        scored_relations: list[SchemaRelation] = []
-        for relation in relations:
-            source = pool.get(relation.source_schema, SchemaConcept(relation.source_schema))
-            target = pool.get(relation.target_schema, SchemaConcept(relation.target_schema))
-            trigger_score = self._relation_trigger_score(relation, body)
-            connectivity = 1.0 if relation.source_schema in seed_names and relation.target_schema in seed_names else 0.4
-            edge_score = (
-                0.40 * source.final_score
-                + 0.35 * target.final_score
-                + 0.15 * trigger_score
-                + 0.10 * connectivity
+            expansion.append(
+                replace(
+                    neighbor,
+                    lexical_score=lexical,
+                    context_score=context_score,
+                    final_score=support,
+                    selection_reasons=("受控一跳概念扩展",),
+                )
             )
-            both_supported = source.final_score >= self.config.neighbor_min_score and target.final_score >= self.config.neighbor_min_score
-            one_seed_supported = (
-                (relation.source_schema in seed_names or relation.target_schema in seed_names)
-                and max(source.lexical_score, target.lexical_score, trigger_score) > 0
-            )
-            if both_supported or one_seed_supported:
-                scored_relations.append(replace(relation, edge_score=edge_score))
+        expansion.sort(key=lambda item: (item.schema not in exact_schemas, -item.final_score, item.schema))
+        expansion = expansion[: min(15, self.config.max_one_hop_nodes)]
 
-        hard_protected = [pool[name] for name in exact_schemas if name in pool]
-        ranked_nodes = sorted(
-            pool.values(),
-            key=lambda item: (
-                item.schema not in exact_schemas,
-                -item.final_score,
-                item.schema,
-            ),
+        final_map: dict[str, SchemaConcept] = {}
+        for concept in (*core_nodes, *chunk_seeds, *expansion):
+            final_map[concept.schema] = _merge_concept(final_map.get(concept.schema, concept), concept)
+        final_nodes = sorted(
+            final_map.values(),
+            key=lambda item: (item.category not in core_categories, -item.final_score, item.schema),
         )
-        selected_nodes: dict[str, SchemaConcept] = {}
-        for concept in hard_protected + ranked_nodes:
-            if concept.schema in selected_nodes:
-                continue
-            if len(selected_nodes) >= self.config.max_schema_nodes:
-                break
-            selected_nodes[concept.schema] = concept
+        if self.config.max_schema_nodes > 0:
+            final_nodes = final_nodes[: self.config.max_schema_nodes]
 
-        eligible_edges = [
-            relation
-            for relation in scored_relations
-            if relation.source_schema in selected_nodes and relation.target_schema in selected_nodes
-        ]
-        eligible_edges.sort(key=lambda item: (-item.edge_score, item.key))
-        selected_relations = tuple(eligible_edges[: self.config.max_schema_edges])
-        involved = {name for relation in selected_relations for name in (relation.source_schema, relation.target_schema)}
-        final_nodes = tuple(
-            concept
-            for concept in selected_nodes.values()
-            if concept.schema in involved or concept.schema in seed_names or concept.schema in exact_schemas
-        )
-        confidence = self._selection_confidence(final_nodes, selected_relations, terms)
+        # 中文说明：关系不参与召回、打分或裁剪，只返回最终节点之间 Schema 中已有的全部关系。
+        relations = self.repository.induced_relations([item.schema for item in final_nodes])
+        confidence = self._selection_confidence(final_nodes, relations, terms)
         return RelevantSchema(
-            concepts=tuple(sorted(final_nodes, key=lambda item: (-item.final_score, item.schema))),
-            relations=selected_relations,
+            concepts=tuple(final_nodes),
+            relations=relations,
+            core_categories=document_pool.core_categories,
             query_terms=tuple(terms),
             selection_confidence=confidence,
-            fallback_used=fallback or confidence < self.config.medium_confidence,
+            fallback_used=vector_fallback or confidence < self.config.medium_confidence,
+            selector_version="core_tree_prior_v2",
         )
-
-    @staticmethod
-    def _relation_trigger_score(relation: SchemaRelation, text: str) -> float:
-        """判断正文是否出现关系中英文名称或常见中文触发词。"""
-
-        triggers = list(RELATION_TRIGGERS.get(relation.relation_en.upper(), ()))
-        if relation.relation_zh:
-            triggers.append(relation.relation_zh)
-        if relation.relation_en:
-            triggers.append(relation.relation_en)
-        lowered = text.lower()
-        return 1.0 if any(trigger and trigger.lower() in lowered for trigger in triggers) else 0.0
 
     @staticmethod
     def _selection_confidence(
@@ -530,7 +570,7 @@ class SchemaSelector:
         relations: Sequence[SchemaRelation],
         terms: Sequence[str],
     ) -> float:
-        """根据头部得分、术语覆盖、图连通度和边界分差估计选择可信度。"""
+        """根据节点头部得分、术语覆盖率和最终节点图连通度估计选择可信度。"""
 
         if not concepts:
             return 0.0
@@ -544,8 +584,7 @@ class SchemaSelector:
         coverage = matched_terms / max(1, len(terms))
         involved = {name for edge in relations for name in (edge.source_schema, edge.target_schema)}
         connectivity = len(involved) / max(1, len(concepts))
-        margin = ranked[-1] if len(ranked) == 1 else max(0.0, ranked[min(len(ranked), 3) - 1] - ranked[-1])
-        confidence = 0.55 * top_average + 0.15 * coverage + 0.20 * connectivity + 0.10 * margin
+        confidence = 0.65 * top_average + 0.20 * coverage + 0.15 * connectivity
         return max(0.0, min(1.0, confidence))
 
 

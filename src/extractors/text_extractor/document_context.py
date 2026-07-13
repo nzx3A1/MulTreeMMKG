@@ -176,9 +176,33 @@ def build_document_context(
         for chunk in ordered_chunks
         if str(chunk["id"]) in representative_lookup
     ]
+    # 中文说明：主题画像只读取上游已经附带的文档与章节字段，不改写或重新切分任何 Chunk。
+    first_chunk = ordered_chunks[0]
+    document_title = str(first_chunk.get("document_title") or document_id or "").strip()
+    document_abstract = str(first_chunk.get("document_abstract") or "").strip()
+    document_summary = str(first_chunk.get("document_summary") or "").strip()
+    author_keywords = tuple(
+        dict.fromkeys(
+            str(item).strip()
+            for item in first_chunk.get("document_keywords") or []
+            if str(item).strip()
+        )
+    )
+    section_summaries = tuple(
+        dict.fromkeys(
+            str(chunk.get("section_summary") or "").strip()
+            for chunk in ordered_chunks
+            if str(chunk.get("section_summary") or "").strip()
+        )
+    )
     topic_profile = "\n".join(
         (
+            f"文档标题：{document_title}",
+            f"文档摘要：{document_abstract}",
+            f"文档总结：{document_summary}",
+            f"作者关键词：{'、'.join(author_keywords)}",
             f"章节标题：{'；'.join(section_titles)}",
+            f"章节总结：{'；'.join(section_summaries)}",
             f"文档Schema关键词：{'、'.join(document_schema_keys)}",
             f"章节Schema关键词：{'、'.join(dict.fromkeys(key for keys in section_schema_keys.values() for key in keys))}",
             f"高频专业词：{'、'.join(domain_terms)}",

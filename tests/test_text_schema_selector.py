@@ -69,6 +69,19 @@ class _FakeEmbeddingClient:
         return dot / (left_norm * right_norm)
 
 
+class _FakeTopicLLM:
+    """返回受白名单约束的主题关键词和主概念树，验证文档级 LLM 分支。"""
+
+    def chat_json(self, messages: Any) -> dict[str, Any]:
+        """固定选择地理与构造单元，并确认选择器确实构造了主题分析请求。"""
+
+        assert "available_categories" in messages[0]["content"]
+        return {
+            "domain_keywords": ["盆地", "构造单元"],
+            "top_categories": ["地理与构造单元"],
+        }
+
+
 def _query_runner(query: str, parameters: Mapping[str, Any]) -> list[dict[str, Any]]:
     """根据 Cypher 结构返回概念、向量、邻域或诱导关系模拟记录。"""
 
@@ -101,7 +114,13 @@ def _query_runner(query: str, parameters: Mapping[str, Any]) -> list[dict[str, A
                 "relation_en": "CONTAINS",
                 "relation_zh": "包含",
                 "target_schema": "Formation",
-            }
+            },
+            {
+                "source_schema": "SourceRock",
+                "relation_en": "DEVELOPED_IN",
+                "relation_zh": "发育于",
+                "target_schema": "Basin",
+            },
         ]
     return [dict(row) for row in CONCEPT_ROWS]
 
@@ -220,7 +239,7 @@ def test_collect_chunks_propagates_section_summary_and_schema_keys() -> None:
 
 
 def test_two_level_selector_builds_document_pool_and_chunk_subgraphs() -> None:
-    """选择器应先生成文档池，再为每个 Chunk 返回受节点和关系预算约束的子图。"""
+    """选择器应保留 Top3 树节点，并返回最终节点集合内的全部 Schema 关系。"""
 
     embedding = _FakeEmbeddingClient()
     repository = Neo4jSchemaRepository(query_runner=_query_runner, embedding_client=embedding)
@@ -250,7 +269,57 @@ def test_two_level_selector_builds_document_pool_and_chunk_subgraphs() -> None:
     assert source_rock.schema_key_score == 1.0
     assert "章节 schemaKeys 精确命中" in source_rock.selection_reasons
     assert len(first.concepts) <= 3
-    assert len(first.relations) <= 2
+    assert {relation.key for relation in first.relations} == {
+        ("Basin", "CONTAINS", "Formation"),
+        ("SourceRock", "DEVELOPED_IN", "Basin"),
+    }
+    assert all(relation.edge_score == 0.0 for relation in first.relations)
+
+
+def test_topic_model_core_tree_keeps_every_concept_in_selected_category() -> None:
+    """LLM 选中的主概念树必须整树保留，不能再按单节点分数裁掉树内概念。"""
+
+    concept_rows = [
+        *CONCEPT_ROWS,
+        {
+            "schema": "StructuralUnit",
+            "zh_name": "构造单元",
+            "category": "地理与构造单元",
+            "description": "具有统一构造特征的区域单元",
+            "examples": ["华北克拉通"],
+            "embedding": [0.7, 0.3],
+        },
+    ]
+
+    def topic_runner(query: str, parameters: Mapping[str, Any]) -> list[dict[str, Any]]:
+        """为主概念树测试返回全概念、单条向量结果和空关系集合。"""
+
+        if "db.index.vector.queryNodes" in query:
+            return [{**CONCEPT_ROWS[0], "vector_score": 0.92}]
+        if "SCHEMA_RELATION" in query:
+            return []
+        return [dict(row) for row in concept_rows]
+
+    embedding = _FakeEmbeddingClient()
+    repository = Neo4jSchemaRepository(query_runner=topic_runner, embedding_client=embedding)
+    selector = SchemaSelector(
+        repository=repository,
+        embedding_client=embedding,
+        llm_client=_FakeTopicLLM(),
+        config=SchemaSelectorConfig(core_tree_top_k=1, document_top_k=0, min_vector_score=0.1),
+    )
+
+    result = selector.prepare_document(_chunks())
+
+    assert result.document_schema_pool.core_categories == ("地理与构造单元",)
+    assert {item.schema for item in result.document_schema_pool.concepts} == {
+        "Basin",
+        "StructuralUnit",
+    }
+    assert all(
+        "Top3 核心概念树全量保留" in item.selection_reasons
+        for item in result.document_schema_pool.concepts
+    )
 
 
 def test_repository_falls_back_to_full_cosine_when_vector_index_is_missing() -> None:

@@ -18,6 +18,7 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any, Iterable, Mapping, MutableMapping, Protocol, Sequence
 
+from neo4j import GraphDatabase
 from tqdm import tqdm
 
 # 允许以 ``python src/summarizer/bottom_up_summarizer.py`` 方式直接执行。
@@ -25,6 +26,7 @@ if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from config.model_config import settings
+from config.neo4j_config import settings as neo4j_settings
 from prompts.summary_prompts import AGG_PROMPT, DOC_AGG_PROMPT, LEAF_PROMPT
 from src.utils.llm_client import LLMClient
 from src.utils.json_io import read_json, write_json
@@ -131,6 +133,37 @@ SCHEMA_KEYS = (
 )
 """章节 schemaKeys 的唯一合法词表；模型输出会再次经过程序校验。"""
 
+CONCEPT_CATEGORIES_CYPHER = """
+MATCH (n:ConceptCategory)
+WHERE n.name IS NOT NULL
+RETURN n.name AS name
+"""
+"""从 Neo4j Schema 库读取全部概念类别名称的只读查询。"""
+
+
+def _load_concept_categories() -> tuple[str, ...]:
+    """查询并去重 ConceptCategory 名称，为本次总结任务提供统一候选集。"""
+
+    config = neo4j_settings.schema_db
+    driver = GraphDatabase.driver(
+        config.uri,
+        auth=(config.username, config.password),
+        connection_timeout=10.0,
+        connection_acquisition_timeout=10.0,
+    )
+    try:
+        driver.verify_connectivity()
+        with driver.session(database=config.database) as session:
+            rows = session.run(CONCEPT_CATEGORIES_CYPHER)
+            category_names = (str(row["name"]).strip() for row in rows)
+            categories = tuple(dict.fromkeys(name for name in category_names if name))
+    finally:
+        driver.close()
+    if not categories:
+        raise RuntimeError("Neo4j Schema 库中没有可用的 ConceptCategory.name，无法生成概念类别。")
+    logger.info(f"已从 Neo4j 读取 {len(categories)} 个 ConceptCategory 候选名称。")
+    return categories
+
 
 def _section_count(sections: Sequence[Mapping[str, Any]]) -> int:
     """统计递归章节数，为 tqdm 提供准确的自底向上处理总量。"""
@@ -183,12 +216,13 @@ def _finish_section_progress(progress: Any, section: Mapping[str, Any]) -> None:
 def _run_section_with_progress(
     section: MutableMapping[str, Any],
     client: ChatClient,
+    concept_categories: Sequence[str],
     progress: Any,
 ) -> str:
-    """在线程真正取得任务时打印开始信息，并在该章节完成后立即更新进度。"""
+    """生成单章摘要，并把本次任务的概念类别候选传给模型提示词。"""
 
     _start_section_progress(progress, section)
-    summary = _summarize_section(section, client)
+    summary = _summarize_section(section, client, concept_categories)
     _finish_section_progress(progress, section)
     return summary
 
@@ -281,9 +315,10 @@ def _summary_prompt(
     title: str,
     child_summaries: Sequence[tuple[str, str]],
     has_chunks: bool,
+    concept_categories: Sequence[str],
     is_document: bool = False,
 ) -> str:
-    """按叶子、章节聚合或全文聚合场景加载石油地质领域提示词。"""
+    """按总结层级组装提示词，并加入 Neo4j 概念类别候选集。"""
 
     child_text = "\n".join(f"- 《{child_title}》：{summary}" for child_title, summary in child_summaries)
     if is_document:
@@ -298,30 +333,34 @@ def _summary_prompt(
         content = "文本、表格、公式和图片将作为本消息后续内容块提供。"
     prompt = template.format(title=title or "未命名章节", content=content)
     schema_options = json.dumps(SCHEMA_KEYS, ensure_ascii=False)
+    category_options = json.dumps(list(concept_categories), ensure_ascii=False)
     return f"""{prompt}
 
 Output Format:
 请严格只输出一个 JSON 对象，不要使用 Markdown 代码块：
-{{"summary":"一个自然段摘要","schemaKeys":["最相关词1","最相关词2"]}}
-schemaKeys 是后续 Schema 召回的重要依据。请逐项检查标题、摘要材料和直属 Chunk 中明确出现或具有直接语义对应的实体、地质单元、地层、岩性、构造、成藏要素、属性与过程；宁可保留多个有直接证据的候选，也不要只返回一个泛化词。仅在全部白名单词都无直接依据时返回空数组。每个词必须原样取自以下白名单，不得创造、拆分或改写：
+{{"summary":"一个自然段摘要","schemaKeys":["最相关词1","最相关词2"],"ConceptCategories":["概念类别1","概念类别2","概念类别3"]}}
+schemaKeys 是后续 Schema 召回的重要依据。请逐项检查直属 Chunk 中明确出现或具有直接语义对应的实体；宁可保留多个有直接证据的候选。仅在全部白名单词都无直接依据时返回空数组。每个词必须原样取自以下白名单，不得创造、拆分或改写：
 {schema_options}
+
+ConceptCategories 用于标识当前章节或全文的核心概念领域。请从下列 Neo4j ConceptCategory.name 候选中选择与当前内容最相关的三个，必须原样返回，不得创造、拆分或改写：
+{category_options}
 """
 
 
-def _parse_summary_result(value: Any) -> tuple[str, list[str]]:
-    """解析模型的结构化结果，并仅保留白名单内且顺序稳定的 schemaKeys。"""
+def _parse_summary_result(value: Any, concept_categories: Sequence[str]) -> tuple[str, list[str], list[str]]:
+    """解析模型结果，并过滤 schemaKeys 与 ConceptCategories 中的非法值。"""
 
     cleaned = _clean_text(value)
     if not cleaned:
-        return "", []
+        return "", [], []
     json_text = re.sub(r"^```(?:json)?\s*|\s*```$", "", cleaned, flags=re.IGNORECASE)
     try:
         payload = json.loads(json_text)
     except (json.JSONDecodeError, TypeError):
-        # 兼容旧模型或测试替身的纯文本响应，避免升级后破坏既有调用方。
-        return cleaned, []
+        # 保留纯文本摘要供调用层识别，并由调用层针对缺失的结构化字段发起重试。
+        return cleaned, [], []
     if not isinstance(payload, Mapping):
-        return "", []
+        return "", [], []
     summary = _clean_text(payload.get("summary"))
     raw_keys = payload.get("schemaKeys")
     valid_keys: list[str] = []
@@ -331,7 +370,17 @@ def _parse_summary_result(value: Any) -> tuple[str, list[str]]:
             normalized = str(key).strip()
             if normalized in allowed and normalized not in valid_keys:
                 valid_keys.append(normalized)
-    return summary, valid_keys
+    raw_categories = payload.get("ConceptCategories")
+    valid_categories: list[str] = []
+    if isinstance(raw_categories, list):
+        allowed_categories = set(concept_categories)
+        for category in raw_categories:
+            normalized = str(category).strip()
+            if normalized in allowed_categories and normalized not in valid_categories:
+                valid_categories.append(normalized)
+            if len(valid_categories) == 3:
+                break
+    return summary, valid_keys, valid_categories
 
 
 def _call_model(
@@ -339,13 +388,16 @@ def _call_model(
     title: str,
     child_summaries: Sequence[tuple[str, str]],
     chunks: Sequence[Mapping[str, Any]],
+    concept_categories: Sequence[str],
     is_document: bool = False,
-) -> tuple[str, list[str]]:
-    """向模型发送章节材料，返回清理后的摘要与经过白名单校验的 schemaKeys。"""
+) -> tuple[str, list[str], list[str]]:
+    """向模型发送章节材料，返回摘要及经过候选集校验的两个数组字段。"""
 
     content: list[dict[str, Any]] = [{
         "type": "text",
-        "text": _summary_prompt(title, child_summaries, bool(chunks), is_document=is_document),
+        "text": _summary_prompt(
+            title, child_summaries, bool(chunks), concept_categories, is_document=is_document
+        ),
     }]
     content.extend(_chunk_content_parts(chunks))
     messages = [{"role": "user", "content": content}]
@@ -353,9 +405,13 @@ def _call_model(
         result = client.chat(messages)
     except Exception as exc:  # 调用失败时保留章节上下文，便于定位坏图片或网络问题。
         raise SummaryGenerationError(f"章节《{title or '未命名章节'}》摘要生成失败：{exc}") from exc
-    summary, schema_keys = _parse_summary_result(result)
-    if not summary:
-        logger.warning(f"章节《{title or '未命名章节'}》首次模型响应为空或仅含思考内容，正在自动重试。")
+    summary, schema_keys, selected_categories = _parse_summary_result(result, concept_categories)
+    expected_category_count = min(3, len(concept_categories))
+    if not summary or len(selected_categories) != expected_category_count:
+        logger.warning(
+            f"章节《{title or '未命名章节'}》首次模型响应缺少有效摘要或未返回 "
+            f"{expected_category_count} 个合法 ConceptCategories，正在自动重试。"
+        )
         try:
             if isinstance(client, SummaryModelRouter):
                 result = client.retry_after_empty(messages)
@@ -363,13 +419,22 @@ def _call_model(
                 result = client.chat(messages)
         except Exception as exc:
             raise SummaryGenerationError(f"章节《{title or '未命名章节'}》摘要重试失败：{exc}") from exc
-        summary, schema_keys = _parse_summary_result(result)
+        summary, schema_keys, selected_categories = _parse_summary_result(result, concept_categories)
     if not summary:
         raise SummaryGenerationError(f"章节《{title or '未命名章节'}》摘要生成失败：重试后模型仍返回空内容。")
-    return summary, schema_keys
+    if len(selected_categories) != expected_category_count:
+        raise SummaryGenerationError(
+            f"章节《{title or '未命名章节'}》摘要生成失败：重试后仅返回 "
+            f"{len(selected_categories)} 个合法 ConceptCategories，预期 {expected_category_count} 个。"
+        )
+    return summary, schema_keys, selected_categories
 
 
-def _summarize_section(section: MutableMapping[str, Any], client: ChatClient) -> str:
+def _summarize_section(
+    section: MutableMapping[str, Any],
+    client: ChatClient,
+    concept_categories: Sequence[str],
+) -> str:
     """生成一个章节摘要；调用前其子章节已经在上一并发批次中完成。"""
 
     children = section.get("children") or []
@@ -391,10 +456,11 @@ def _summarize_section(section: MutableMapping[str, Any], client: ChatClient) ->
     if not child_summaries and not valid_chunks:
         section["summary"] = "本章节未包含可用于生成摘要的内容。"
         section["schemaKeys"] = []
+        section["ConceptCategories"] = []
         logger.warning(f"章节《{section_title}》没有可摘要内容，已写入提示文本。")
     else:
-        section["summary"], section["schemaKeys"] = _call_model(
-            client, str(section.get("title") or ""), child_summaries, valid_chunks
+        section["summary"], section["schemaKeys"], section["ConceptCategories"] = _call_model(
+            client, str(section.get("title") or ""), child_summaries, valid_chunks, concept_categories
         )
     return str(section["summary"])
 
@@ -403,8 +469,9 @@ def summarize_document_tree(
     stage02: Mapping[str, Any],
     llm_client: ChatClient | None = None,
     show_progress: bool = True,
+    concept_categories: Sequence[str] | None = None,
 ) -> dict[str, Any]:
-    """为第二阶段目录树添加章节和全文的 ``summary``、``schemaKeys``，并返回独立深拷贝。"""
+    """为目录树添加摘要、schemaKeys 和 ConceptCategories，并返回独立深拷贝。"""
 
     result = copy.deepcopy(dict(stage02))
     document = result.get("document")
@@ -414,7 +481,14 @@ def summarize_document_tree(
     if not isinstance(sections, list):
         raise ValueError("document.sections 必须是列表。")
     valid_sections = [section for section in sections if isinstance(section, MutableMapping)]
-    # 纯文本请求使用 MiniMax 高速模型，含图片请求保留原有视觉模型，兼顾吞吐量和多模态能力。
+    category_options = (
+        _load_concept_categories()
+        if concept_categories is None
+        else tuple(dict.fromkeys(str(item).strip() for item in concept_categories if str(item).strip()))
+    )
+    if not category_options:
+        raise ValueError("ConceptCategory 候选列表不能为空。")
+    # 纯文本请求使用 deepseek 高速模型，含图片请求保留原有视觉模型，兼顾吞吐量和多模态能力。
     client = llm_client or SummaryModelRouter(
         text_client=LLMClient(config=replace(settings.llm, model=settings.summary.model, max_tokens=settings.summary.max_tokens)),
         vision_client=LLMClient(config=replace(settings.vlm, max_tokens=settings.summary.max_tokens)),
@@ -442,7 +516,7 @@ def summarize_document_tree(
         # 按章节高度自底向上串行执行，避免同时向大模型服务发送多个请求。
         for section_batch in _sections_grouped_by_height(valid_sections):
             for section in _ordered(section_batch):
-                _run_section_with_progress(section, client, progress)
+                _run_section_with_progress(section, client, category_options, progress)
 
         for section in _ordered(valid_sections):
             top_summaries.append((str(section.get("title") or section.get("id") or "未命名章节"), str(section["summary"])))
@@ -450,13 +524,14 @@ def summarize_document_tree(
         document_title = str(document.get("title") or "全文")
         if top_summaries:
             logger.info("章节摘要全部完成，开始生成全文摘要。")
-            document["summary"], document["schemaKeys"] = _call_model(
-                client, document_title, top_summaries, [], is_document=True
+            document["summary"], document["schemaKeys"], document["ConceptCategories"] = _call_model(
+                client, document_title, top_summaries, [], category_options, is_document=True
             )
             logger.info(f"全文摘要已完成：{document_title}")
         else:
             document["summary"] = "文档未包含可用于生成摘要的章节。"
             document["schemaKeys"] = []
+            document["ConceptCategories"] = []
             logger.warning("文档未包含章节，未调用模型生成全文摘要。")
     finally:
         progress.close()

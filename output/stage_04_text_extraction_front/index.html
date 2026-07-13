@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="逐 chunk 对照原文、Schema 选择与知识图谱抽取结果。" />
+  <title>GeoGraph Lens · 文本知识抽取观测台</title>
+  <link rel="stylesheet" href="./styles.css?v=2" />
+</head>
+<body>
+  <!-- 页面骨架：左侧选择 chunk，中间对照原文与图谱，右侧查看抽取明细。 -->
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">G</span><div><strong>GeoGraph Lens</strong><small>文本知识抽取观测台</small></div></div>
+      <div class="top-stats" id="topStats"></div>
+      <button class="ghost-button" id="reloadButton" type="button">重新载入</button>
+    </header>
+
+    <section class="workspace">
+      <aside class="chunk-rail">
+        <div class="panel-heading"><div><span class="eyebrow">DOCUMENT</span><h2>文本分段</h2></div><span class="count-pill" id="chunkCount">0</span></div>
+        <label class="search-box"><span>⌕</span><input id="chunkSearch" type="search" placeholder="搜索 chunk 或原文…" /></label>
+        <div class="chunk-list" id="chunkList"></div>
+      </aside>
+
+      <section class="main-stage">
+        <div class="chunk-header">
+          <div><div class="breadcrumb" id="documentName">等待载入数据</div><h1 id="chunkTitle">—</h1></div>
+          <div class="metric-row" id="chunkMetrics"></div>
+        </div>
+
+        <section class="source-card">
+          <div class="section-title"><div><span class="index-label">01</span><h2>原始文本</h2></div><div class="text-actions"><button id="highlightToggle" class="toggle active" type="button">实体标注</button><button id="copyText" class="icon-button" type="button">复制</button></div></div>
+          <article class="source-text" id="sourceText">正在读取原始 chunk 文本…</article>
+        </section>
+
+        <section class="graph-card">
+          <div class="section-title graph-title"><div><span class="index-label">02</span><h2>知识图谱</h2></div><div class="graph-controls"><button class="filter-chip active" data-kind="entity" type="button"><i class="dot entity"></i>实体</button><button class="filter-chip active" data-kind="event" type="button"><i class="dot event"></i>事件</button><button id="resetGraph" class="icon-button" type="button">重置视图</button></div></div>
+          <div class="graph-wrap"><canvas id="graphCanvas"></canvas><div class="graph-tip" id="graphTip">拖拽节点 · 滚轮缩放 · 点击查看详情</div><div class="node-inspector" id="nodeInspector"></div></div>
+        </section>
+      </section>
+
+      <aside class="detail-rail">
+        <div class="tabs" role="tablist">
+          <button class="tab active" data-tab="schema" type="button">Schema</button>
+          <button class="tab" data-tab="entities" type="button">实体</button>
+          <button class="tab" data-tab="relations" type="button">关系</button>
+          <button class="tab" data-tab="events" type="button">事件</button>
+        </div>
+        <div class="detail-toolbar"><span id="detailSummary">—</span><label>排序 <select id="sortSelect"><option value="score">置信度</option><option value="name">名称</option></select></label></div>
+        <div class="detail-content" id="detailContent"></div>
+      </aside>
+    </section>
+  </main>
+
+  <div class="loading-screen" id="loadingScreen"><div class="loader-orbit"></div><strong>正在建立数据观测台</strong><span>连接抽取结果与原始文本…</span></div>
+  <div class="error-screen hidden" id="errorScreen"><div class="error-card"><span class="error-code">DATA / OFFLINE</span><h2>数据暂未载入</h2><p id="errorMessage"></p><button id="retryButton" type="button">重试</button><p class="hint">请通过目录中的 <b>启动页面.ps1</b> 打开，浏览器直接双击 HTML 会阻止本地 JSON 读取。</p></div></div>
+  <script src="./app.js?v=2"></script>
+</body>
+</html>

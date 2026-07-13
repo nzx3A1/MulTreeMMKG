@@ -95,6 +95,7 @@ class RelevantSchema:
 
     concepts: tuple[SchemaConcept, ...] = ()
     relations: tuple[SchemaRelation, ...] = ()
+    core_categories: tuple[str, ...] = ()
     query_terms: tuple[str, ...] = ()
     selection_confidence: float = 0.0
     fallback_used: bool = False
@@ -113,6 +114,7 @@ class RelevantSchema:
             "selector_version": self.selector_version,
             "concepts": [concept.to_dict() for concept in self.concepts],
             "relations": [relation.to_dict() for relation in self.relations],
+            "core_categories": list(self.core_categories),
             "query_terms": list(self.query_terms),
             "selection_confidence": self.selection_confidence,
             "fallback_used": self.fallback_used,
