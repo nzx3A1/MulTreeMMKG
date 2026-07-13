@@ -94,12 +94,11 @@ class LLMClient:
 
         GLOBAL_LLM_RATE_LIMITER.wait(self.min_request_interval)
 
-    @staticmethod
-    def _thinking_disabled_extra_body(model: str) -> dict[str, Any]:
-        """生成与提供脚本一致的默认关闭思考参数。"""
+    def _thinking_extra_body(self, model: str) -> dict[str, Any]:
+        """从共享模型配置生成思考开关参数，默认对所有文本模型关闭思考。"""
 
         _ = model
-        return {"enable_thinking": False}
+        return {"enable_thinking": self.config.enable_thinking}
 
     @staticmethod
     def _normalize_messages(prompt_or_messages: Any) -> list[dict[str, Any]]:
@@ -114,7 +113,7 @@ class LLMClient:
 
         messages = self._normalize_messages(prompt)
         model = kwargs.pop("model", self.config.model)
-        extra_body = self._thinking_disabled_extra_body(model)
+        extra_body = self._thinking_extra_body(model)
         extra_body.update(kwargs.pop("extra_body", {}))
         request = {
             "model": model,

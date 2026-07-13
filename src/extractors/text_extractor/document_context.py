@@ -51,8 +51,8 @@ def _as_mapping(chunk: Any) -> dict[str, Any]:
     raise TypeError(f"不支持的文本 Chunk 类型：{type(chunk).__name__}")
 
 
-def extract_domain_terms(text: str, *, limit: int = 80) -> tuple[str, ...]:
-    """使用 jieba 词性标注提取中文名词，并严格过滤英文技术标识。"""
+def extract_domain_terms(text: str, *, limit: int = 40) -> tuple[str, ...]:
+    """提取高频核心领域术语，限制候选规模以避免低频噪声稀释覆盖率。"""
 
     cleaned = CITATION_PATTERN.sub(" ", str(text or ""))
     counter: Counter[str] = Counter()
@@ -107,7 +107,7 @@ def build_document_context(
     chunks: Sequence[Any],
     *,
     representative_limit: int = 12,
-    term_limit: int = 80,
+    term_limit: int = 40,
 ) -> DocumentContext:
     """校验同一篇论文的全部文本 Chunk，并构建顺序、章节和主题上下文。"""
 

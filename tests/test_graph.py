@@ -19,7 +19,7 @@ def test_graph_stores_chunk_entities_relations_and_events() -> None:
         entities=[entity_a, entity_b],
         relations=[relation],
         events=[event],
-        stage="stage_04_text_extraction",
+        stage="stage_04_text_extraction_front",
     )
 
     assert graph.metadata.chunk_id == "chunk-1"

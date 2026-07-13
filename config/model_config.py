@@ -11,6 +11,20 @@ from pathlib import Path
 from typing import Dict
 
 
+def _env_bool(name: str, default: bool) -> bool:
+    """读取布尔环境变量，统一识别常见的开启与关闭写法。"""
+
+    value = os.getenv(name)
+    if value is None:
+        return default
+    normalized = value.strip().lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    raise ValueError(f"环境变量 {name} 必须是 true/false、1/0、yes/no 或 on/off")
+
+
 def _load_env_file(path: Path) -> Dict[str, str]:
     """读取简单的 .env 文件，并将未设置的键注入当前进程环境。"""
 
@@ -43,6 +57,7 @@ class OpenAICompatibleConfig:
     temperature: float = 0.0
     max_tokens: int = 8192
     timeout_secs: float = 120.0
+    enable_thinking: bool = False
 
 @dataclass(frozen=True)
 class OpenAIVLMCompatibleConfig:
@@ -54,6 +69,7 @@ class OpenAIVLMCompatibleConfig:
     temperature: float = 0.0
     max_tokens: int = 8192
     timeout_secs: float = 120.0
+    enable_thinking: bool = False
 
 @dataclass(frozen=True)
 class EmbeddingConfig:
@@ -84,6 +100,7 @@ class SummaryConfig:
     fallback_model: str = "deepseek-ai/DeepSeek-V4-Flash"
     max_tokens: int = 2000
     request_interval_secs: float = 1.0
+    enable_thinking: bool = False
 
 
 @dataclass(frozen=True)
@@ -107,6 +124,7 @@ def load_model_settings() -> ModelSettings:
         temperature=float(os.getenv("LLM_TEMPERATURE", "0")),
         max_tokens=int(os.getenv("LLM_MAX_TOKENS", str(OpenAICompatibleConfig.max_tokens))),
         timeout_secs=float(os.getenv("LLM_TIMEOUT_SECS", "120")),
+        enable_thinking=_env_bool("LLM_ENABLE_THINKING", OpenAICompatibleConfig.enable_thinking),
     )
     vlm = OpenAIVLMCompatibleConfig(
         base_url=os.getenv("VLM_BASE_URL", OpenAIVLMCompatibleConfig.base_url),
@@ -116,6 +134,7 @@ def load_model_settings() -> ModelSettings:
         temperature=float(os.getenv("VLM_TEMPERATURE", "0")),
         max_tokens=int(os.getenv("VLM_MAX_TOKENS", str(OpenAIVLMCompatibleConfig.max_tokens))),
         timeout_secs=float(os.getenv("VLM_TIMEOUT_SECS", "120")),
+        enable_thinking=_env_bool("VLM_ENABLE_THINKING", OpenAIVLMCompatibleConfig.enable_thinking),
     )
     embedding = EmbeddingConfig(
         base_url=os.getenv("EMBEDDING_BASE_URL", EmbeddingConfig.base_url),
@@ -136,6 +155,7 @@ def load_model_settings() -> ModelSettings:
         fallback_model=os.getenv("SUMMARY_FALLBACK_MODEL", SummaryConfig.fallback_model),
         max_tokens=int(os.getenv("SUMMARY_MAX_TOKENS", str(SummaryConfig.max_tokens))),
         request_interval_secs=float(os.getenv("SUMMARY_REQUEST_INTERVAL_SECS", str(SummaryConfig.request_interval_secs))),
+        enable_thinking=_env_bool("SUMMARY_ENABLE_THINKING", SummaryConfig.enable_thinking),
     )
     return ModelSettings(llm=llm, vlm=vlm, embedding=embedding, mineru=mineru, summary=summary)
 

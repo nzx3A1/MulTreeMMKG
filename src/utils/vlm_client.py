@@ -78,7 +78,8 @@ class BaseModel:
         """发送视觉消息并在请求异常时按指数退避重试。"""
 
         model = kwargs.pop("model", self.model_name_vl)
-        extra_body = {"enable_thinking": False}
+        # 中文说明：视觉模型与文本模型共用配置化思考开关，默认关闭思考以减少额外输出和延迟。
+        extra_body = {"enable_thinking": self.config.enable_thinking}
         extra_body.update(kwargs.pop("extra_body", {}))
         request = {
             "model": model,

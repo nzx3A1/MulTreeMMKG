@@ -8,7 +8,7 @@ from src.utils.llm_client import LLMClient
 def test_llm_simple_question():
     """向大模型提问一个简单问题，验证能正常返回回答。"""
     llm = LLMClient()
-    response = llm.chat([{"role": "user", "content": "1+1等于几？"}])
+    response = llm.chat([{"role": "user", "content": "你是谁？"}])
     print(f"\n大模型回答: {response}")
 
 

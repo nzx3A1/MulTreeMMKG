@@ -19,7 +19,7 @@ class GraphMetadata(MMKGBaseModel):
     document_id: Optional[ID] = None  # 所属文档；汇总多文档图时可为空
     chunk_id: Optional[ID] = None  # 单 Chunk 抽取图的来源 Chunk，汇总图为空
     modality: Optional[SourceModality] = None  # 单 Chunk 的来源模态，汇总图通常为 MIXED
-    stage: Optional[str] = None  # 生成阶段，例如 stage_04_text_extraction
+    stage: Optional[str] = None  # 生成阶段，例如 stage_04_text_extraction_front
     raw_response: Optional[Any] = None  # 单 Chunk 调试时保留的原始模型响应
     extra: Dict[str, Any] = Field(default_factory=dict)  # 调用参数、统计信息等扩展元数据
 
@@ -34,7 +34,6 @@ class Entity(MMKGBaseModel):
     type: str                          # 实体类型（来自 Schema 白名单）
     type_zh: Optional[str] = None       # 实体类型中文名称
     aliases: List[str] = Field(default_factory=list)  # 别名列表
-    description: Optional[str] = None  # 实体描述
     attributes: Dict[str, Any] = Field(default_factory=dict)  # 属性键值对
     provenance: str = ""                # 原文证据字符串
     normalized_id: Optional[ID] = None # 对齐后的规范化 ID
@@ -72,7 +71,7 @@ class Relation(MMKGBaseModel):
 
     id: ID                             # 关系唯一标识
     type: str                          # 关系类型（来自 Schema 白名单）
-    official_name: Optional[str] = None  # 关系官方名称或标准名称
+    relation_name: Optional[str] = None  # 关系名称或标准名称，可为空
     type_zh: Optional[str] = None       # 关系类型中文名称
     source_id: ID                      # 源实体 ID
     target_id: ID                      # 目标实体 ID

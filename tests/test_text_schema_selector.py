@@ -17,6 +17,8 @@ from src.extractors.text_extractor import (
     SchemaSelectorConfig,
     build_document_context,
 )
+from src.extractors.text_extractor.schema_models import SchemaConcept
+from src.extractors.text_extractor.schema_selector import _lexical_score, _weighted_score
 
 
 CONCEPT_ROWS = [
@@ -150,6 +152,32 @@ def test_query_terms_keep_nouns_and_filter_english_citation_noise() -> None:
 
     assert {"华北克拉通", "鄂尔多斯盆地", "构造演化", "U-Pb"} <= terms
     assert terms.isdisjoint({"Wu", "Zhai", "Santosh", "Zhao", "and", "et", "al", "Ga"})
+
+
+def test_lexical_score_supports_alias_and_token_jaccard() -> None:
+    """词法评分应识别储层别名，并能通过 token-level Jaccard 召回近似概念名称。"""
+
+    reservoir = SchemaConcept(schema="Reservoir", zh_name="储集层")
+    structural_unit = SchemaConcept(schema="StructuralUnit", zh_name="区域 构造 单元")
+
+    alias_score, alias_exact = _lexical_score("研究区储层物性较好", ("储层",), reservoir)
+    fuzzy_score, fuzzy_exact = _lexical_score("区域构造格局明显", ("区域构造",), structural_unit)
+
+    assert alias_score >= 0.90
+    assert alias_exact is False
+    assert fuzzy_score > 0.0
+    assert fuzzy_exact is False
+
+
+def test_weighted_score_redistributes_missing_schema_key_weight() -> None:
+    """schemaKeys 为空时应重新归一化有效信号，不能让固定的四分之一权重白白损失。"""
+
+    score = _weighted_score(
+        {"vector": 0.8, "lexical": 0.6, "schema_key": 0.0},
+        {"vector": 0.50, "lexical": 0.25, "schema_key": 0.25},
+    )
+
+    assert score == pytest.approx((0.50 * 0.8 + 0.25 * 0.6) / 0.75)
 
 
 def test_document_context_rejects_mixed_documents() -> None:

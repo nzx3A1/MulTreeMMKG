@@ -5,6 +5,8 @@ import re
 from dataclasses import dataclass, replace
 from typing import Any, Mapping, Sequence
 
+import jieba
+
 from src.utils.embedding_client import EmbeddingClient
 
 from .document_context import build_document_context, extract_domain_terms
@@ -35,6 +37,18 @@ RELATION_TRIGGERS = {
     "COLLECTED_FROM": ("采自", "取自"),
 }
 
+# 统一常见地质同义词与简称，弥补正文表述和 Schema 中文名不完全一致的问题。
+CONCEPT_ALIASES = {
+    "储集层": ("储层", "储集体"),
+    "储层": ("储集层", "储集体"),
+    "烃源岩": ("生油岩", "源岩"),
+    "盖层": ("封盖层",),
+    "断层": ("断裂",),
+    "断裂": ("断层",),
+    "盆地": ("沉积盆地",),
+    "地层组": ("组",),
+}
+
 
 @dataclass(frozen=True)
 class SchemaSelectorConfig:
@@ -43,8 +57,8 @@ class SchemaSelectorConfig:
     document_top_k: int = 30
     chunk_vector_top_k: int = 12
     min_vector_score: float = 0.55
-    seed_score: float = 0.65
-    neighbor_min_score: float = 0.50
+    seed_score: float = 0.40
+    neighbor_min_score: float = 0.35
     max_schema_nodes: int = 15
     max_schema_edges: int = 35
     max_expansion_edges: int = 200
@@ -89,8 +103,49 @@ def _concept_search_text(concept: SchemaConcept) -> str:
     ).lower()
 
 
+def _lexical_candidates(concept: SchemaConcept) -> tuple[str, ...]:
+    """汇总概念中英文名、斜杠别名和领域同义词，作为模糊词法匹配候选。"""
+
+    names: list[str] = [concept.schema, concept.zh_name]
+    names.extend(part for part in re.split(r"[/／、]", concept.zh_name) if part)
+    for name in tuple(names):
+        normalized = re.sub(r"\s+", "", str(name)).lower()
+        names.extend(CONCEPT_ALIASES.get(normalized, ()))
+    return tuple(dict.fromkeys(name.strip().lower() for name in names if name and name.strip()))
+
+
+def _token_set(value: str) -> set[str]:
+    """使用 jieba 将名称或术语切分为稳定 token 集，过滤空白和纯标点。"""
+
+    return {
+        token.strip().lower()
+        for token in jieba.lcut(str(value or ""), cut_all=False)
+        if token.strip() and re.search(r"[\w\u4e00-\u9fff]", token)
+    }
+
+
+def _jaccard(left: set[str], right: set[str]) -> float:
+    """计算两个 token 集的 Jaccard 相似度，空集合不产生模糊命中。"""
+
+    return len(left & right) / len(left | right) if left and right else 0.0
+
+
+def _weighted_score(parts: Mapping[str, float], weights: Mapping[str, float]) -> float:
+    """按可用信号重新归一化权重，避免缺失 schemaKeys 时固定损失 25% 分数。"""
+
+    active_weights = {
+        name: weight
+        for name, weight in weights.items()
+        if name != "schema_key" or parts.get(name, 0.0) > 0.0
+    }
+    total_weight = sum(active_weights.values())
+    if total_weight <= 0:
+        return 0.0
+    return sum(parts.get(name, 0.0) * weight for name, weight in active_weights.items()) / total_weight
+
+
 def _lexical_score(text: str, terms: Sequence[str], concept: SchemaConcept) -> tuple[float, bool]:
-    """计算正文对概念名称、示例和描述的词法支持，并标记精确命中。"""
+    """融合精确命中、别名命中和 token-level Jaccard 计算概念词法支持度。"""
 
     normalized = text.lower()
     exact = False
@@ -105,6 +160,21 @@ def _lexical_score(text: str, terms: Sequence[str], concept: SchemaConcept) -> t
         if example and str(example).lower() in normalized:
             exact = True
             scores.append(0.90)
+    candidates = _lexical_candidates(concept)
+    for candidate in candidates:
+        if candidate and candidate in normalized:
+            alias_exact = candidate not in {concept.schema.lower(), concept.zh_name.lower()}
+            exact = exact or not alias_exact
+            scores.append(0.90 if alias_exact else 1.0)
+    text_units = tuple(dict.fromkeys((*terms, *_token_set(normalized))))
+    for candidate in candidates:
+        candidate_tokens = _token_set(candidate)
+        similarity = max(
+            (_jaccard(candidate_tokens, _token_set(unit)) for unit in text_units),
+            default=0.0,
+        )
+        if similarity >= 0.34:
+            scores.append(min(0.85, 0.35 + 0.50 * similarity))
     search_text = _concept_search_text(concept)
     matched_terms = [term for term in terms if len(term) >= 2 and term.lower() in search_text]
     if matched_terms:
@@ -198,11 +268,14 @@ class SchemaSelector:
                 if _lexical_score(title, extract_domain_terms(title), concept)[0] > 0
             )
             coverage = section_hits / max(1, len(document.section_titles))
-            document_score = (
-                0.50 * current.vector_score
-                + 0.15 * lexical
-                + 0.10 * coverage
-                + 0.25 * schema_key_score
+            document_score = _weighted_score(
+                {
+                    "vector": current.vector_score,
+                    "lexical": lexical,
+                    "coverage": coverage,
+                    "schema_key": schema_key_score,
+                },
+                {"vector": 0.50, "lexical": 0.15, "coverage": 0.10, "schema_key": 0.25},
             )
             reasons = list(current.selection_reasons)
             if current.vector_score > 0:
@@ -296,12 +369,15 @@ class SchemaSelector:
                 continue
             current = _merge_concept(merged.get(concept.schema, concept), concept)
             document_score = document_scores.get(concept.schema, 0.0)
-            final_score = (
-                0.35 * current.vector_score
-                + 0.15 * lexical
-                + 0.10 * context_score
-                + 0.15 * document_score
-                + 0.25 * schema_key_score
+            final_score = _weighted_score(
+                {
+                    "vector": current.vector_score,
+                    "lexical": lexical,
+                    "context": context_score,
+                    "document": document_score,
+                    "schema_key": schema_key_score,
+                },
+                {"vector": 0.35, "lexical": 0.15, "context": 0.10, "document": 0.15, "schema_key": 0.25},
             )
             reasons = list(current.selection_reasons)
             if current.vector_score > 0:
@@ -469,7 +545,7 @@ class SchemaSelector:
         involved = {name for edge in relations for name in (edge.source_schema, edge.target_schema)}
         connectivity = len(involved) / max(1, len(concepts))
         margin = ranked[-1] if len(ranked) == 1 else max(0.0, ranked[min(len(ranked), 3) - 1] - ranked[-1])
-        confidence = 0.45 * top_average + 0.25 * coverage + 0.20 * connectivity + 0.10 * margin
+        confidence = 0.55 * top_average + 0.15 * coverage + 0.20 * connectivity + 0.10 * margin
         return max(0.0, min(1.0, confidence))
 
 

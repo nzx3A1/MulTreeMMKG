@@ -13,15 +13,8 @@ from .schema_models import (
 )
 from .schema_repository import Neo4jSchemaRepository
 from .schema_selector import SchemaSelector, SchemaSelectorConfig, build_chunk_query_text
-
-
-def extract_from_text(*args: Any, **kwargs: Any) -> Any:
-    """延迟导入尚在后续阶段完善的文本事实抽取器，避免阻塞 Schema 选择模块。"""
-
-    from .text_extractor import extract_from_text as implementation
-
-    return implementation(*args, **kwargs)
-
+from .pipeline import extract_text_chunks_to_file
+from .text_extractor import extract_from_text, extract_text_chunk_graph
 
 __all__ = [
     "DocumentContext",
@@ -36,4 +29,6 @@ __all__ = [
     "build_document_context",
     "extract_domain_terms",
     "extract_from_text",
+    "extract_text_chunks_to_file",
+    "extract_text_chunk_graph",
 ]

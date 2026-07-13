@@ -93,7 +93,12 @@ class Neo4jSchemaRepository:
         if self._query_runner is not None:
             return [dict(row) for row in self._query_runner(query, parameters)]
         config = neo4j_settings.schema_db
-        driver = GraphDatabase.driver(config.uri, auth=(config.username, config.password))
+        driver = GraphDatabase.driver(
+            config.uri,
+            auth=(config.username, config.password),
+            connection_timeout=10.0,
+            connection_acquisition_timeout=10.0,
+        )
         try:
             driver.verify_connectivity()
             with driver.session(database=config.database) as session:

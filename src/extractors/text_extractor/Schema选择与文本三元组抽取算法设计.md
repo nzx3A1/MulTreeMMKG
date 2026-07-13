@@ -464,7 +464,6 @@ function select_schema(chunk, document_context, document_schema_pool):
 
 Prompt 中必须明确：
 
-- 不得因为 Schema 中允许某关系就生成事实；
 - 只抽取当前正文明确陈述或可以由同一句直接解析的事实；
 - 标题只辅助类型判断，不能充当关系证据；
 - 输出必须是严格 JSON；
@@ -485,8 +484,6 @@ Prompt 中必须明确：
   "normalized_name": "长7段暗色泥岩",
   "schema": "SourceRock",
   "mention": "长7段暗色泥岩",
-  "char_start": 0,
-  "char_end": 7,
   "evidence": "长7段暗色泥岩有机质丰度较高，是研究区主要烃源岩",
   "confidence": 0.94,
   "type_source": "schema_constrained"
@@ -935,8 +932,8 @@ src/extractors/
 
 ## 17. 最终验收清单
 
-- [ ] 查询向量与 Schema 节点向量使用相同模型和 1024 维度；
-- [ ] `entity_concept_embedding_idx` 状态为 `ONLINE`；
+- [x] 查询向量与 Schema 节点向量使用相同模型和 1024 维度；
+- [x] `entity_concept_embedding_idx` 状态为 `ONLINE`；
 - [ ] 每个 Chunk 都保存 Schema 选择结果、分数和版本；
 - [ ] 一篇论文只构建一次文档级 Schema 候选池，Chunk 局部选择允许池外补充；
 - [ ] 抽取器不对 `extractor_init.py` 传入的 Chunk 再次切分；
