@@ -1,0 +1,312 @@
+- main [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]: G
+      - generic [ref=e6]:
+        - strong [ref=e7]: GeoGraph Lens
+        - generic [ref=e8]: 文本知识抽取观测台
+    - generic [ref=e9]:
+      - generic [ref=e10]:
+        - generic [ref=e11]: "6"
+        - generic [ref=e12]: CHUNKS
+      - generic [ref=e13]:
+        - generic [ref=e14]: "67"
+        - generic [ref=e15]: ENTITIES
+      - generic [ref=e16]:
+        - generic [ref=e17]: "36"
+        - generic [ref=e18]: RELATIONS
+      - generic [ref=e19]:
+        - generic [ref=e20]: "36"
+        - generic [ref=e21]: EVENTS
+    - button "重新载入" [ref=e22] [cursor=pointer]
+  - generic [ref=e23]:
+    - complementary [ref=e24]:
+      - generic [ref=e25]:
+        - generic [ref=e26]:
+          - text: DOCUMENT
+          - heading "文本分段" [level=2] [ref=e27]
+        - generic [ref=e28]: "6"
+      - generic [ref=e29]:
+        - generic [ref=e30]: ⌕
+        - searchbox "⌕" [ref=e31]
+      - generic [ref=e32]:
+        - button "CHUNK 0:text:0 01 作为形成于3．8 Ga 的古老陆核，华北克拉通经历了多阶段多期次的构造演化( Wu and Zhong，1998; 翟明国等，2014) 前人研究认为，华北克拉通基底于约2．5 Ga 由多个微陆块拼合形成，可划分为胶辽 前淮 许昌 阜平 济宁和阿拉善地块 6 个地块 ( Zhai et al． ，2005; Zhai and Santosh，2011 )2．25～2． 0 Ga 期间，其西北部 中部及东北－东部发育3 条主裂谷带，裂谷盆地进一步演化为洋盆并启动俯冲过程( Santosh，2010; Zhai and Santosh，2011;翟明国等，2021) 历经长期俯冲－增生作用后，克拉通于 1． 97～1． 82 Ga 通过陆块碰撞完成最终克拉通化，形成孔兹岩带( 北部) 中央造山带( 中部) 及胶－辽－吉带( 东部) 3 条主缝合带( Zhai and Peng，2007; Santosh et al． ，2011; 刘 建 辉 等，2025 )1．80 Ga 时期华北克拉通进入伸展构造环境，伴随区域性伸展作用，克拉通内发育多组陆内裂谷系统基性岩墙群及非造山岩浆活动产物( 李江海等，2001; 翟明国，2004; 陈杰等，2024) ● 11 实体 ⌁ 9 关系 ◆ 4 事件" [ref=e33] [cursor=pointer]:
+          - generic [ref=e34]:
+            - generic [ref=e35]: CHUNK 0:text:0
+            - generic [ref=e36]: "01"
+          - generic [ref=e37]: 作为形成于3．8 Ga 的古老陆核，华北克拉通经历了多阶段多期次的构造演化( Wu and Zhong，1998; 翟明国等，2014) 前人研究认为，华北克拉通基底于约2．5 Ga 由多个微陆块拼合形成，可划分为胶辽 前淮 许昌 阜平 济宁和阿拉善地块 6 个地块 ( Zhai et al． ，2005; Zhai and Santosh，2011 )2．25～2． 0 Ga 期间，其西北部 中部及东北－东部发育3 条主裂谷带，裂谷盆地进一步演化为洋盆并启动俯冲过程( Santosh，2010; Zhai and Santosh，2011;翟明国等，2021) 历经长期俯冲－增生作用后，克拉通于 1． 97～1． 82 Ga 通过陆块碰撞完成最终克拉通化，形成孔兹岩带( 北部) 中央造山带( 中部) 及胶－辽－吉带( 东部) 3 条主缝合带( Zhai and Peng，2007; Santosh et al． ，2011; 刘 建 辉 等，2025 )1．80 Ga 时期华北克拉通进入伸展构造环境，伴随区域性伸展作用，克拉通内发育多组陆内裂谷系统基性岩墙群及非造山岩浆活动产物( 李江海等，2001; 翟明国，2004; 陈杰等，2024)
+          - generic [ref=e38]:
+            - generic [ref=e39]: ● 11 实体
+            - generic [ref=e40]: ⌁ 9 关系
+            - generic [ref=e41]: ◆ 4 事件
+        - 'button "CHUNK 1:text:0 02 鄂尔多斯盆地位于华北克拉通( NCC) 西部，现今构造格局可划分为6个单元：伊盟隆起、西缘逆冲带 天环坳陷 伊陕斜坡 晋西挠褶带及渭北隆起( 杨华等，2000; 何登发，2022; 赵凡凡等，2025) 盆地周缘受控于新生代地堑系，北接阴山造山带，南邻秦岭造山带，东抵吕梁山构造带，西缘为贺兰－六盘山逆冲带，形成典型的盆－山耦合体系。 该盆地发育于太古宙－古元古代结晶基底之上，属大型多旋回叠合盆地( 何登发，2022; 赵凡凡等，2025) ，其沉积演化序列包含五大阶段: 中－新元古代裂陷槽期、早古生代浅水台地期、晚古生代近海平原期、中生代内陆湖盆期及新生代周缘断陷期( 何登发，2022; 刘国庆等，2024) 盆地内构造较为简单，以水平－缓西倾( 小于 3°) 的单斜为特征，但盆地边缘有较为复杂不同走向 不同样式的构造带发育，造山作用强烈，活动类型不均一，形成了不同的盆山耦合系统( Linet al． ，2016) 。 ● 11 实体 ⌁ 6 关系 ◆ 6 事件" [ref=e42] [cursor=pointer]':
+          - generic [ref=e43]:
+            - generic [ref=e44]: CHUNK 1:text:0
+            - generic [ref=e45]: "02"
+          - generic [ref=e46]: "鄂尔多斯盆地位于华北克拉通( NCC) 西部，现今构造格局可划分为6个单元：伊盟隆起、西缘逆冲带 天环坳陷 伊陕斜坡 晋西挠褶带及渭北隆起( 杨华等，2000; 何登发，2022; 赵凡凡等，2025) 盆地周缘受控于新生代地堑系，北接阴山造山带，南邻秦岭造山带，东抵吕梁山构造带，西缘为贺兰－六盘山逆冲带，形成典型的盆－山耦合体系。 该盆地发育于太古宙－古元古代结晶基底之上，属大型多旋回叠合盆地( 何登发，2022; 赵凡凡等，2025) ，其沉积演化序列包含五大阶段: 中－新元古代裂陷槽期、早古生代浅水台地期、晚古生代近海平原期、中生代内陆湖盆期及新生代周缘断陷期( 何登发，2022; 刘国庆等，2024) 盆地内构造较为简单，以水平－缓西倾( 小于 3°) 的单斜为特征，但盆地边缘有较为复杂不同走向 不同样式的构造带发育，造山作用强烈，活动类型不均一，形成了不同的盆山耦合系统( Linet al． ，2016) 。"
+          - generic [ref=e47]:
+            - generic [ref=e48]: ● 11 实体
+            - generic [ref=e49]: ⌁ 6 关系
+            - generic [ref=e50]: ◆ 6 事件
+        - button "CHUNK 0:text:1 03 1．80～1． 75 Ga 是华北克拉通伸展作用的起始年代，这个阶段与南缘熊耳群火山岩及五台 恒山地区的基性岩墙群密切相关，期间岩浆活动记录了克拉通早期减薄和陆内伸展的地质过程。前人对这些岩浆事件进行了大量研究，认为这一时期的构造活动是 Columbia 超大陆裂解的初始( 陆松年等，2002;翟明 国 等，2014; 相 振 群，2014; Huang et al． ，2020) ，但对华北克拉通西南缘的研究仍有些薄弱( 赵太平等，2001，2004; 彭澎等，2004; 徐欢等，2020; 相振群等，2020; 李秋根等，2024) ，对地质事件的性质和构造背景的认识尚存在争议，如 Zhao 等( 2009) 根据火山岩地球化学特点，认为南缘的熊耳群火山岩具有钙碱性特点，形成于大陆边缘弧环境，而翟明国( 2004) 赵太平等( 2004) 姜盛洪( 2015)等认为其形成于与地幔柱相关的大陆裂解环境，Zhao 等( 2018) 相振群等( 2020) 认为南缘登封地区石秤花岗闪长岩是碰撞后形成的 因此，查明华北克拉通西南缘1．8 ～ 1．6 Ga 的构造事件性质及其动力学机制，对于探究华北克拉通的构造环境转变及其与哥伦比亚超大陆裂解的关系有着重要的意义。 ● 10 实体 ⌁ 4 关系 ◆ 8 事件" [ref=e51] [cursor=pointer]:
+          - generic [ref=e52]:
+            - generic [ref=e53]: CHUNK 0:text:1
+            - generic [ref=e54]: "03"
+          - generic [ref=e55]: 1．80～1． 75 Ga 是华北克拉通伸展作用的起始年代，这个阶段与南缘熊耳群火山岩及五台 恒山地区的基性岩墙群密切相关，期间岩浆活动记录了克拉通早期减薄和陆内伸展的地质过程。前人对这些岩浆事件进行了大量研究，认为这一时期的构造活动是 Columbia 超大陆裂解的初始( 陆松年等，2002;翟明 国 等，2014; 相 振 群，2014; Huang et al． ，2020) ，但对华北克拉通西南缘的研究仍有些薄弱( 赵太平等，2001，2004; 彭澎等，2004; 徐欢等，2020; 相振群等，2020; 李秋根等，2024) ，对地质事件的性质和构造背景的认识尚存在争议，如 Zhao 等( 2009) 根据火山岩地球化学特点，认为南缘的熊耳群火山岩具有钙碱性特点，形成于大陆边缘弧环境，而翟明国( 2004) 赵太平等( 2004) 姜盛洪( 2015)等认为其形成于与地幔柱相关的大陆裂解环境，Zhao 等( 2018) 相振群等( 2020) 认为南缘登封地区石秤花岗闪长岩是碰撞后形成的 因此，查明华北克拉通西南缘1．8 ～ 1．6 Ga 的构造事件性质及其动力学机制，对于探究华北克拉通的构造环境转变及其与哥伦比亚超大陆裂解的关系有着重要的意义。
+          - generic [ref=e56]:
+            - generic [ref=e57]: ● 10 实体
+            - generic [ref=e58]: ⌁ 4 关系
+            - generic [ref=e59]: ◆ 8 事件
+        - button "CHUNK 1:text:1 04 研究区位于鄂尔多斯盆地西南缘六盘山地区( 图1a) 研究区内断裂发育，以脆性断裂为主，呈NW-NWW 向展布，主要为逆断层。 断面上局部可见近水平擦痕构造，反映其具有复杂的演化历史。 该期断裂主要活动时期为燕山-喜山期，新近纪以来新构造断裂特征比较明显。 研究区六盘山断裂带西部陇县骑安沟地区出露中酸性火成岩( 图 1b) ，本文花岗斑岩样品( LTX-1LTX-2) 采样点坐标为 N35°3． 674' E106°34． 540'，玄武 安 山 岩 ( LTX-3 LTX-4 ) 采 样 点 坐 标 为N35°2． 986' E106°35． 058' 由于受第四系覆盖层影响，两种岩体之间的接触关系在野外未能准确观测，但火成岩体与围岩下白垩统紫红色砂岩、泥岩及震旦系碳酸盐岩均呈断层接触，推测其为断层接触而不是侵入关系 花岗斑岩主要以岩墙形式分布( 图2a) ，玄武安山岩主要以岩株形式产出，表面风化较为严重，区域呈带状展布，部分岩体断面出露较 新鲜。 ● 12 实体 ⌁ 4 关系 ◆ 4 事件" [ref=e60] [cursor=pointer]:
+          - generic [ref=e61]:
+            - generic [ref=e62]: CHUNK 1:text:1
+            - generic [ref=e63]: "04"
+          - generic [ref=e64]: 研究区位于鄂尔多斯盆地西南缘六盘山地区( 图1a) 研究区内断裂发育，以脆性断裂为主，呈NW-NWW 向展布，主要为逆断层。 断面上局部可见近水平擦痕构造，反映其具有复杂的演化历史。 该期断裂主要活动时期为燕山-喜山期，新近纪以来新构造断裂特征比较明显。 研究区六盘山断裂带西部陇县骑安沟地区出露中酸性火成岩( 图 1b) ，本文花岗斑岩样品( LTX-1LTX-2) 采样点坐标为 N35°3． 674' E106°34． 540'，玄武 安 山 岩 ( LTX-3 LTX-4 ) 采 样 点 坐 标 为N35°2． 986' E106°35． 058' 由于受第四系覆盖层影响，两种岩体之间的接触关系在野外未能准确观测，但火成岩体与围岩下白垩统紫红色砂岩、泥岩及震旦系碳酸盐岩均呈断层接触，推测其为断层接触而不是侵入关系 花岗斑岩主要以岩墙形式分布( 图2a) ，玄武安山岩主要以岩株形式产出，表面风化较为严重，区域呈带状展布，部分岩体断面出露较 新鲜。
+          - generic [ref=e65]:
+            - generic [ref=e66]: ● 12 实体
+            - generic [ref=e67]: ⌁ 4 关系
+            - generic [ref=e68]: ◆ 4 事件
+        - button "CHUNK 0:text:2 05 在1．80～1．75 Ga 期间，华北克拉通形成了广泛发育的双峰式火成岩组合，如熊耳群的双峰式火山－侵入岩。 最近，作者在位于鄂尔多斯盆地西南缘的陇县骑安沟地区，识别出一套新的由玄武安山岩与花岗斑岩组成的典型双峰式火成岩组合，对该套火成岩的岩石学特征 地球化学组成进行了研究，并进行了锆石 U-Pb 定年分析，厘定其成因机制及形成时代，进而为华北克拉通西部－鄂尔多斯盆地在中元古代的构造演化过程提供了重要证据，同时探究了其与南缘熊耳群岩浆事件及哥伦比亚超大陆裂解的关系。 ● 10 实体 ⌁ 4 关系 ◆ 5 事件" [ref=e69] [cursor=pointer]:
+          - generic [ref=e70]:
+            - generic [ref=e71]: CHUNK 0:text:2
+            - generic [ref=e72]: "05"
+          - generic [ref=e73]: 在1．80～1．75 Ga 期间，华北克拉通形成了广泛发育的双峰式火成岩组合，如熊耳群的双峰式火山－侵入岩。 最近，作者在位于鄂尔多斯盆地西南缘的陇县骑安沟地区，识别出一套新的由玄武安山岩与花岗斑岩组成的典型双峰式火成岩组合，对该套火成岩的岩石学特征 地球化学组成进行了研究，并进行了锆石 U-Pb 定年分析，厘定其成因机制及形成时代，进而为华北克拉通西部－鄂尔多斯盆地在中元古代的构造演化过程提供了重要证据，同时探究了其与南缘熊耳群岩浆事件及哥伦比亚超大陆裂解的关系。
+          - generic [ref=e74]:
+            - generic [ref=e75]: ● 10 实体
+            - generic [ref=e76]: ⌁ 4 关系
+            - generic [ref=e77]: ◆ 5 事件
+        - button "CHUNK 1:text:2 06 花岗斑岩表面呈肉红色，具有中细粒花岗结构或斑状结构，块状构造( 图 2c) ，斑晶主要为钾长石( 图2b) ，约占全岩20% 显微镜下可以观测到长石表面不干净，出现蚀变矿物; 约 10%斑晶为石英斑晶，有的表面干净，周边出现溶蚀现象，也有石英斑晶内部被溶蚀; 斜长石斑晶约占 5%，基质为微晶质，以石英与长石为主并含有部分暗色矿物，主要为细粒至微晶质( 图3a 3b) 玄武安山岩呈灰黄色－灰绿色，具气孔构造( 图2d) 斑晶主要以斜长石为主，含量约占全岩20% 斜长石无色 板状 半自形－自形，聚片双晶发育，表面发生了绿泥石化 绢云母化蚀变; 角闪石暗色矿物含量约占 10%，呈半自形－自形 基质主要为斜长石微晶，含量约占 60%，可见聚片双晶，发生绢云母化蚀变，暗色矿物微晶约占 10%，黑色玻璃质约占25%，充填于微晶之中，局部可见杏仁体，被方解石和硅质填充( 图3c 3d) ● 13 实体 ⌁ 9 关系 ◆ 9 事件" [ref=e78] [cursor=pointer]:
+          - generic [ref=e79]:
+            - generic [ref=e80]: CHUNK 1:text:2
+            - generic [ref=e81]: "06"
+          - generic [ref=e82]: 花岗斑岩表面呈肉红色，具有中细粒花岗结构或斑状结构，块状构造( 图 2c) ，斑晶主要为钾长石( 图2b) ，约占全岩20% 显微镜下可以观测到长石表面不干净，出现蚀变矿物; 约 10%斑晶为石英斑晶，有的表面干净，周边出现溶蚀现象，也有石英斑晶内部被溶蚀; 斜长石斑晶约占 5%，基质为微晶质，以石英与长石为主并含有部分暗色矿物，主要为细粒至微晶质( 图3a 3b) 玄武安山岩呈灰黄色－灰绿色，具气孔构造( 图2d) 斑晶主要以斜长石为主，含量约占全岩20% 斜长石无色 板状 半自形－自形，聚片双晶发育，表面发生了绿泥石化 绢云母化蚀变; 角闪石暗色矿物含量约占 10%，呈半自形－自形 基质主要为斜长石微晶，含量约占 60%，可见聚片双晶，发生绢云母化蚀变，暗色矿物微晶约占 10%，黑色玻璃质约占25%，充填于微晶之中，局部可见杏仁体，被方解石和硅质填充( 图3c 3d)
+          - generic [ref=e83]:
+            - generic [ref=e84]: ● 13 实体
+            - generic [ref=e85]: ⌁ 9 关系
+            - generic [ref=e86]: ◆ 9 事件
+    - generic [ref=e87]:
+      - generic [ref=e88]:
+        - generic [ref=e89]:
+          - generic [ref=e90]: 鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟
+          - heading "Chunk 0:text:0" [level=1] [ref=e91]
+        - generic [ref=e92]:
+          - generic [ref=e93]:
+            - generic [ref=e94]: "11"
+            - text: 实体
+          - generic [ref=e95]:
+            - generic [ref=e96]: "9"
+            - text: 关系
+          - generic [ref=e97]:
+            - generic [ref=e98]: "4"
+            - text: 事件
+          - generic [ref=e99]:
+            - generic [ref=e100]: "13"
+            - text: Schema
+      - generic [ref=e101]:
+        - generic [ref=e102]:
+          - generic [ref=e103]:
+            - generic [ref=e104]: "01"
+            - heading "原始文本" [level=2] [ref=e105]
+          - generic [ref=e106]:
+            - button "实体标注" [ref=e107] [cursor=pointer]
+            - button "复制" [ref=e108] [cursor=pointer]
+        - article [ref=e109]:
+          - text: 作为形成于3．8 Ga 的古老陆核，
+          - mark [ref=e110] [cursor=pointer]: 华北克拉通
+          - text: 经历了多阶段多期次的构造演化( Wu and Zhong，1998; 翟明国等，2014) 前人研究认为，
+          - mark [ref=e111] [cursor=pointer]: 华北克拉通
+          - text: 基底于约2．5 Ga 由多个微陆块拼合形成，可划分为胶辽 前淮 许昌 阜平 济宁和
+          - mark [ref=e112] [cursor=pointer]: 阿拉善地块
+          - text: 6 个地块 ( Zhai et al． ，2005; Zhai and Santosh，2011 )2．25～2． 0 Ga 期间，其西北部 中部及东北－东部发育3 条主裂谷带，裂谷盆地进一步演化为洋盆并启动俯冲过程( Santosh，2010; Zhai and Santosh，2011;翟明国等，2021) 历经长期俯冲－增生作用后，克拉通于 1． 97～1． 82 Ga 通过陆块碰撞完成最终克拉通化，形成
+          - mark [ref=e113] [cursor=pointer]: 孔兹岩带
+          - text: ( 北部)
+          - mark [ref=e114] [cursor=pointer]: 中央造山带
+          - text: ( 中部) 及
+          - mark [ref=e115] [cursor=pointer]: 胶－辽－吉带
+          - text: ( 东部) 3 条主缝合带( Zhai and Peng，2007; Santosh et al． ，2011; 刘 建 辉 等，2025 )1．80 Ga 时期
+          - mark [ref=e116] [cursor=pointer]: 华北克拉通
+          - text: 进入伸展构造环境，伴随区域性伸展作用，克拉通内发育多组陆内裂谷系统基性岩墙群及非造山岩浆活动产物( 李江海等，2001; 翟明国，2004; 陈杰等，2024)
+      - generic [ref=e117]:
+        - generic [ref=e118]:
+          - generic [ref=e119]:
+            - generic [ref=e120]: "02"
+            - heading "知识图谱" [level=2] [ref=e121]
+          - generic [ref=e122]:
+            - button "实体" [ref=e123] [cursor=pointer]
+            - button "事件" [ref=e125] [cursor=pointer]
+            - button "重置视图" [ref=e127] [cursor=pointer]
+        - generic [ref=e128]: 拖拽节点 · 滚轮缩放 · 点击查看详情
+    - complementary [ref=e130]:
+      - tablist [ref=e131]:
+        - button "Schema" [ref=e132] [cursor=pointer]
+        - button "实体" [ref=e133] [cursor=pointer]
+        - button "关系" [ref=e134] [cursor=pointer]
+        - button "事件" [ref=e135] [cursor=pointer]
+      - generic [ref=e136]:
+        - generic [ref=e137]: 13 个候选 · 置信度 0.548
+        - generic [ref=e138]:
+          - text: 排序
+          - combobox "排序" [ref=e139]:
+            - option "置信度" [selected]
+            - option "名称"
+      - generic [ref=e140]:
+        - generic [ref=e141]:
+          - strong [ref=e142]: "0.548"
+          - paragraph [ref=e143]: Schema 选择置信度 · hybrid_graph_v1
+          - generic [ref=e144]:
+            - generic [ref=e145]: 华北克拉通
+            - generic [ref=e146]: 地块
+            - generic [ref=e147]: 裂谷
+            - generic [ref=e148]: 陆块
+            - generic [ref=e149]: 岩浆活动
+            - generic [ref=e150]: 构造演化
+            - generic [ref=e151]: 构造环境
+            - generic [ref=e152]: 裂谷盆地
+            - generic [ref=e153]: 基性岩
+            - generic [ref=e154]: 产物
+            - generic [ref=e155]: 吉带
+            - generic [ref=e156]: 基底
+            - generic [ref=e157]: 墙群
+            - generic [ref=e158]: 洋盆
+            - generic [ref=e159]: 济宁
+            - generic [ref=e160]: 系统
+          - paragraph [ref=e161]: 本 chunk 使用了 fallback 补全候选
+        - article [ref=e162]:
+          - generic [ref=e163]:
+            - generic [ref=e164]: 盆地
+            - generic [ref=e165]: Basin
+          - generic [ref=e166]: 地理与构造单元
+          - generic [ref=e169]: 综合 0.863 · 向量 0.802 · 词法 1.00
+          - generic [ref=e170]:
+            - generic [ref=e171]: Neo4j 向量 Top-K 召回
+            - generic [ref=e172]: 正文词法命中
+            - generic [ref=e173]: 章节或相邻上下文命中
+            - generic [ref=e174]: 文档候选池先验
+            - generic [ref=e175]: 章节 schemaKeys 命中
+            - generic [ref=e176]: 章节 schemaKeys 精确命中
+            - generic [ref=e177]: 正文精确命中
+        - article [ref=e178]:
+          - generic [ref=e179]:
+            - generic [ref=e180]: 研究区
+            - generic [ref=e181]: StudyArea
+          - generic [ref=e182]: 地理与构造单元
+          - generic [ref=e185]: 综合 0.646 · 向量 0.791 · 词法 0.00
+          - generic [ref=e186]:
+            - generic [ref=e187]: Neo4j 向量 Top-K 召回
+            - generic [ref=e188]: 文档候选池先验
+            - generic [ref=e189]: 章节 schemaKeys 命中
+            - generic [ref=e190]: 章节 schemaKeys 精确命中
+        - article [ref=e191]:
+          - generic [ref=e192]:
+            - generic [ref=e193]: 岩性
+            - generic [ref=e194]: Lithology
+          - generic [ref=e195]: 岩石、矿物与沉积体系
+          - generic [ref=e198]: 综合 0.639 · 向量 0.772 · 词法 0.00
+          - generic [ref=e199]:
+            - generic [ref=e200]: Neo4j 向量 Top-K 召回
+            - generic [ref=e201]: 文档候选池先验
+            - generic [ref=e202]: 章节 schemaKeys 命中
+            - generic [ref=e203]: 章节 schemaKeys 精确命中
+        - article [ref=e204]:
+          - generic [ref=e205]:
+            - generic [ref=e206]: 隆起
+            - generic [ref=e207]: Uplift
+          - generic [ref=e208]: 地理与构造单元
+          - generic [ref=e211]: 综合 0.606 · 向量 0.784 · 词法 0.00
+          - generic [ref=e212]:
+            - generic [ref=e213]: Neo4j 向量 Top-K 召回
+            - generic [ref=e214]: 文档候选池先验
+            - generic [ref=e215]: 章节 schemaKeys 命中
+            - generic [ref=e216]: 章节 schemaKeys 精确命中
+        - article [ref=e217]:
+          - generic [ref=e218]:
+            - generic [ref=e219]: 构造单元
+            - generic [ref=e220]: StructuralUnit
+          - generic [ref=e221]: 地理与构造单元
+          - generic [ref=e224]: 综合 0.476 · 向量 0.000 · 词法 0.55
+          - generic [ref=e225]:
+            - generic [ref=e226]: 正文词法命中
+            - generic [ref=e227]: 章节或相邻上下文命中
+            - generic [ref=e228]: 文档候选池先验
+            - generic [ref=e229]: 章节 schemaKeys 命中
+            - generic [ref=e230]: 章节 schemaKeys 精确命中
+        - article [ref=e231]:
+          - generic [ref=e232]:
+            - generic [ref=e233]: 断层
+            - generic [ref=e234]: Fault
+          - generic [ref=e235]: 地理与构造单元
+          - generic [ref=e238]: 综合 0.418 · 向量 0.782 · 词法 0.00
+          - generic [ref=e239]:
+            - generic [ref=e240]: Neo4j 向量 Top-K 召回
+            - generic [ref=e241]: 章节或相邻上下文命中
+            - generic [ref=e242]: 文档候选池先验
+        - article [ref=e243]:
+          - generic [ref=e244]:
+            - generic [ref=e245]: 地质时代
+            - generic [ref=e246]: GeologicAge
+          - generic [ref=e247]: 地层与地质时代
+          - generic [ref=e250]: 综合 0.383 · 向量 0.000 · 词法 0.00
+          - generic [ref=e251]:
+            - generic [ref=e252]: 章节或相邻上下文命中
+            - generic [ref=e253]: 文档候选池先验
+            - generic [ref=e254]: 章节 schemaKeys 命中
+            - generic [ref=e255]: 章节 schemaKeys 精确命中
+        - article [ref=e256]:
+          - generic [ref=e257]:
+            - generic [ref=e258]: 分析方法
+            - generic [ref=e259]: AnalyticalMethod
+          - generic [ref=e260]: 实验样品与测试
+          - generic [ref=e263]: 综合 0.372 · 向量 0.000 · 词法 0.00
+          - generic [ref=e264]:
+            - generic [ref=e265]: 章节或相邻上下文命中
+            - generic [ref=e266]: 文档候选池先验
+            - generic [ref=e267]: 章节 schemaKeys 命中
+            - generic [ref=e268]: 章节 schemaKeys 精确命中
+        - article [ref=e269]:
+          - generic [ref=e270]:
+            - generic [ref=e271]: 斜坡
+            - generic [ref=e272]: Slope
+          - generic [ref=e273]: 地理与构造单元
+          - generic [ref=e276]: 综合 0.351 · 向量 0.772 · 词法 0.00
+          - generic [ref=e277]:
+            - generic [ref=e278]: Neo4j 向量 Top-K 召回
+            - generic [ref=e279]: 文档候选池先验
+        - article [ref=e280]:
+          - generic [ref=e281]:
+            - generic [ref=e282]: 凹陷/坳陷
+            - generic [ref=e283]: Depression
+          - generic [ref=e284]: 地理与构造单元
+          - generic [ref=e287]: 综合 0.350 · 向量 0.777 · 词法 0.00
+          - generic [ref=e288]:
+            - generic [ref=e289]: Neo4j 向量 Top-K 召回
+            - generic [ref=e290]: 文档候选池先验
+        - article [ref=e291]:
+          - generic [ref=e292]:
+            - generic [ref=e293]: 实验
+            - generic [ref=e294]: Experiment
+          - generic [ref=e295]: 实验样品与测试
+          - generic [ref=e298]: 综合 0.310 · 向量 0.000 · 词法 0.00
+          - generic [ref=e299]:
+            - generic [ref=e300]: 文档候选池先验
+            - generic [ref=e301]: 章节 schemaKeys 命中
+            - generic [ref=e302]: 章节 schemaKeys 精确命中
+        - article [ref=e303]:
+          - generic [ref=e304]:
+            - generic [ref=e305]: 段
+            - generic [ref=e306]: StratigraphicMember
+          - generic [ref=e307]: 地层与地质时代
+          - generic [ref=e310]: 综合 0.250 · 向量 0.000 · 词法 1.00
+          - generic [ref=e311]:
+            - generic [ref=e312]: 正文词法命中
+            - generic [ref=e313]: 章节或相邻上下文命中
+            - generic [ref=e314]: 正文精确命中
+        - article [ref=e315]:
+          - generic [ref=e316]:
+            - generic [ref=e317]: 组
+            - generic [ref=e318]: Formation
+          - generic [ref=e319]: 地层与地质时代
+          - generic [ref=e322]: 综合 0.205 · 向量 0.000 · 词法 1.00
+          - generic [ref=e323]:
+            - generic [ref=e324]: 正文词法命中
+            - generic [ref=e325]: 章节或相邻上下文命中
+            - generic [ref=e326]: 正文精确命中

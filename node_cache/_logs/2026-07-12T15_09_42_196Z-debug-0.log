@@ -1,0 +1,99 @@
+0 verbose cli E:\Nodejs\node.exe E:\Nodejs\node_modules\npm\bin\npm-cli.js
+1 info using npm@10.9.2
+2 info using node@v22.16.0
+3 silly config load:file:E:\Nodejs\node_modules\npm\npmrc
+4 silly config load:file:C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\.npmrc
+5 silly config load:file:C:\Users\nzx\.npmrc
+6 silly config load:file:C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\node_global\etc\npmrc
+7 verbose title npm exec playwright-cli --session graphdebug open http://127.0.0.1:8765/stage_04_text_extraction_front/index.html
+8 verbose argv "exec" "--yes" "--package" "@playwright/cli" "--" "playwright-cli" "--session" "graphdebug" "open" "http://127.0.0.1:8765/stage_04_text_extraction_front/index.html"
+9 verbose logfile logs-max:10 dir:C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\node_cache\_logs\2026-07-12T15_09_42_196Z-
+10 verbose logfile C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\node_cache\_logs\2026-07-12T15_09_42_196Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly packumentCache heap:4345298944 maxSize:1086324736 maxEntrySize:543162368
+13 http fetch GET 200 https://registry.npmmirror.com/npm 106ms
+14 http fetch GET 200 https://registry.npmmirror.com/@playwright%2fcli 76ms (cache miss)
+15 silly packumentCache heap:4345298944 maxSize:1086324736 maxEntrySize:543162368
+16 silly idealTree buildDeps
+17 silly fetch manifest @playwright/cli@0.1.17
+18 silly packumentCache full:https://registry.npmmirror.com/@playwright%2fcli cache-miss
+19 http fetch GET 200 https://registry.npmmirror.com/@playwright%2fcli 29ms (cache miss)
+20 silly packumentCache full:https://registry.npmmirror.com/@playwright%2fcli set size:19203 disposed:false
+21 silly placeDep ROOT @playwright/cli@0.1.17 OK for:  want: 0.1.17
+22 silly fetch manifest playwright@1.62.0-alpha-1783623505000
+23 silly packumentCache full:https://registry.npmmirror.com/playwright cache-miss
+24 silly fetch manifest playwright-core@1.62.0-alpha-1783623505000
+25 silly packumentCache full:https://registry.npmmirror.com/playwright-core cache-miss
+26 http fetch GET 200 https://registry.npmmirror.com/playwright 334ms (cache miss)
+27 silly packumentCache full:https://registry.npmmirror.com/playwright set size:2278307 disposed:false
+28 http fetch GET 200 https://registry.npmmirror.com/playwright-core 557ms (cache miss)
+29 silly packumentCache full:https://registry.npmmirror.com/playwright-core set size:2319887 disposed:false
+30 silly placeDep ROOT playwright@1.62.0-alpha-1783623505000 OK for: @playwright/cli@0.1.17 want: 1.62.0-alpha-1783623505000
+31 silly placeDep ROOT playwright-core@1.62.0-alpha-1783623505000 OK for: @playwright/cli@0.1.17 want: 1.62.0-alpha-1783623505000
+32 silly fetch manifest fsevents@2.3.2
+33 silly packumentCache full:https://registry.npmmirror.com/fsevents cache-miss
+34 http fetch GET 200 https://registry.npmmirror.com/fsevents 46ms (cache miss)
+35 silly packumentCache full:https://registry.npmmirror.com/fsevents set size:16344 disposed:false
+36 silly placeDep ROOT fsevents@2.3.2 OK for: playwright@1.62.0-alpha-1783623505000 want: 2.3.2
+37 silly reify moves {}
+38 silly audit bulk request {
+38 silly audit   '@playwright/cli': [ '0.1.17' ],
+38 silly audit   playwright: [ '1.62.0-alpha-1783623505000' ],
+38 silly audit   'playwright-core': [ '1.62.0-alpha-1783623505000' ],
+38 silly audit   fsevents: [ '2.3.2' ]
+38 silly audit }
+39 verbose reify failed optional dependency C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\node_cache\_npx\31e32ef8478fbf80\node_modules\fsevents
+40 silly reify mark deleted [
+40 silly reify   'C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\node_cache\\_npx\\31e32ef8478fbf80\\node_modules\\fsevents'
+40 silly reify ]
+41 http cache playwright@https://registry.npmmirror.com/playwright/-/playwright-1.62.0-alpha-1783623505000.tgz 0ms (cache hit)
+42 http cache playwright-core@https://registry.npmmirror.com/playwright-core/-/playwright-core-1.62.0-alpha-1783623505000.tgz 0ms (cache hit)
+43 http cache @playwright/cli@https://registry.npmmirror.com/@playwright/cli/-/cli-0.1.17.tgz 1ms (cache hit)
+44 silly tarball no local data for playwright@https://registry.npmmirror.com/playwright/-/playwright-1.62.0-alpha-1783623505000.tgz. Extracting by manifest.
+45 silly tarball no local data for playwright-core@https://registry.npmmirror.com/playwright-core/-/playwright-core-1.62.0-alpha-1783623505000.tgz. Extracting by manifest.
+46 silly tarball no local data for @playwright/cli@https://registry.npmmirror.com/@playwright/cli/-/cli-0.1.17.tgz. Extracting by manifest.
+47 http fetch POST 404 https://registry.npmmirror.com/-/npm/v1/security/advisories/bulk 13ms
+48 silly audit bulk request failed [object Object]
+49 http fetch POST 404 https://registry.npmmirror.com/-/npm/v1/security/audits/quick 13ms
+50 verbose audit error HttpErrorGeneral: 404 Not Found - POST https://registry.npmmirror.com/-/npm/v1/security/audits/quick - [NOT_IMPLEMENTED] /-/npm/v1/security/* not implemented yet
+50 verbose audit error     at E:\Nodejs\node_modules\npm\node_modules\npm-registry-fetch\lib\check-response.js:103:15
+50 verbose audit error     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+50 verbose audit error     at async [getReport] (E:\Nodejs\node_modules\npm\node_modules\@npmcli\arborist\lib\audit-report.js:336:21)
+50 verbose audit error     at async AuditReport.run (E:\Nodejs\node_modules\npm\node_modules\@npmcli\arborist\lib\audit-report.js:106:19) {
+50 verbose audit error   headers: [Object: null prototype] {
+50 verbose audit error     server: [ 'Tengine' ],
+50 verbose audit error     date: [ 'Sun, 12 Jul 2026 15:09:43 GMT' ],
+50 verbose audit error     'content-type': [ 'application/json' ],
+50 verbose audit error     'transfer-encoding': [ 'chunked' ],
+50 verbose audit error     connection: [ 'keep-alive' ],
+50 verbose audit error     'strict-transport-security': [ 'max-age=5184000' ],
+50 verbose audit error     via: [ 'cache26.cn8985[,404666]' ],
+50 verbose audit error     'timing-allow-origin': [ '*' ],
+50 verbose audit error     eagleid: [ 'b6306c1f17838689835016993e' ],
+50 verbose audit error     'x-fetch-attempts': [ '1' ]
+50 verbose audit error   },
+50 verbose audit error   statusCode: 404,
+50 verbose audit error   code: 'E404',
+50 verbose audit error   method: 'POST',
+50 verbose audit error   uri: 'https://registry.npmmirror.com/-/npm/v1/security/audits/quick',
+50 verbose audit error   body: {
+50 verbose audit error     error: '[NOT_IMPLEMENTED] /-/npm/v1/security/* not implemented yet'
+50 verbose audit error   },
+50 verbose audit error   pkgid: undefined
+50 verbose audit error }
+51 silly audit error [object Object]
+52 silly audit report null
+53 http fetch GET 200 https://cdn.npmmirror.com/packages/%40playwright/cli/0.1.17/cli-0.1.17.tgz 171ms (cache miss)
+54 http fetch GET 200 https://cdn.npmmirror.com/packages/playwright/1.62.0-alpha-1783623505000/playwright-1.62.0-alpha-1783623505000.tgz 338ms (cache miss)
+55 http fetch GET 200 https://cdn.npmmirror.com/packages/playwright-core/1.62.0-alpha-1783623505000/playwright-core-1.62.0-alpha-1783623505000.tgz 511ms (cache miss)
+56 verbose cwd C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG
+57 verbose os Windows_NT 10.0.22631
+58 verbose node v22.16.0
+59 verbose npm  v10.9.2
+60 notice
+60 notice New major version of npm available! 10.9.2 -> 12.0.1
+60 notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.1
+60 notice To update run: npm install -g npm@12.0.1
+60 notice  { force: true, [Symbol(proc-log.meta)]: true }
+61 verbose exit 1
+62 verbose code 1

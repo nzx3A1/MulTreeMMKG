@@ -1,0 +1,126 @@
+2026-07-13 10:20:05.655 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:209 - 文本抽取流程启动：document_id=鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟，Chunk数=6，章节数=2，领域术语数=80
+2026-07-13 10:21:11.970 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:209 - 文本抽取流程启动：document_id=鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟，Chunk数=6，章节数=2，领域术语数=80
+2026-07-13 10:22:09.014 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:226 - 文档级Schema候选池完成：概念=30，关系=70，置信度=0.658，降级=False
+2026-07-13 10:22:20.272 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:120 - Chunk 0:text:0 开始抽取：字符数=529，局部Schema概念=13，局部Schema关系=27
+2026-07-13 10:25:47.252 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:129 - Chunk 0:text:0 实体抽取完成：候选数=12，候选名称=['华北克拉通', '胶辽地块', '前淮地块', '许昌地块', '阜平地块', '济宁地块', '阿拉善地块', '裂谷盆地', '孔兹岩带', '中央造山带', '胶－辽－吉带', '基性岩墙群']
+2026-07-13 10:57:18.957 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:275 - 文本抽取流程启动：document_id=鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟，Chunk数=6，章节数=2，领域术语数=80
+2026-07-13 10:58:03.636 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:292 - 文档级Schema候选池完成：概念=30，关系=70，置信度=0.658，降级=False
+2026-07-13 10:58:03.640 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:177 - Chunk 0:text:0 开始抽取：字符数=529，局部Schema概念=13，局部Schema关系=27
+2026-07-13 11:23:16.355 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:337 - 文本抽取流程启动：document_id=鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟，Chunk数=6，章节数=2，领域术语数=80
+2026-07-13 11:23:50.768 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:354 - 文档级Schema候选池完成：概念=30，关系=70，置信度=0.658，降级=False
+2026-07-13 11:23:50.781 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:241 - Chunk 0:text:0 开始抽取：字符数=529，局部Schema概念=13，局部Schema关系=27
+2026-07-13 11:24:27.456 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:256 - Chunk 0:text:0 实体抽取完成：候选数=13，候选名称=['华北克拉通', '胶辽地块', '前淮地块', '许昌地块', '阜平地块', '济宁地块', '阿拉善地块', '裂谷盆地', '孔兹岩带', '中央造山带', '胶－辽－吉带', '陆内裂谷系统', '基性岩墙群']
+2026-07-13 11:25:59.322 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:268 - Chunk 0:text:0 关系抽取完成：候选数=12，候选类型=['CONTAINS', 'CONTAINS', 'CONTAINS', 'CONTAINS', 'CONTAINS', 'CONTAINS', 'other', 'other', 'other', 'other', 'DEVELOPS', 'DEVELOPS']
+2026-07-13 11:25:59.324 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:297 - Chunk 0:text:0 解析校验完成：实体=12，关系=0，事件=0，拒绝=13
+2026-07-13 11:25:59.326 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:241 - Chunk 1:text:0 开始抽取：字符数=415，局部Schema概念=15，局部Schema关系=35
+2026-07-13 11:46:32.655 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:337 - 文本抽取流程启动：document_id=鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟，Chunk数=6，章节数=2，领域术语数=40
+2026-07-13 11:47:10.785 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:354 - 文档级Schema候选池完成：概念=30，关系=83，置信度=0.723，降级=False
+2026-07-13 11:47:10.787 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:241 - Chunk 0:text:0 开始抽取：字符数=529，局部Schema概念=15，局部Schema关系=28
+2026-07-13 11:49:04.813 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:256 - Chunk 0:text:0 实体抽取完成：候选数=17，候选名称=['华北克拉通', '3.8 Ga', '2.5 Ga', '胶辽地块', '前淮地块', '许昌地块', '阜平地块', '济宁地块', '阿拉善地块', '2.25～2.0 Ga', '裂谷盆地', '1.97～1.82 Ga', '孔兹岩带', '中央造山带', '胶－辽－吉带', '1.80 Ga', '基性岩墙群']
+2026-07-13 11:49:54.329 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:268 - Chunk 0:text:0 关系抽取完成：候选数=14，候选类型=['other', 'other', 'CONTAINS', 'CONTAINS', 'CONTAINS', 'CONTAINS', 'CONTAINS', 'CONTAINS', 'other', 'other', 'other', 'other', 'other', 'other']
+2026-07-13 11:49:54.330 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:297 - Chunk 0:text:0 解析校验完成：实体=17，关系=14，事件=0，拒绝=17
+2026-07-13 11:49:54.331 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:241 - Chunk 1:text:0 开始抽取：字符数=415，局部Schema概念=15，局部Schema关系=35
+2026-07-13 11:51:17.588 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:256 - Chunk 1:text:0 实体抽取完成：候选数=21，候选名称=['鄂尔多斯盆地', '华北克拉通', '伊盟隆起', '西缘逆冲带', '天环坳陷', '伊陕斜坡', '晋西挠褶带', '渭北隆起', '新生代地堑系', '阴山造山带', '秦岭造山带', '吕梁山构造带', '贺兰－六盘山逆冲带', '太古宙－古元古代结晶基底', '大型多旋回叠合盆地', '中－新元古代裂陷槽期', '早古生代浅水台地期', '晚古生代近海平原期', '中生代内陆湖盆期', '新生代周缘断陷期', '单斜']
+2026-07-13 11:52:33.108 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:268 - Chunk 1:text:0 关系抽取完成：候选数=20，候选类型=['other', 'CONTAINS', 'CONTAINS', 'CONTAINS', 'CONTAINS', 'CONTAINS', 'CONTAINS', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'CONTAINS', 'CONTAINS', 'CONTAINS', 'CONTAINS', 'CONTAINS', 'other']
+2026-07-13 11:52:33.109 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:297 - Chunk 1:text:0 解析校验完成：实体=21，关系=20，事件=0，拒绝=26
+2026-07-13 11:52:33.109 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:241 - Chunk 0:text:1 开始抽取：字符数=537，局部Schema概念=15，局部Schema关系=29
+2026-07-13 11:53:32.779 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:256 - Chunk 0:text:1 实体抽取完成：候选数=12，候选名称=['华北克拉通', '熊耳群火山岩', '基性岩墙群', 'Columbia 超大陆', '华北克拉通西南缘', '熊耳群火山岩', '大陆边缘弧环境', '地幔柱', '大陆裂解环境', '石秤花岗闪长岩', '华北克拉通西南缘', '哥伦比亚超大陆']
+2026-07-13 11:54:20.356 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:268 - Chunk 0:text:1 关系抽取完成：候选数=7，候选类型=['other', 'other', 'other', 'other', 'other', 'other', 'other']
+2026-07-13 11:54:20.356 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:297 - Chunk 0:text:1 解析校验完成：实体=12，关系=7，事件=0，拒绝=10
+2026-07-13 11:54:20.357 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:241 - Chunk 1:text:1 开始抽取：字符数=430，局部Schema概念=15，局部Schema关系=21
+2026-07-13 11:55:59.816 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:256 - Chunk 1:text:1 实体抽取完成：候选数=19，候选名称=['研究区', '鄂尔多斯盆地', '六盘山地区', '脆性断裂', '逆断层', '近水平擦痕构造', '燕山-喜山期', '六盘山断裂带', '陇县骑安沟地区', '中酸性火成岩', '花岗斑岩', '玄武安山岩', '第四系覆盖层', '下白垩统紫红色砂岩', '泥岩', '震旦系碳酸盐岩', '断层接触', '岩墙', '岩株']
+2026-07-13 11:57:29.830 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:268 - Chunk 1:text:1 关系抽取完成：候选数=18，候选类型=['COVERS', 'COVERS', 'CONTAINS', 'CONTAINS', 'other', 'other', 'other', 'EXPOSES', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other']
+2026-07-13 11:57:29.831 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:297 - Chunk 1:text:1 解析校验完成：实体=19，关系=18，事件=0，拒绝=18
+2026-07-13 11:57:29.831 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:241 - Chunk 0:text:2 开始抽取：字符数=235，局部Schema概念=15，局部Schema关系=26
+2026-07-13 11:58:04.432 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:256 - Chunk 0:text:2 实体抽取完成：候选数=10，候选名称=['华北克拉通', '双峰式火成岩组合', '熊耳群', '鄂尔多斯盆地', '陇县骑安沟地区', '玄武安山岩', '花岗斑岩', '锆石 U-Pb 定年分析', '中元古代', '哥伦比亚超大陆']
+2026-07-13 11:59:09.884 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:268 - Chunk 0:text:2 关系抽取完成：候选数=10，候选类型=['other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other']
+2026-07-13 11:59:09.884 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:297 - Chunk 0:text:2 解析校验完成：实体=10，关系=10，事件=0，拒绝=12
+2026-07-13 11:59:09.884 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:241 - Chunk 1:text:2 开始抽取：字符数=391，局部Schema概念=15，局部Schema关系=18
+2026-07-13 11:59:51.742 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:256 - Chunk 1:text:2 实体抽取完成：候选数=14，候选名称=['花岗斑岩', '钾长石', '石英斑晶', '斜长石斑晶', '基质', '玄武安山岩', '斜长石', '角闪石', '斜长石微晶', '暗色矿物微晶', '黑色玻璃质', '杏仁体', '方解石', '硅质']
+2026-07-13 12:00:32.618 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:268 - Chunk 1:text:2 关系抽取完成：候选数=12，候选类型=['HAS_TEXTURE', 'COMPOSED_OF', 'COMPOSED_OF', 'COMPOSED_OF', 'HAS_TEXTURE', 'COMPOSED_OF', 'COMPOSED_OF', 'COMPOSED_OF', 'COMPOSED_OF', 'COMPOSED_OF', 'other', 'other']
+2026-07-13 12:00:32.618 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:297 - Chunk 1:text:2 解析校验完成：实体=14，关系=12，事件=0，拒绝=15
+2026-07-13 12:00:32.645 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:389 - 文本抽取结果已保存：C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\output\stage_04_text_extraction_front.json
+2026-07-13 12:00:32.645 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:390 - 文本抽取流程完成：Graph=6，实体=93，关系=81，事件=0
+2026-07-13 13:54:41.660 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:337 - 文本抽取流程启动：document_id=鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟，Chunk数=3，章节数=1，领域术语数=40
+2026-07-13 13:55:17.962 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:354 - 文档级Schema候选池完成：概念=30，关系=86，置信度=0.686，降级=False
+2026-07-13 15:18:47.297 | INFO     | __main__:summarize_stage02_file:552 - 读取第二阶段目录树：C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\output\stage_02_document_tree.json
+2026-07-13 15:18:49.349 | INFO     | __main__:_load_concept_categories:164 - 已从 Neo4j 读取 9 个 ConceptCategory 候选名称。
+2026-07-13 15:18:49.349 | INFO     | __main__:summarize_document_tree:502 - 开始自底向上摘要：共 2 个章节，文本模型=deepseek-ai/DeepSeek-V4-Flash，兜底模型=deepseek-ai/DeepSeek-V4-Flash，串行执行，请求间隔=1.0 秒，单次输出上限=2000 tokens。
+2026-07-13 15:18:49.353 | INFO     | __main__:_start_section_progress:204 - 开始生成章节摘要：前言
+2026-07-13 15:19:02.780 | INFO     | __main__:_finish_section_progress:213 - 章节摘要已完成（1/2）：前言
+2026-07-13 15:19:02.780 | INFO     | __main__:_start_section_progress:204 - 开始生成章节摘要：地质背景与岩石学特征
+2026-07-13 15:19:10.728 | INFO     | __main__:_finish_section_progress:213 - 章节摘要已完成（2/2）：地质背景与岩石学特征
+2026-07-13 15:19:10.728 | INFO     | __main__:summarize_document_tree:526 - 章节摘要全部完成，开始生成全文摘要。
+2026-07-13 15:19:24.651 | INFO     | __main__:summarize_document_tree:530 - 全文摘要已完成：鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义
+2026-07-13 15:19:24.651 | INFO     | __main__:summarize_stage02_file:555 - 摘要结果已写入：C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\output\stage_03_document_summary.json
+2026-07-13 15:50:46.254 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:338 - 文本抽取流程启动：document_id=鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟，Chunk数=3，章节数=1，领域术语数=40
+2026-07-13 15:51:21.340 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:355 - 文档级Schema候选池完成：概念=57，关系=248，置信度=0.732，降级=False
+2026-07-13 15:51:21.353 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:241 - Chunk 0:text:0 开始抽取：字符数=529，局部Schema概念=52，局部Schema关系=210
+2026-07-13 15:52:46.422 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:256 - Chunk 0:text:0 实体抽取完成：候选数=18，候选名称=['华北克拉通', '3.8 Ga', '2.5 Ga', '胶辽地块', '前淮地块', '许昌地块', '阜平地块', '济宁地块', '阿拉善地块', '2.25～2.0 Ga', '裂谷盆地', '洋盆', '1.97～1.82 Ga', '孔兹岩带', '中央造山带', '胶－辽－吉带', '1.80 Ga', '基性岩墙群']
+2026-07-13 15:54:30.853 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:268 - Chunk 0:text:0 关系抽取完成：候选数=15，候选类型=['other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other']
+2026-07-13 15:54:30.857 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:297 - Chunk 0:text:0 解析校验完成：实体=18，关系=15，事件=0，拒绝=15
+2026-07-13 15:54:30.858 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:241 - Chunk 0:text:1 开始抽取：字符数=537，局部Schema概念=52，局部Schema关系=206
+2026-07-13 15:55:39.851 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:256 - Chunk 0:text:1 实体抽取完成：候选数=14，候选名称=['华北克拉通', '熊耳群火山岩', '基性岩墙群', 'Columbia 超大陆', '华北克拉通西南缘', '熊耳群火山岩', '大陆边缘弧环境', '地幔柱', '大陆裂解环境', '石秤花岗闪长岩', '登封地区', '1.8 Ga', '1.6 Ga', '哥伦比亚超大陆']
+2026-07-13 15:56:39.967 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:268 - Chunk 0:text:1 关系抽取完成：候选数=7，候选类型=['other', 'other', 'other', 'other', 'other', 'other', 'other']
+2026-07-13 15:56:39.967 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:297 - Chunk 0:text:1 解析校验完成：实体=14，关系=7，事件=0，拒绝=8
+2026-07-13 15:56:39.967 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:241 - Chunk 0:text:2 开始抽取：字符数=235，局部Schema概念=52，局部Schema关系=194
+2026-07-13 15:57:49.019 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:256 - Chunk 0:text:2 实体抽取完成：候选数=16，候选名称=['华北克拉通', '双峰式火成岩组合', '熊耳群', '双峰式火山－侵入岩', '鄂尔多斯盆地', '陇县骑安沟地区', '玄武安山岩', '花岗斑岩', '双峰式火成岩组合', '岩石学特征', '地球化学组成', '锆石 U-Pb 定年分析', '华北克拉通西部', '中元古代', '熊耳群岩浆事件', '哥伦比亚超大陆裂解']
+2026-07-13 15:58:19.483 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:268 - Chunk 0:text:2 关系抽取完成：候选数=12，候选类型=['other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other']
+2026-07-13 15:58:19.483 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:297 - Chunk 0:text:2 解析校验完成：实体=16，关系=12，事件=0，拒绝=14
+2026-07-13 15:58:19.504 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:390 - 文本抽取结果已保存：C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\output\stage_04_text_extraction.json
+2026-07-13 15:58:19.504 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:391 - 文本抽取流程完成：Graph=3，实体=48，关系=34，事件=0
+2026-07-13 16:19:32.402 | INFO     | __main__:summarize_stage02_file:552 - 读取第二阶段目录树：C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\output\stage_02_document_tree.json
+2026-07-13 16:19:34.470 | INFO     | __main__:_load_concept_categories:164 - 已从 Neo4j 读取 9 个 ConceptCategory 候选名称。
+2026-07-13 16:19:34.471 | INFO     | __main__:summarize_document_tree:502 - 开始自底向上摘要：共 4 个章节，文本模型=deepseek-ai/DeepSeek-V4-Flash，兜底模型=deepseek-ai/DeepSeek-V4-Flash，串行执行，请求间隔=1.0 秒，单次输出上限=2000 tokens。
+2026-07-13 16:19:34.511 | INFO     | __main__:_start_section_progress:204 - 开始生成章节摘要：前言
+2026-07-13 16:19:52.175 | INFO     | __main__:_finish_section_progress:213 - 章节摘要已完成（1/4）：前言
+2026-07-13 16:19:52.176 | INFO     | __main__:_start_section_progress:204 - 开始生成章节摘要：花岗斑岩源区与成因分析
+2026-07-13 16:20:25.995 | INFO     | __main__:_finish_section_progress:213 - 章节摘要已完成（2/4）：花岗斑岩源区与成因分析
+2026-07-13 16:20:25.995 | INFO     | __main__:_start_section_progress:204 - 开始生成章节摘要：源区与岩体成因分析
+2026-07-13 16:20:46.288 | INFO     | __main__:_finish_section_progress:213 - 章节摘要已完成（3/4）：源区与岩体成因分析
+2026-07-13 16:20:46.288 | INFO     | __main__:_start_section_progress:204 - 开始生成章节摘要：讨论
+2026-07-13 16:20:53.945 | INFO     | __main__:_finish_section_progress:213 - 章节摘要已完成（4/4）：讨论
+2026-07-13 16:20:53.945 | INFO     | __main__:summarize_document_tree:526 - 章节摘要全部完成，开始生成全文摘要。
+2026-07-13 16:21:06.354 | INFO     | __main__:summarize_document_tree:530 - 全文摘要已完成：鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义
+2026-07-13 16:21:06.356 | INFO     | __main__:summarize_stage02_file:555 - 摘要结果已写入：C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\output\stage_03_document_summary.json
+2026-07-13 16:36:36.317 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:338 - 文本抽取流程启动：document_id=鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟，Chunk数=3，章节数=1，领域术语数=40
+2026-07-13 16:37:24.160 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:355 - 文档级Schema候选池完成：概念=64，关系=283，置信度=0.736，降级=False
+2026-07-13 16:37:24.163 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:241 - Chunk 0:text:0 开始抽取：字符数=529，局部Schema概念=59，局部Schema关系=242
+2026-07-13 16:39:49.967 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:256 - Chunk 0:text:0 实体抽取完成：候选数=21，候选名称=['华北克拉通', '3.8 Ga', '2.5 Ga', '胶辽地块', '前淮地块', '许昌地块', '阜平地块', '济宁地块', '阿拉善地块', '2.25～2.0 Ga', '裂谷盆地', '洋盆', '1.97～1.82 Ga', '孔兹岩带', '中央造山带', '胶－辽－吉带', '1.80 Ga', '伸展构造环境', '陆内裂谷系统', '基性岩墙群', '非造山岩浆活动产物']
+2026-07-13 16:41:50.790 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:268 - Chunk 0:text:0 关系抽取完成：候选数=19，候选类型=['other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other']
+2026-07-13 16:41:50.792 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:297 - Chunk 0:text:0 解析校验完成：实体=21，关系=19，事件=0，拒绝=0
+2026-07-13 16:41:50.792 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:241 - Chunk 0:text:1 开始抽取：字符数=537，局部Schema概念=58，局部Schema关系=259
+2026-07-13 16:42:47.300 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:256 - Chunk 0:text:1 实体抽取完成：候选数=13，候选名称=['华北克拉通', '熊耳群火山岩', '基性岩墙群', 'Columbia 超大陆', '华北克拉通西南缘', '大陆边缘弧环境', '地幔柱', '大陆裂解环境', '石秤花岗闪长岩', '1.80 Ga', '1.75 Ga', '1.8 Ga', '1.6 Ga']
+2026-07-13 16:43:36.780 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:268 - Chunk 0:text:1 关系抽取完成：候选数=8，候选类型=['other', 'other', 'other', 'other', 'other', 'other', 'other', 'other']
+2026-07-13 16:43:36.780 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:297 - Chunk 0:text:1 解析校验完成：实体=13，关系=8，事件=0，拒绝=3
+2026-07-13 16:43:36.782 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:241 - Chunk 0:text:2 开始抽取：字符数=235，局部Schema概念=58，局部Schema关系=259
+2026-07-13 16:44:49.988 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:256 - Chunk 0:text:2 实体抽取完成：候选数=16，候选名称=['华北克拉通', '1.80～1.75 Ga', '双峰式火成岩组合', '熊耳群', '双峰式火山－侵入岩', '鄂尔多斯盆地', '陇县骑安沟地区', '玄武安山岩', '花岗斑岩', '岩石学特征', '地球化学组成', '锆石 U-Pb 定年分析', '中元古代', '华北克拉通西部', '熊耳群岩浆事件', '哥伦比亚超大陆裂解']
+2026-07-13 16:46:06.932 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:268 - Chunk 0:text:2 关系抽取完成：候选数=10，候选类型=['other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other']
+2026-07-13 16:46:06.933 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:297 - Chunk 0:text:2 解析校验完成：实体=16，关系=10，事件=0，拒绝=0
+2026-07-13 16:46:06.951 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:390 - 文本抽取结果已保存：C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\output\stage_04_text_extraction.json
+2026-07-13 16:46:06.951 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:391 - 文本抽取流程完成：Graph=3，实体=50，关系=37，事件=0
+2026-07-13 17:30:30.821 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:337 - 文本抽取流程启动：document_id=鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟，Chunk数=1，章节数=1，领域术语数=19
+2026-07-13 17:30:58.597 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:354 - 文档级Schema候选池完成：概念=64，关系=283，置信度=0.736，降级=False
+2026-07-13 17:30:58.610 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:241 - Chunk 0:text:0 开始抽取：字符数=529，局部Schema概念=58，局部Schema关系=259
+2026-07-13 17:32:39.227 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:255 - Chunk 0:text:0 实体抽取完成：候选数=21，候选名称=['华北克拉通', '3.8 Ga', '2.5 Ga', '胶辽地块', '前淮地块', '许昌地块', '阜平地块', '济宁地块', '阿拉善地块', '2.25～2.0 Ga', '裂谷盆地', '洋盆', '1.97～1.82 Ga', '孔兹岩带', '中央造山带', '胶-辽-吉带', '1.80 Ga', '伸展构造环境', '陆内裂谷系统', '基性岩墙群', '非造山岩浆活动产物']
+2026-07-13 17:39:21.327 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:267 - Chunk 0:text:0 关系抽取完成：候选数=19，候选类型=['other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other']
+2026-07-13 17:39:21.328 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:296 - Chunk 0:text:0 解析校验完成：实体=21，关系=19，事件=0，拒绝=0
+2026-07-13 17:39:21.337 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:389 - 文本抽取结果已保存：C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\output\stage_04_text_extraction.json
+2026-07-13 17:39:21.338 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:390 - 文本抽取流程完成：Graph=1，实体=21，关系=19，事件=0
+2026-07-13 18:11:54.443 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:337 - 文本抽取流程启动：document_id=鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟，Chunk数=1，章节数=1，领域术语数=19
+2026-07-13 18:12:30.060 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:354 - 文档级Schema候选池完成：概念=64，关系=283，置信度=0.736，降级=False
+2026-07-13 18:12:30.066 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:241 - Chunk 0:text:0 开始抽取：字符数=529，局部Schema概念=58，局部Schema关系=259
+2026-07-13 18:13:26.354 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:255 - Chunk 0:text:0 实体抽取完成：候选数=11，候选名称=['华北克拉通', '胶辽地块', '前淮地块', '许昌地块', '阜平地块', '济宁地块', '阿拉善地块', '孔兹岩带', '中央造山带', '胶－辽－吉带', '基性岩墙群']
+2026-07-13 18:14:57.836 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:267 - Chunk 0:text:0 关系抽取完成：候选数=11，候选类型=['other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other']
+2026-07-13 18:14:57.841 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:296 - Chunk 0:text:0 解析校验完成：实体=11，关系=11，事件=0，拒绝=0
+2026-07-13 18:14:57.853 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:389 - 文本抽取结果已保存：C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\output\stage_04_text_extraction.json
+2026-07-13 18:14:57.853 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:390 - 文本抽取流程完成：Graph=1，实体=11，关系=11，事件=0
+2026-07-13 18:31:15.158 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:337 - 文本抽取流程启动：document_id=鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟，Chunk数=1，章节数=1，领域术语数=19
+2026-07-13 18:33:20.737 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:337 - 文本抽取流程启动：document_id=鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟，Chunk数=1，章节数=1，领域术语数=19
+2026-07-13 18:33:52.028 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:354 - 文档级Schema候选池完成：概念=64，关系=283，置信度=0.736，降级=False
+2026-07-13 18:33:52.036 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:241 - Chunk 0:text:0 开始抽取：字符数=529，局部Schema概念=58，局部Schema关系=259
+2026-07-13 18:34:52.389 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:255 - Chunk 0:text:0 实体抽取完成：候选数=13，候选名称=['华北克拉通', '胶辽地块', '前淮地块', '许昌地块', '阜平地块', '济宁地块', '阿拉善地块', '裂谷盆地', '孔兹岩带', '中央造山带', '胶－辽－吉带', '陆内裂谷系统', '基性岩墙群']
+2026-07-13 18:36:39.281 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:267 - Chunk 0:text:0 关系抽取完成：候选数=13，候选类型=['other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other', 'other']
+2026-07-13 18:36:39.285 | INFO     | src.extractors.text_extractor.text_extractor:extract_text_chunk_graph:296 - Chunk 0:text:0 解析校验完成：实体=13，关系=13，事件=0，拒绝=0
+2026-07-13 18:36:39.293 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:389 - 文本抽取结果已保存：C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\output\stage_04_text_extraction.json
+2026-07-13 18:36:39.293 | INFO     | src.extractors.text_extractor.text_extractor:extract_from_text:390 - 文本抽取流程完成：Graph=1，实体=13，关系=13，事件=0
