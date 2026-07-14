@@ -55,7 +55,7 @@ class _FakeSelector:
 
 
 class _FakeLLM:
-    """返回包含合法候选和越界候选的结构化模型响应。"""
+    """返回包含白名单外类型和正文外证据的结构化模型响应。"""
 
     def __init__(self) -> None:
         """保存调用次数和模型收到的消息。"""
@@ -86,8 +86,8 @@ class _FakeLLM:
                     {
                         "name": "相邻段落实体",
                         "official_name": "相邻段落实体",
-                        "type": "Basin",
-                        "type_zh": "盆地",
+                        "type": "CustomConcept",
+                        "type_zh": "自定义概念",
                     },
                 ]
             }
@@ -98,7 +98,11 @@ class _FakeLLM:
                         "temp_id": "r1",
                         "type": "located_in",
                         "source_id": "entity_1",
+                        "source_name": "延长组",
+                        "source_type": "Formation",
                         "target_id": "entity_2",
+                        "target_name": "鄂尔多斯盆地",
+                        "target_type": "Basin",
                         "attributes": {},
                         "provenance": "延长组位于鄂尔多斯盆地",
                         "metadata": {},
@@ -107,7 +111,11 @@ class _FakeLLM:
                         "temp_id": "r2",
                         "type": "LOCATED_IN",
                         "source_id": "entity_2",
+                        "source_name": "错误源实体名称",
+                        "source_type": "错误源实体类型",
                         "target_id": "entity_1",
+                        "target_name": "错误目标实体名称",
+                        "target_type": "错误目标实体类型",
                         "provenance": "延长组位于鄂尔多斯盆地",
                     },
                 ]
@@ -125,9 +133,9 @@ class _FakeLLM:
                     {
                         "source_id": "entity_2",
                         "target_id": "entity_1",
-                        "relation_name": "位于",
-                        "type": "LOCATED_IN",
-                        "type_zh": "位于",
+                        "relation_name": "自定义关联",
+                        "type": "CUSTOM_RELATION",
+                        "type_zh": "自定义关联",
                     },
                 ]
             }
@@ -240,8 +248,8 @@ def _chunks() -> list[dict[str, Any]]:
     ]
 
 
-def test_extract_from_text_builds_valid_graphs_with_one_document_selection() -> None:
-    """整篇只选择一次 Schema，并将合法候选映射为引用完整的 Graph。"""
+def test_extract_from_text_only_validates_output_format() -> None:
+    """白名单外类型和正文外证据格式正确时也应通过解析校验。"""
 
     selector = _FakeSelector()
     llm = _FakeLLM()
@@ -255,6 +263,8 @@ def test_extract_from_text_builds_valid_graphs_with_one_document_selection() -> 
     assert "选择最合适的已定义类型" in prompt_tasks[1]
     assert "判断关系" in prompt_tasks[2]
     assert "方向及类型均匹配" in prompt_tasks[3]
+    relation_output = json.loads(llm.messages[2][0]["content"])["Output"]["relations"][0]
+    assert {"source_name", "source_type", "target_name", "target_type"} <= set(relation_output)
     assert [graph.metadata.chunk_id for graph in graphs] == ["c1", "c2"]
     assert all(isinstance(graph, Graph) for graph in graphs)
     first = graphs[0]
@@ -264,13 +274,26 @@ def test_extract_from_text_builds_valid_graphs_with_one_document_selection() -> 
     assert first.entities[0].type_zh == "组"
     assert first.relations[0].type == "LOCATED_IN"
     assert first.relations[0].relation_name == "位于"
-    assert first.entities[2].metadata["validation"]["passed"] is False
-    assert "evidence_not_in_text" in first.entities[2].metadata["validation"]["errors"]
-    assert first.relations[1].metadata["validation"]["passed"] is False
-    assert "relation_not_in_schema" in first.relations[1].metadata["validation"]["errors"]
+    assert (
+        first.relations[0].source_name,
+        first.relations[0].source_type,
+        first.relations[0].target_name,
+        first.relations[0].target_type,
+    ) == ("延长组", "Formation", "鄂尔多斯盆地", "Basin")
+    assert first.entities[2].type == "CustomConcept"
+    assert first.entities[2].metadata["validation"] == {"passed": True, "errors": []}
+    assert first.relations[1].type == "CUSTOM_RELATION"
+    assert first.relations[1].metadata["validation"]["passed"] is True
+    assert (
+        first.relations[1].source_name,
+        first.relations[1].source_type,
+        first.relations[1].target_name,
+        first.relations[1].target_type,
+    ) == ("鄂尔多斯盆地", "Basin", "延长组", "Formation")
     assert first.validate_references() == []
-    assert first.metadata.extra["validation"]["rejected_count"] == 2
-    assert first.metadata.extra["validation"]["retained_invalid_count"] == 2
+    assert first.metadata.extra["validation"]["rejected_count"] == 0
+    assert first.metadata.extra["validation"]["retained_invalid_count"] == 0
+    assert first.metadata.extra["validation"]["final_consistency_passed"] is True
     assert graphs[1].metadata.extra["empty_reason"] == "empty_text"
 
 

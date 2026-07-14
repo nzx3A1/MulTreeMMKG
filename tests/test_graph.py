@@ -9,7 +9,16 @@ def test_graph_stores_chunk_entities_relations_and_events() -> None:
 
     entity_a = Entity(id="entity-a", name="延长组", type="Stratum")
     entity_b = Entity(id="entity-b", name="长7段", type="Reservoir")
-    relation = Relation(id="relation-a-b", type="CONTAINS", source_id=entity_a.id, target_id=entity_b.id)
+    relation = Relation(
+        id="relation-a-b",
+        type="CONTAINS",
+        source_id=entity_a.id,
+        source_name=entity_a.name,
+        source_type=entity_a.type,
+        target_id=entity_b.id,
+        target_name=entity_b.name,
+        target_type=entity_b.type,
+    )
     event = Event(id="event-deposition", type="geological_process", name="沉积作用", participants=[entity_a.id, entity_b.id])
 
     graph = Graph.from_chunk(
@@ -25,6 +34,10 @@ def test_graph_stores_chunk_entities_relations_and_events() -> None:
     assert graph.metadata.chunk_id == "chunk-1"
     assert graph.metadata.modality == SourceModality.TEXT
     assert graph.relations[0].source_id == "entity-a"
+    assert graph.relations[0].source_name == "延长组"
+    assert graph.relations[0].source_type == "Stratum"
+    assert graph.relations[0].target_name == "长7段"
+    assert graph.relations[0].target_type == "Reservoir"
     assert graph.events[0].participants == ["entity-a", "entity-b"]
     assert graph.validate_references() == []
 

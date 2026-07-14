@@ -70,11 +70,15 @@ class Relation(MMKGBaseModel):
     """知识图谱关系。"""
 
     id: ID                             # 关系唯一标识
-    type: str                          # 关系类型（来自 Schema 白名单）
+    type: str                          # 关系英文类型；解析阶段不要求属于 Schema 白名单
     relation_name: Optional[str] = None  # 关系名称或标准名称，可为空
     type_zh: Optional[str] = None       # 关系类型中文名称
     source_id: ID                      # 源实体 ID
+    source_name: str = ""              # 源实体名称，与 source_id 引用的实体保持一致
+    source_type: str = ""              # 源实体英文类型，与 source_id 引用的实体保持一致
     target_id: ID                      # 目标实体 ID
+    target_name: str = ""              # 目标实体名称，与 target_id 引用的实体保持一致
+    target_type: str = ""              # 目标实体英文类型，与 target_id 引用的实体保持一致
     attributes: Dict[str, Any] = Field(default_factory=dict)  # 属性键值对
     provenance: str = ""                # 原文证据字符串
     metadata: Dict[str, Any] = Field(default_factory=dict)  # 扩展元数据

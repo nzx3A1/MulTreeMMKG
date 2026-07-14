@@ -5,20 +5,15 @@ from model import Graph
 
 
 def validate_graph(graph: Graph, text: str) -> list[str]:
-    """检查引用完整性，以及实体和关系证据是否确实来自当前正文。"""
+    """只检查 Graph 的关系端点和事件参与者引用格式是否完整。"""
 
-    errors = list(graph.validate_references())
-    for entity in graph.entities:
-        if not entity.provenance or entity.provenance not in text:
-            errors.append(f"实体 {entity.id} 的 provenance 不在当前正文中")
-    for relation in graph.relations:
-        if not relation.provenance or relation.provenance not in text:
-            errors.append(f"关系 {relation.id} 的 provenance 不在当前正文中")
-    return errors
+    # 中文说明：保留 text 参数兼容现有调用接口，但不再校验证据内容或 Schema 白名单。
+    _ = text
+    return list(graph.validate_references())
 
 
 def ensure_valid_graph(graph: Graph, text: str) -> Graph:
-    """执行最终一致性校验，将错误写入 Graph 元数据但不丢弃候选。"""
+    """执行最终结构一致性校验，将引用格式错误写入 Graph 元数据。"""
 
     errors = validate_graph(graph, text)
     validation = graph.metadata.extra.setdefault("validation", {})

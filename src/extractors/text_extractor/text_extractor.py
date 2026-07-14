@@ -203,7 +203,7 @@ def extract_text_chunk_graph(
     4. 第二次 LLM 调用（RELATION_PROMPT）—— 在已抽取实体间判断 Schema 允许的有向关系；
     5. 事件载荷固定为空，不发起事件抽取 LLM 调用；
     6. 合并两阶段结果，交由 parse_extraction_payload 解析为稳定 ID 的 Graph 子对象；
-    7. ensure_valid_graph 执行最终引用完整性和 provenance 证据校验。
+    7. ensure_valid_graph 只执行最终对象引用与输出结构校验。
 
     Args:
         chunk: 当前文本 Chunk，需包含 id、document_id、text 等字段。
@@ -252,7 +252,6 @@ def extract_text_chunk_graph(
     entity_candidates = _entity_prompt_view(entity_payload)
 
 
-
     logger.info(
         f"Chunk {chunk_id} 实体抽取完成：候选数={len(entity_candidates)}，"
         f"候选名称={[str(item.get('name') or '') for item in entity_candidates]}"
@@ -291,7 +290,7 @@ def extract_text_chunk_graph(
             "entity": dict(entity_payload), "relation": dict(relation_payload), "event": dict(event_payload),
         },
     }
-    # 解析为稳定 ID 的 Entity/Relation/Event 对象，并执行 Schema 白名单和证据校验
+    # 中文说明：解析为稳定 ID 的 Graph 对象，只校验字段格式和对象引用，不校验 Schema 白名单或证据内容。
     graph = ensure_valid_graph(parse_extraction_payload(combined, chunk=chunk, schema=schema), text)
     validation = graph.metadata.extra.get("validation", {})
     logger.info(
