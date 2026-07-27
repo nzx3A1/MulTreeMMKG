@@ -216,12 +216,15 @@ def batch_clean_full_md(output_root):
 
 
 def download_with_retries(url, retries=3, timeout=120):
-    """下载 MinerU 结果 zip，遇到 CDN SSL/连接抖动时自动重试，最后一次允许关闭证书校验兜底。"""
+    """直连下载 MinerU 结果 zip，避免系统代理导致 CDN TLS 握手中断。"""
     last_error = None
+    # MinerU 的签名下载地址可直接访问；禁用环境代理可规避代理链路上的 SSL EOF。
+    session = requests.Session()
+    session.trust_env = False
     for attempt in range(1, retries + 1):
         verify = attempt != retries
         try:
-            return requests.get(url, stream=True, timeout=timeout, verify=verify)
+            return session.get(url, stream=True, timeout=timeout, verify=verify)
         except requests.RequestException as e:
             last_error = e
             print(f"  下载重试 {attempt}/{retries} 失败: {e}")
@@ -273,7 +276,9 @@ def submit_files_and_upload(pdf_paths_or_items):
 
     data = {
         "files": files_list,
-        "model_version": "vlm"
+        "model_version": "vlm",
+        # 关闭 MinerU 表格识别，避免将表格内容解析为结构化表格。
+        "enable_table": False,
     }
 
     print(f"正在提交 {len(valid_upload_items)} 个文件进行处理...")

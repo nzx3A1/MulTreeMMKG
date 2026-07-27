@@ -12,16 +12,24 @@ import json
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable
 
 
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
 SECTION_HEADING_RE = re.compile(r"^(#{2,6})\s+(.+?)\s*$")
 HTML_TABLE_RE = re.compile(r"<table\b[\s\S]*?</table>", re.IGNORECASE)
 IMAGE_RE = re.compile(r"!\[[^\]]*]\(([^)]+)\)[ \t]*(?:\n|$)")
+TABLE_CAPTION_START_RE = re.compile(
+    r"^(?:表|Table)\s*[．.]?\s*[0-9０-９]+(?:\s*[．.]\s*[0-9０-９]+)*(?=\s|$|[：:]|[\u3400-\u9fff])",
+    re.IGNORECASE,
+)
 FORMULA_RE = re.compile(r"\$\$\s*([\s\S]*?)\s*\$\$")
 REFERENCE_HEADING_RE = re.compile(r"^#{2,6}\s+.*?(References|参考文献)", re.IGNORECASE)
 MARKUP_TAG_RE = re.compile(r"</?(?:sup|sub|span|b|strong|i|em)[^>]*>", re.IGNORECASE)
+TABLE_LAYOUT_MODEL_NAME = "PicoDet_layout_1x_table"
+TABLE_CONTINUATION_THRESHOLD = 0.95
+_TABLE_LAYOUT_MODEL: Any | None = None
+TableImageDetector = Callable[[Path, float], bool]
 
 
 @dataclass
@@ -33,7 +41,7 @@ class SectionNode:
     title: str
     raw_content: str = ""
     children: list["SectionNode"] = field(default_factory=list)
-    table: list[dict[str, str]] = field(default_factory=list)
+    table: list[dict[str, Any]] = field(default_factory=list)
     images: list[dict[str, Any]] = field(default_factory=list)
     formulas: list[dict[str, str]] = field(default_factory=list)
     content: str = ""
@@ -58,20 +66,38 @@ class AMarkdownParser:
 
     produced_by = "src/parser/AMarkdownParser.py"
 
-    def __init__(self, use_llm_basic_info: bool = False) -> None:
-        """初始化解析器；use_llm_basic_info 为 True 时会尝试用项目 LLM 补全基本信息。"""
+    def __init__(
+        self,
+        use_llm_basic_info: bool = False,
+        table_image_detector: TableImageDetector | None = None,
+        table_continuation_threshold: float = TABLE_CONTINUATION_THRESHOLD,
+    ) -> None:
+        """初始化解析器，并配置切分表格图片的检测器与置信度阈值。"""
 
         self.use_llm_basic_info = use_llm_basic_info
+        self.table_image_detector = table_image_detector or detect_table_image_with_picodet
+        self.table_continuation_threshold = table_continuation_threshold
 
     def parse_file(self, input_file: str | Path) -> dict[str, Any]:
         """读取 Markdown 文件并解析为目标阶段 1 JSON。"""
 
         markdown_path = Path(input_file)
         text = read_text(markdown_path)
-        result = self.parse_text(text, filename=markdown_path.name, input_file=str(markdown_path.resolve()))
+        result = self.parse_text(
+            text,
+            filename=markdown_path.name,
+            input_file=str(markdown_path.resolve()),
+            asset_base_dir=markdown_path.parent,
+        )
         return result
 
-    def parse_text(self, text: str, filename: str = "full.md", input_file: str = "") -> dict[str, Any]:
+    def parse_text(
+        self,
+        text: str,
+        filename: str = "full.md",
+        input_file: str = "",
+        asset_base_dir: str | Path | None = None,
+    ) -> dict[str, Any]:
         """解析 Markdown 文本，组装论文基本信息、目录树和元数据。"""
 
         text = normalize_newlines(text)
@@ -89,7 +115,13 @@ class AMarkdownParser:
         if self.use_llm_basic_info:
             basic_information = merge_llm_basic_information(basic_lines, basic_information)
 
-        toc = self._parse_toc(lines, first_section_index, reference_start, intro_lines)
+        toc = self._parse_toc(
+            lines,
+            first_section_index,
+            reference_start,
+            intro_lines,
+            Path(asset_base_dir) if asset_base_dir is not None else None,
+        )
         return {
             "filename": filename,
             "title": title,
@@ -106,6 +138,7 @@ class AMarkdownParser:
         first_section_index: int | None,
         reference_start: int | None,
         intro_lines: list[str],
+        asset_base_dir: Path | None,
     ) -> list[SectionNode]:
         """解析正文标题并构建章节树，同时保留无标题引言为“前言”章节。"""
 
@@ -119,7 +152,14 @@ class AMarkdownParser:
         intro_text = "\n".join(line for line in intro_lines if line.strip()).strip()
         if intro_text:
             intro_node = SectionNode(level=2, id="0", title="前言", raw_content=intro_text)
-            populate_section_assets(intro_node, reference_text, asset_counters)
+            populate_section_assets(
+                intro_node,
+                reference_text,
+                asset_counters,
+                asset_base_dir,
+                self.table_image_detector,
+                self.table_continuation_threshold,
+            )
             nodes.append(intro_node)
 
         if first_section_index is None:
@@ -134,7 +174,14 @@ class AMarkdownParser:
                 title=heading["title"],
                 raw_content="\n".join(body_lines).strip(),
             )
-            populate_section_assets(node, reference_text, asset_counters)
+            populate_section_assets(
+                node,
+                reference_text,
+                asset_counters,
+                asset_base_dir,
+                self.table_image_detector,
+                self.table_continuation_threshold,
+            )
 
             while stack and stack[-1].level >= node.level:
                 stack.pop()
@@ -424,18 +471,77 @@ def slugify_title(title: str) -> str:
     return slug or "section"
 
 
+def detect_table_image_with_picodet(image_path: Path, threshold: float = TABLE_CONTINUATION_THRESHOLD) -> bool:
+    """使用表格专用 PicoDet 模型判断后续图片是否仍属于当前表格。"""
+
+    global _TABLE_LAYOUT_MODEL
+    if not image_path.is_file():
+        print(f"表格续图检测跳过：图片不存在 {image_path}")
+        return False
+
+    try:
+        if _TABLE_LAYOUT_MODEL is None:
+            from paddleocr import LayoutDetection
+
+            # treeSchemeKG 的 Windows CPU 环境关闭 MKLDNN，规避 Paddle 3.3.x 的 PIR 转换错误。
+            _TABLE_LAYOUT_MODEL = LayoutDetection(
+                model_name=TABLE_LAYOUT_MODEL_NAME,
+                enable_mkldnn=False,
+            )
+
+        results = _TABLE_LAYOUT_MODEL.predict(str(image_path), batch_size=1, layout_nms=True)
+        best_score = 0.0
+        for result in results:
+            if not isinstance(result, dict):
+                continue
+            result_data = result.get("res", result)
+            boxes = result_data.get("boxes", []) if isinstance(result_data, dict) else []
+            for box in boxes:
+                if str(box.get("label", "")).strip().lower() != "table":
+                    continue
+                best_score = max(best_score, float(box.get("score", 0.0)))
+        is_table = best_score >= threshold
+        print(
+            f"表格续图检测：{image_path.name}，table置信度={best_score:.3f}，"
+            f"阈值={threshold:.2f}，结果={'合并' if is_table else '停止'}"
+        )
+        return is_table
+    except Exception as exc:
+        # 模型失败时保守地停止合并，防止普通图片被错误吸收到表格 Chunk。
+        print(f"表格续图检测失败：{image_path}，停止合并。原因：{exc}")
+        return False
+
+
+def resolve_markdown_image_path(image_ref: str, asset_base_dir: Path | None) -> Path:
+    """将 Markdown 图片引用解析为本地路径，供表格续图模型读取。"""
+
+    image_path = Path(image_ref)
+    if image_path.is_absolute() or asset_base_dir is None:
+        return image_path
+    return (asset_base_dir / image_path).resolve()
+
+
 def populate_section_assets(
     node: SectionNode,
     reference_text: str = "",
     asset_counters: dict[str, int] | None = None,
+    asset_base_dir: Path | None = None,
+    table_image_detector: TableImageDetector = detect_table_image_with_picodet,
+    table_continuation_threshold: float = TABLE_CONTINUATION_THRESHOLD,
 ) -> None:
     """提取单个章节内的表格、图片、公式，并生成剥离结构块后的正文。"""
 
     raw = normalize_newlines(node.raw_content)
     removal_spans: list[tuple[int, int]] = []
 
-    tables, table_spans = extract_tables(raw, reference_text)
-    images, image_spans = extract_images(raw, reference_text)
+    tables, table_spans = extract_tables(
+        raw,
+        reference_text,
+        asset_base_dir,
+        table_image_detector,
+        table_continuation_threshold,
+    )
+    images, image_spans = extract_images(raw, reference_text, excluded_spans=table_spans)
     formulas, formula_spans = extract_formulas(raw, reference_text, asset_counters)
 
     node.table = tables
@@ -447,30 +553,162 @@ def populate_section_assets(
     node.content = clean_section_content(remove_spans(raw, removal_spans))
 
 
-def extract_tables(text: str, reference_text: str = "") -> tuple[list[dict[str, str]], list[tuple[int, int]]]:
-    """提取 HTML table、表题，并按“表1”编号查找括号引用上下文。"""
+def extract_tables(
+    text: str,
+    reference_text: str = "",
+    asset_base_dir: Path | None = None,
+    table_image_detector: TableImageDetector = detect_table_image_with_picodet,
+    table_continuation_threshold: float = TABLE_CONTINUATION_THRESHOLD,
+) -> tuple[list[dict[str, Any]], list[tuple[int, int]]]:
+    """提取 HTML 表格及“表/Table + 数字”标题后紧接的图片表格。"""
 
-    tables: list[dict[str, str]] = []
+    tables: list[dict[str, Any]] = []
     spans: list[tuple[int, int]] = []
     for match in HTML_TABLE_RE.finditer(text):
         caption, caption_span = extract_caption_before(text, match.start(), keywords=("表", "Table"))
         table_numbers = extract_labeled_numbers(caption, labels=("表", "Table"))
-        context = "\n".join(find_reference_contexts(reference_text, "表", table_numbers))
+        contexts = find_table_reference_contexts(reference_text, table_numbers)
         tables.append(
             {
                 "content": match.group(0).strip(),
                 "caption": caption,
-                "context": context,
+                "context": "\n".join(contexts),
             }
         )
         spans.append((caption_span[0], match.end()))
+
+    image_tables, image_table_spans = extract_captioned_image_tables(
+        text,
+        reference_text,
+        asset_base_dir,
+        table_image_detector,
+        table_continuation_threshold,
+    )
+    tables.extend(image_tables)
+    spans.extend(image_table_spans)
+
+    ordered = sorted(zip(spans, tables), key=lambda item: item[0][0])
+    if not ordered:
+        return [], []
+    ordered_spans, ordered_tables = zip(*ordered)
+    return list(ordered_tables), list(ordered_spans)
+
+
+def extract_captioned_image_tables(
+    text: str,
+    reference_text: str = "",
+    asset_base_dir: Path | None = None,
+    table_image_detector: TableImageDetector = detect_table_image_with_picodet,
+    table_continuation_threshold: float = TABLE_CONTINUATION_THRESHOLD,
+) -> tuple[list[dict[str, Any]], list[tuple[int, int]]]:
+    """识别表题及连续表格图片，并在首张非表格图片或新表题处结束。"""
+
+    line_matches = list(re.finditer(r"(?m)^.*(?:\n|$)", text))
+    tables: list[dict[str, Any]] = []
+    spans: list[tuple[int, int]] = []
+    consumed_until = -1
+
+    for index, line_match in enumerate(line_matches):
+        if line_match.start() < consumed_until:
+            continue
+        first_line = line_match.group(0).strip()
+        if not TABLE_CAPTION_START_RE.match(clean_inline_text(first_line)):
+            continue
+
+        caption_lines = [first_line]
+        caption_numbers = extract_labeled_numbers(first_line, labels=("表", "Table"))
+        image_match: re.Match[str] | None = None
+        image_line_match: re.Match[str] | None = None
+        image_line_index: int | None = None
+        nonempty_line_count = 1
+
+        for following_index, following_line_match in enumerate(line_matches[index + 1 :], start=index + 1):
+            following_line = following_line_match.group(0)
+            stripped = following_line.strip()
+            if not stripped:
+                continue
+
+            image_match = re.fullmatch(r"!\[[^\]]*]\(([^)]+)\)", stripped)
+            if image_match:
+                image_line_match = following_line_match
+                image_line_index = following_index
+                break
+
+            cleaned = clean_inline_text(stripped)
+            following_caption_match = TABLE_CAPTION_START_RE.match(cleaned)
+            following_numbers = extract_labeled_numbers(cleaned, labels=("表", "Table"))
+            is_different_table = bool(
+                following_caption_match
+                and caption_numbers
+                and following_numbers
+                and set(caption_numbers).isdisjoint(following_numbers)
+            )
+            if (
+                stripped.startswith(("#", "<table", "$$"))
+                or is_different_table
+                or nonempty_line_count >= 12
+            ):
+                image_match = None
+                break
+
+            caption_lines.append(stripped)
+            nonempty_line_count += 1
+
+        if image_match is None or image_line_match is None or image_line_index is None:
+            continue
+
+        table_image_matches = [image_match]
+        last_image_line_match = image_line_match
+        # 首张图片由明确表题归类；之后只检查中间没有任何非空内容的连续图片。
+        for continuation_line_match in line_matches[image_line_index + 1 :]:
+            continuation_line = continuation_line_match.group(0).strip()
+            if not continuation_line:
+                continue
+            if TABLE_CAPTION_START_RE.match(clean_inline_text(continuation_line)):
+                break
+
+            continuation_image = re.fullmatch(r"!\[[^\]]*]\(([^)]+)\)", continuation_line)
+            if continuation_image is None:
+                break
+
+            continuation_path = resolve_markdown_image_path(
+                continuation_image.group(1).strip(),
+                asset_base_dir,
+            )
+            if not table_image_detector(continuation_path, table_continuation_threshold):
+                break
+            table_image_matches.append(continuation_image)
+            last_image_line_match = continuation_line_match
+
+        caption = clean_inline_text("\n".join(caption_lines), strip_markup=False)
+        table_numbers = extract_labeled_numbers(caption, labels=("表", "Table"))
+        contexts = find_table_reference_contexts(reference_text, table_numbers)
+        image_paths = [item.group(1).strip() for item in table_image_matches]
+        tables.append(
+            {
+                # 图片表格只保存干净路径，去掉 Markdown 的 ![](  ) 包装符号。
+                "content": "\n".join(image_paths),
+                "caption": caption,
+                "context": "\n".join(contexts),
+                "path": image_paths[0] if len(image_paths) == 1 else image_paths,
+                "source_type": "image",
+            }
+        )
+        span = (line_match.start(), last_image_line_match.end())
+        spans.append(span)
+        consumed_until = span[1]
     return tables, spans
 
 
-def extract_images(text: str, reference_text: str = "") -> tuple[list[dict[str, Any]], list[tuple[int, int]]]:
-    """提取连续图片组、图题，并按“图1”编号查找括号引用上下文。"""
+def extract_images(
+    text: str,
+    reference_text: str = "",
+    excluded_spans: Iterable[tuple[int, int]] = (),
+) -> tuple[list[dict[str, Any]], list[tuple[int, int]]]:
+    """提取普通图片组；已归类为图片表格的图片不会被重复提取。"""
 
-    matches = list(IMAGE_RE.finditer(text))
+    excluded = list(excluded_spans)
+    matches = [match for match in IMAGE_RE.finditer(text) if not span_overlaps(match.span(), excluded)]
     images: list[dict[str, Any]] = []
     spans: list[tuple[int, int]] = []
     index = 0
@@ -496,6 +734,13 @@ def extract_images(text: str, reference_text: str = "") -> tuple[list[dict[str, 
         )
         spans.append((group_start, caption_end))
     return images, spans
+
+
+def span_overlaps(span: tuple[int, int], excluded_spans: Iterable[tuple[int, int]]) -> bool:
+    """判断字符区间是否与任一排除区间重叠。"""
+
+    start, end = span
+    return any(start < excluded_end and excluded_start < end for excluded_start, excluded_end in excluded_spans)
 
 
 def extract_formulas(
@@ -619,6 +864,14 @@ def find_reference_contexts(reference_text: str, label: str, numbers: Iterable[s
     return contexts
 
 
+def find_table_reference_contexts(reference_text: str, numbers: Iterable[str]) -> list[str]:
+    """同时查找中文“表”和英文“Table”编号引用，并保持原文顺序去重。"""
+
+    contexts = find_reference_contexts(reference_text, "表", numbers)
+    contexts.extend(find_reference_contexts(reference_text, "Table", numbers))
+    return list(dict.fromkeys(contexts))
+
+
 def parenthesized_label_exists(text: str, label: str, number: str) -> bool:
     """判断单个段落的括号内容中是否包含指定的图、表或公式编号。"""
 
@@ -672,12 +925,6 @@ def project_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
-def default_input_path() -> Path:
-    """返回默认 MinerU Markdown 输入目录。"""
-
-    return project_root() / "data" / "mineru_output"
-
-
 def default_output_path() -> Path:
     """返回默认聚合 JSON 输出路径。"""
 
@@ -717,7 +964,7 @@ def main() -> None:
     cli.add_argument(
         "input",
         nargs="?",
-        default=str(default_input_path()),
+        default=project_root() / "data" / "mineru_output"/"鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟",
         help="MinerU 导出的 full.md 路径或目录；不传则默认扫描 data/mineru_output",
     )
     cli.add_argument("-o", "--output", help="输出 JSON 文件路径；目录输入且不传时默认写入 output/amarkdown_parser_results.json")

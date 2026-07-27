@@ -53,7 +53,7 @@ class OpenAICompatibleConfig:
 
     base_url: str = "https://api.siliconflow.cn/v1"
     api_key: str = "sk-lwctfhzpjhwclurfgdtpkwynqkawporxgvrhkjrtbuujayij"
-    model: str = "deepseek-ai/DeepSeek-V4-Flash"
+    model: str = "deepseek-ai/DeepSeek-V3.2"
     temperature: float = 0.0
     max_tokens: int = 8192
     timeout_secs: float = 120.0
@@ -63,9 +63,10 @@ class OpenAICompatibleConfig:
 class OpenAIVLMCompatibleConfig:
     """OpenAI 兼容视觉模型配置。"""
 
-    base_url: str = "https://api.siliconflow.cn/v1"
-    api_key: str = OpenAICompatibleConfig.api_key
-    model: str = "Qwen/Qwen3.5-27B"
+    # 中文说明：视觉流程使用用户指定的内网多模态服务，与文本 LLM 配置相互独立。
+    base_url: str = "http://10.18.19.66:8000/v1"
+    api_key: str = "sk-0e3c52e6065a4ef4a1b044c2fe5098d5"
+    model: str = "qwen-3.6-27B-FP8"
     temperature: float = 0.0
     max_tokens: int = 8192
     timeout_secs: float = 120.0

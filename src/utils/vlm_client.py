@@ -78,8 +78,16 @@ class BaseModel:
         """发送视觉消息并在请求异常时按指数退避重试。"""
 
         model = kwargs.pop("model", self.model_name_vl)
-        # 中文说明：视觉模型与文本模型共用配置化思考开关，默认关闭思考以减少额外输出和延迟。
-        extra_body = {"enable_thinking": self.config.enable_thinking}
+        # 中文说明：内网 Qwen 3.6 通过 chat_template_kwargs 控制思考；其他服务保留原顶层兼容参数。
+        send_enable_thinking = bool(kwargs.pop("send_enable_thinking", True))
+        if send_enable_thinking and "qwen-3.6" in str(model).lower():
+            extra_body = {
+                "chat_template_kwargs": {"enable_thinking": self.config.enable_thinking}
+            }
+        elif send_enable_thinking:
+            extra_body = {"enable_thinking": self.config.enable_thinking}
+        else:
+            extra_body = {}
         extra_body.update(kwargs.pop("extra_body", {}))
         request = {
             "model": model,
@@ -87,9 +95,10 @@ class BaseModel:
             "temperature": kwargs.pop("temperature", self.temperature),
             "max_tokens": kwargs.pop("max_tokens", self.config.max_tokens),
             "timeout": kwargs.pop("timeout", self.timeout),
-            "extra_body": extra_body,
             **kwargs,
         }
+        if extra_body:
+            request["extra_body"] = extra_body
         last_error: Exception | None = None
         for attempt in range(self.retry_attempts):
             try:
@@ -113,6 +122,9 @@ class BaseModel:
 
 class VLMClient(BaseModel):
     """工程视觉客户端，在 BaseModel 请求逻辑上增加图片输入辅助方法。"""
+
+    # 中文说明：真实客户端支持复杂表格的多次短响应抽取；离线测试桩未声明时仍使用单次兼容路径。
+    supports_segmented_table_extraction = True
 
     @staticmethod
     def image_to_data_url(image_path: str | Path) -> str:

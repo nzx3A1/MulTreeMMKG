@@ -87,12 +87,14 @@ class InitExtractor:
         self,
         llm_client: Any | None = None,
         vlm_client: Any | None = None,
+        image_classification_provider: Any | None = None,
         show_progress: bool = True,
     ) -> None:
         """初始化可注入的客户端；默认客户端均为延迟连接，不会在此处发起请求。"""
 
         self.llm_client = llm_client or LLMClient()
         self.vlm_client = vlm_client or VLMClient()
+        self.image_classification_provider = image_classification_provider
         self.show_progress = show_progress
 ###########################################################核心####################################################
     def extract(
@@ -112,34 +114,39 @@ class InitExtractor:
         results: dict[str, list[Graph]] = {}
 
         # 第一阶段：优先抽取正文文本，为后续多模态结果提供文本语义基础。
-        text_chunks = grouped["text"]
-        if self.show_progress:
-            print(f"正在抽取 text Chunk：{len(text_chunks)} 个")
-        if text_chunks:
-            from src.extractors.text_extractor import extract_from_text
+        # text_chunks = grouped["text"]
+        # if self.show_progress:
+        #     print(f"正在抽取 text Chunk：{len(text_chunks)} 个")
+        # if text_chunks:
+        #     from src.extractors.text_extractor import extract_from_text
+        #
+        #     results["text"] = extract_from_text(
+        #         text_chunks,
+        #         self.llm_client,
+        #         output_path=(Path(output_dir) / "stage_04_text_extraction.json") if output_dir else None,
+        #         show_progress=self.show_progress,
+        #     )
+        # else:
+        #     results["text"] = []
 
-            results["text"] = extract_from_text(
-                text_chunks,
+        # 第二阶段：抽取表格中的结构化实体、属性与关系。
+        table_chunks = grouped["table"]
+        if self.show_progress:
+            print(f"正在抽取 table Chunk：{len(table_chunks)} 个")
+        if table_chunks:
+            from .table_extractor import extract_from_tables
+
+            results["table"] = extract_from_tables(
+                table_chunks,
                 self.llm_client,
-                output_path=(Path(output_dir) / "stage_04_text_extraction.json") if output_dir else None,
+                output_path=(Path(output_dir) / "stage_04_table_extraction.json") if output_dir else None,
+                recognition_output_path=(Path(output_dir) / "stage_04_table_recognition.json") if output_dir else None,
+                report_output_path=(Path(output_dir) / "stage_04_table_tasks.json") if output_dir else None,
+                work_dir=(Path(output_dir) / "table_extraction") if output_dir else None,
                 show_progress=self.show_progress,
             )
         else:
-            results["text"] = []
-
-        # 第二阶段：抽取表格中的结构化实体、属性与关系。
-        # table_chunks = grouped["table"]
-        # if self.show_progress:
-        #     print(f"正在抽取 table Chunk：{len(table_chunks)} 个")
-        # if table_chunks:
-        #     from .table_extractor import extract_from_tables
-        #
-        #     results["table"] = extract_from_tables(
-        #         table_chunks,
-        #         self.llm_client,
-        #     )
-        # else:
-        #     results["table"] = []
+            results["table"] = []
         #
         # # 第三阶段：抽取公式、变量、参数及其领域关系。
         # formula_chunks = grouped["formula"]
@@ -155,20 +162,23 @@ class InitExtractor:
         # else:
         #     results["formula"] = []
         #
-        # # 第四阶段：最后调用视觉模型抽取图片内容，避免提前占用较重的视觉请求资源。
-        # image_chunks = grouped["image"]
-        # if self.show_progress:
-        #     print(f"正在抽取 image Chunk：{len(image_chunks)} 个")
-        # if image_chunks:
-        #     from .image_extractor import extract_from_images
-        #
-        #     results["image"] = extract_from_images(
-        #         image_chunks,
-        #         self.llm_client,
-        #         self.vlm_client,
-        #     )
-        # else:
-        #     results["image"] = []
+        # 第四阶段：最后调用视觉模型抽取图片内容，避免提前占用较重的视觉请求资源。
+        image_chunks = grouped["image"]
+        if self.show_progress:
+            print(f"正在抽取 image Chunk：{len(image_chunks)} 个")
+        if image_chunks:
+            from .image_extractor import extract_from_images
+
+            results["image"] = extract_from_images(
+                image_chunks,
+                self.llm_client,
+                self.vlm_client,
+                classification_provider=self.image_classification_provider,
+                output_path=(Path(output_dir) / "stage_04_image_extraction.json") if output_dir else None,
+                show_progress=self.show_progress,
+            )
+        else:
+            results["image"] = []
 
         return results
 
@@ -177,17 +187,33 @@ class InitExtractor:
 def main() -> None:
     """读取第三阶段输入，初始化 InitExtractor 并调用 extract 处理全部 Chunk。"""
 
-    parser = argparse.ArgumentParser(description="执行第四阶段抽取，当前只启用文本模态")
+    parser = argparse.ArgumentParser(description="执行第四阶段多模态抽取，按当前配置启用表格与图片模态")
     parser.add_argument("--input", type=Path, default=DEFAULT_INPUT_PATH, help="第三阶段摘要 JSON")
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR, help="第四阶段输出目录")
+    parser.add_argument("--image-classifications", type=Path, help="可选的逐图片分类 JSON，仅用于路由")
     parser.add_argument("--quiet", action="store_true", help="不显示模态调度进度")
     args = parser.parse_args()
 
     source = _as_mapping(read_json(args.input), "第三阶段输入")
     chunks = collect_chunks(source)
-    extractor = InitExtractor(show_progress=not args.quiet)
+    # 中文说明：逐图分类文件只是路由辅助信息，图片 Chunk 仍是图片抽取流水线的唯一业务输入。
+    image_classification_provider = None
+    if args.image_classifications:
+        from src.extractors.image_extractor import RecordImageClassificationProvider
+
+        image_classification_provider = RecordImageClassificationProvider.from_json(args.image_classifications)
+    extractor = InitExtractor(
+        image_classification_provider=image_classification_provider,
+        show_progress=not args.quiet,
+    )
     results = extractor.extract(chunks, output_dir=args.output_dir)
-    print(f"第四阶段文本抽取完成，共生成 {len(results['text'])} 个 Chunk Graph")
+    # 中文说明：当前调试配置可能关闭文本分支，使用 get 避免入口因缺少 text 键而在任务完成后误报失败。
+    print(
+        "第四阶段抽取完成："
+        f"表格 Graph={len(results.get('table', []))}，"
+        f"图片 Graph={len(results.get('image', []))}，"
+        f"文本 Graph={len(results.get('text', []))}"
+    )
 
 
 if __name__ == "__main__":

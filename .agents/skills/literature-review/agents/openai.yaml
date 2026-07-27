@@ -1,0 +1,4 @@
+interface:
+  display_name: "科研文献综述"
+  short_description: "用于科研论文检索、筛选、去重、证据核验和可追溯综述写作"
+  default_prompt: "Use $literature-review to build a traceable literature review for my research topic."

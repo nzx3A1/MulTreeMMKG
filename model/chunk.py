@@ -45,6 +45,9 @@ class TableChunk(ChunkBase):
     caption: Optional[str] = None
     """表格标题（可选）。"""
 
+    table_path: List[str] = Field(default_factory=list)
+    """表格的本地文件路径列表。"""
+
     references: Optional[List[str]] = None
     """表格的引用列表，每个引用是一个字符串（可选）。"""
 

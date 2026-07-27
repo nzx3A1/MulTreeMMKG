@@ -1,117 +1,66 @@
-"""VLM 客户端测试。
-
-验证 VLMClient 能正常初始化并调用 describe_image 方法。
-"""
+"""直接调用项目 VLM 客户端生成图片描述。"""
 from __future__ import annotations
 
-import _bootstrap  # noqa: F401 - 直接运行测试文件时注入项目根目录。
-import pytest
-import tempfile
-from types import SimpleNamespace
+import argparse
+import sys
 from pathlib import Path
-from PIL import Image
 
+import _bootstrap  # noqa: F401 - 直接运行测试文件时注入项目根目录。
+
+from config.model_config import settings
 from src.utils.vlm_client import VLMClient
 
 
-class _FakeChatCompletions:
-    """模拟 OpenAI chat.completions.create 返回结构。"""
-
-    def __init__(self):
-        """保存最后一次请求参数，供视觉模型思考开关测试使用。"""
-
-        self.last_kwargs = None
-
-    def create(self, **kwargs):
-        self.last_kwargs = kwargs
-        message = SimpleNamespace(content="这是一张图片")
-        return SimpleNamespace(choices=[SimpleNamespace(message=message)])
+DEFAULT_IMAGE_PATH = Path(__file__).parent / "test_data" / "images" / "img.png"
+DEFAULT_PROMPT = "请详细描述这张图片中的主要内容、文字信息和关键视觉特征。"
 
 
-class _FakeOpenAIClient:
-    """模拟 OpenAI 客户端。"""
+def get_image_description(
+    image_path: str | Path = DEFAULT_IMAGE_PATH,
+    prompt: str = DEFAULT_PROMPT,
+) -> str:
+    """中文说明：使用 config 中的 VLM 配置调用客户端，并返回图片描述文本。"""
 
-    def __init__(self):
-        self.chat = SimpleNamespace(completions=_FakeChatCompletions())
+    path = Path(image_path).expanduser().resolve()
+    if not path.is_file():
+        raise FileNotFoundError(f"图片不存在：{path}")
 
-
-def test_vlm_client_can_be_created():
-    """VLMClient 应能正常初始化。"""
-
-    fake_client = _FakeOpenAIClient()
-    vlm = VLMClient(client=fake_client)
-    assert vlm is not None
-
-
-def test_vlm_client_image_to_data_url(tmp_path):
-    """VLMClient.image_to_data_url 应能将图片转换为 data URL。"""
-
-    image_path = tmp_path / "test.png"
-    image_path.write_bytes(b"\x89PNG\r\n\x1a\n")
-    data_url = VLMClient.image_to_data_url(image_path)
-    assert data_url.startswith("data:image/png;base64,")
+    vlm_client = VLMClient(config=settings.vlm)
+    return vlm_client.describe_image(
+        image_path=path,
+        prompt=prompt,
+        task_name="VLM 图片描述测试",
+    )
 
 
-def test_vlm_client_normalize_image_ref(tmp_path):
-    """VLMClient.normalize_image_ref 应能规范化图片引用。"""
+def parse_args() -> argparse.Namespace:
+    """中文说明：读取可选图片路径和提示词，未传参时使用仓库测试图片。"""
 
-    assert VLMClient.normalize_image_ref("http://example.com/img.png").startswith("http://")
-    assert VLMClient.normalize_image_ref("data:image/png;base64,xxx").startswith("data:image/")
-
-    image_path = tmp_path / "test.png"
-    image_path.write_bytes(b"\x89PNG\r\n\x1a\n")
-    normalized = VLMClient.normalize_image_ref(image_path)
-    assert normalized.startswith("data:image/png;base64,")
-
-
-def test_vlm_client_describe_image(tmp_path):
-    """VLMClient.describe_image 应能正常调用并返回描述。"""
-
-    fake_client = _FakeOpenAIClient()
-    vlm = VLMClient(client=fake_client)
-
-    image_path = tmp_path / "test.png"
-    image_path.write_bytes(b"\x89PNG\r\n\x1a\n")
-
-    response = vlm.describe_image(image_path, "描述这张图片")
-    assert response == "这是一张图片"
-    request = fake_client.chat.completions.last_kwargs
-    assert request["extra_body"]["enable_thinking"] is False
-
-
-@pytest.mark.live
-def test_vlm_client_live_describe_image(tmp_path):
-    """VLMClient 应能调用真实 API 并返回图片描述。"""
-
-    vlm = VLMClient()
-
-    image_path = tmp_path / "test.png"
-    img = Image.new("RGB", (100, 100), color="red")
-    img.save(image_path)
-
-    response = vlm.describe_image(image_path, "描述这张图片")
-    assert isinstance(response, str)
-    assert len(response) > 0
+    parser = argparse.ArgumentParser(description="调用 config 中配置的 VLM 模型描述图片")
+    parser.add_argument(
+        "image_path",
+        nargs="?",
+        type=Path,
+        default=DEFAULT_IMAGE_PATH,
+        help=f"待描述图片路径，默认：{DEFAULT_IMAGE_PATH}",
+    )
+    parser.add_argument(
+        "--prompt",
+        default=DEFAULT_PROMPT,
+        help="发送给 VLM 的图片描述要求",
+    )
+    return parser.parse_args()
 
 
 def main() -> None:
-    """直接点击运行本文件时，顺序执行测试并打印结果。"""
+    """中文说明：调用图片描述函数，并将模型返回结果直接打印到终端。"""
 
-    print("开始运行 VLMClient 测试...")
-    test_vlm_client_can_be_created()
-    print("1. 初始化测试通过")
-    with tempfile.TemporaryDirectory() as temp_dir:
-        tmp_path = Path(temp_dir)
-        test_vlm_client_image_to_data_url(tmp_path)
-        print("2. 图片转 data URL 测试通过")
-        test_vlm_client_normalize_image_ref(tmp_path)
-        print("3. 图片引用规范化测试通过")
-        test_vlm_client_describe_image(tmp_path)
-        print("4. 模拟图片描述测试通过")
-        print("5. 开始真实 VLM API 调用测试...")
-        test_vlm_client_live_describe_image(tmp_path)
-        print("6. 真实 VLM API 调用测试通过")
-    print("VLMClient 测试全部完成")
+    # 中文说明：VLM 回复可能包含 GBK 无法表示的符号，统一使用 UTF-8 输出。
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    args = parse_args()
+    description = get_image_description(args.image_path, args.prompt)
+    print(description)
 
 
 if __name__ == "__main__":

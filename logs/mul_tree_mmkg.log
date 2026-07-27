@@ -29,3 +29,11 @@
 2026-07-13 16:19:01,510 | WARNING | mul_tree_mmkg.src.summarizer.bottom_up_summarizer | 章节《Section》首次模型响应缺少有效摘要或未返回 3 个合法 ConceptCategories，正在自动重试。
 2026-07-13 17:26:47,102 | WARNING | mul_tree_mmkg.src.summarizer.bottom_up_summarizer | 章节《Empty》没有可摘要内容，已写入提示文本。
 2026-07-13 17:26:47,227 | WARNING | mul_tree_mmkg.src.summarizer.bottom_up_summarizer | 章节《Section》首次模型响应缺少有效摘要或未返回 3 个合法 ConceptCategories，正在自动重试。
+2026-07-15 22:09:38,177 | WARNING | mul_tree_mmkg.src.summarizer.bottom_up_summarizer | 章节《Empty》没有可摘要内容，已写入提示文本。
+2026-07-15 22:09:38,302 | WARNING | mul_tree_mmkg.src.summarizer.bottom_up_summarizer | 章节《Section》首次模型响应缺少有效摘要或未返回 3 个合法 ConceptCategories，正在自动重试。
+2026-07-20 11:16:14,011 | WARNING | mul_tree_mmkg.src.summarizer.bottom_up_summarizer | 章节《Empty》没有可摘要内容，已写入提示文本。
+2026-07-20 11:16:14,136 | WARNING | mul_tree_mmkg.src.summarizer.bottom_up_summarizer | 章节《Section》首次模型响应缺少有效摘要或未返回 3 个合法 ConceptCategories，正在自动重试。
+2026-07-20 12:39:01,557 | WARNING | mul_tree_mmkg.src.summarizer.bottom_up_summarizer | 章节《Empty》没有可摘要内容，已写入提示文本。
+2026-07-20 12:39:01,684 | WARNING | mul_tree_mmkg.src.summarizer.bottom_up_summarizer | 章节《Section》首次模型响应缺少有效摘要或未返回 3 个合法 ConceptCategories，正在自动重试。
+2026-07-26 22:17:17,896 | WARNING | mul_tree_mmkg.src.summarizer.bottom_up_summarizer | 章节《Empty》没有可摘要内容，已写入提示文本。
+2026-07-26 22:17:18,022 | WARNING | mul_tree_mmkg.src.summarizer.bottom_up_summarizer | 章节《Section》首次模型响应缺少有效摘要或未返回 3 个合法 ConceptCategories，正在自动重试。
