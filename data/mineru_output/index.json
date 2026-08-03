@@ -1,62 +1,32 @@
 [
   {
-    "paper_id": "吉木萨尔凹陷芦草沟组页岩油储层发育特征与成藏条件研究_李杰",
-    "source_pdf": "吉木萨尔凹陷芦草沟组页岩油储层发育特征与成藏条件研究_李杰.pdf",
-    "source_path": "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\pdf\\吉木萨尔凹陷芦草沟组页岩油储层发育特征与成藏条件研究_李杰.pdf",
-    "output_dir": "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\吉木萨尔凹陷芦草沟组页岩油储层发育特征与成藏条件研究_李杰"
+    "paper_id": "File1039",
+    "source_pdf": "File1039.pdf",
+    "source_path": "testData\\pdf\\File1039.pdf",
+    "output_dir": "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\File1039"
   },
   {
-    "paper_id": "塔里木盆地顺北超深断溶体油藏特征与启示_漆立新",
-    "source_pdf": "塔里木盆地顺北超深断溶体油藏特征与启示_漆立新.pdf",
-    "source_path": "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\pdf\\塔里木盆地顺北超深断溶体油藏特征与启示_漆立新.pdf",
-    "output_dir": "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\塔里木盆地顺北超深断溶体油藏特征与启示_漆立新"
+    "paper_id": "File1066",
+    "source_pdf": "File1066.pdf",
+    "source_path": "testData\\pdf\\File1066.pdf",
+    "output_dir": "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\File1066"
   },
   {
-    "paper_id": "川南地区龙马溪组页岩气富集高产主控因素分析_蒲泊伶",
-    "source_pdf": "川南地区龙马溪组页岩气富集高产主控因素分析_蒲泊伶.pdf",
-    "source_path": "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\pdf\\川南地区龙马溪组页岩气富集高产主控因素分析_蒲泊伶.pdf",
-    "output_dir": "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\川南地区龙马溪组页岩气富集高产主控因素分析_蒲泊伶"
+    "paper_id": "File108",
+    "source_pdf": "File108.pdf",
+    "source_path": "testData\\pdf\\File108.pdf",
+    "output_dir": "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\File108"
   },
   {
-    "paper_id": "松辽盆地北部白垩系青山口组不同赋存状态页岩油特征_皇甫玉慧",
-    "source_pdf": "松辽盆地北部白垩系青山口组不同赋存状态页岩油特征_皇甫玉慧.pdf",
-    "source_path": "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\pdf\\松辽盆地北部白垩系青山口组不同赋存状态页岩油特征_皇甫玉慧.pdf",
-    "output_dir": "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\松辽盆地北部白垩系青山口组不同赋存状态页岩油特征_皇甫玉慧"
+    "paper_id": "File460",
+    "source_pdf": "File460.pdf",
+    "source_path": "testData\\pdf\\File460.pdf",
+    "output_dir": "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\File460"
   },
   {
-    "paper_id": "自贡地区五峰组—龙马溪组页岩储层特征和含气性_朱龙飞",
-    "source_pdf": "自贡地区五峰组—龙马溪组页岩储层特征和含气性_朱龙飞.pdf",
-    "source_path": "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\pdf\\自贡地区五峰组—龙马溪组页岩储层特征和含气性_朱龙飞.pdf",
-    "output_dir": "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\自贡地区五峰组—龙马溪组页岩储层特征和含气性_朱龙飞"
-  },
-  {
-    "paper_id": "鄂尔多斯盆地三叠系延长组长7段页岩气储层特征及其勘探开发前景_吴凯",
-    "source_pdf": "鄂尔多斯盆地三叠系延长组长7段页岩气储层特征及其勘探开发前景_吴凯.pdf",
-    "source_path": "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\pdf\\鄂尔多斯盆地三叠系延长组长7段页岩气储层特征及其勘探开发前景_吴凯.pdf",
-    "output_dir": "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地三叠系延长组长7段页岩气储层特征及其勘探开发前景_吴凯"
-  },
-  {
-    "paper_id": "鄂尔多斯盆地中生界延长组长7段页岩油地质特征及勘探开发进展_付金华 (1)",
-    "source_pdf": "鄂尔多斯盆地中生界延长组长7段页岩油地质特征及勘探开发进展_付金华 (1).pdf",
-    "source_path": "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\pdf\\鄂尔多斯盆地中生界延长组长7段页岩油地质特征及勘探开发进展_付金华 (1).pdf",
-    "output_dir": "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地中生界延长组长7段页岩油地质特征及勘探开发进展_付金华 (1)"
-  },
-  {
-    "paper_id": "鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制_吴东旭",
-    "source_pdf": "鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制_吴东旭.pdf",
-    "source_path": "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\pdf\\鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制_吴东旭.pdf",
-    "output_dir": "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制_吴东旭"
-  },
-  {
-    "paper_id": "鄂尔多斯盆地富县地区延长组长7湖相页岩油地质特征及勘探潜力评价_孙建博",
-    "source_pdf": "鄂尔多斯盆地富县地区延长组长7湖相页岩油地质特征及勘探潜力评价_孙建博.pdf",
-    "source_path": "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\pdf\\鄂尔多斯盆地富县地区延长组长7湖相页岩油地质特征及勘探潜力评价_孙建博.pdf",
-    "output_dir": "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地富县地区延长组长7湖相页岩油地质特征及勘探潜力评价_孙建博"
-  },
-  {
-    "paper_id": "鄂尔多斯盆地延安地区马五段上组合细粒白云岩储层特征及有利储层控制因素_伊硕",
-    "source_pdf": "鄂尔多斯盆地延安地区马五段上组合细粒白云岩储层特征及有利储层控制因素_伊硕.pdf",
-    "source_path": "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\pdf\\鄂尔多斯盆地延安地区马五段上组合细粒白云岩储层特征及有利储层控制因素_伊硕.pdf",
-    "output_dir": "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地延安地区马五段上组合细粒白云岩储层特征及有利储层控制因素_伊硕"
+    "paper_id": "File565",
+    "source_pdf": "File565.pdf",
+    "source_path": "testData\\pdf\\File565.pdf",
+    "output_dir": "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\File565"
   }
 ]

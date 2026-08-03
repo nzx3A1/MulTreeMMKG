@@ -1,6 +1,7 @@
 """按轨道组分段调用 VLM，避免复杂地层表格单次长响应超时。"""
 from __future__ import annotations
 
+from copy import deepcopy
 import json
 import os
 from pathlib import Path
@@ -13,13 +14,20 @@ from src.utils.llm_client import safe_json_loads
 from ...schema_models import ImageExtractionTask
 from ..subclassifier import StratigraphicSubtypeClassification
 from .pipeline import INTERVAL_FIELDS, TABLE_EMBEDDED_HYBRID_SCHEMA_VERSION
+from .ppstructure_geometry import (
+    apply_ppstructure_geometry,
+    extract_ppstructure_geometry,
+    geometry_prompt_catalog,
+)
 
 
 SEGMENT_ORDER = ("layout", "stratigraphy_lithology", "facies_reservoir_wells")
+NODE_ENRICHMENT_SCHEMA_VERSION = "table_embedded_hybrid.node_enrichment.v1"
+NODE_FIELDS = (*INTERVAL_FIELDS, "curve_tracks", "point_markers", "objects")
 
 
 def _source_image_size(task: ImageExtractionTask) -> tuple[int, int]:
-    """中文说明：直接读取来源图片真实尺寸，作为所有 VLM 像素坐标的硬约束。"""
+    """中文说明：读取原图尺寸，仅用于向 VLM 说明画布；像素几何由 PP-StructureV3 负责。"""
 
     image_path = Path(task.image_path)
     if not image_path.is_file():
@@ -34,8 +42,9 @@ def build_segmented_table_prompt(
     segment: str,
     known_tracks: list[Mapping[str, Any]] | None = None,
     known_intervals: list[Mapping[str, Any]] | None = None,
+    geometry: Mapping[str, Any] | None = None,
 ) -> str:
-    """中文说明：为三组互补轨道生成短响应 Prompt，所有分段共用原图像素坐标。"""
+    """中文说明：为三组语义任务生成 Prompt，所有坐标都改由同一份 PP 几何目录提供。"""
 
     if segment not in SEGMENT_ORDER:
         raise ValueError(f"未知表格分段：{segment}")
@@ -61,27 +70,33 @@ def build_segmented_table_prompt(
             {
                 "id": str(interval.get("id") or ""),
                 "name": str(interval.get("name") or ""),
-                "top_y": interval.get("top_y"),
-                "bottom_y": interval.get("bottom_y"),
+                "geometry_refs": list(interval.get("geometry_refs") or []),
             }
             for interval in known_intervals
             if str(interval.get("id") or "")
         ]
         interval_catalog = (
-            "\n左侧 OCR 已经确定以下地层边界（均为原图真实像素）。右侧图元必须以这些行边界为锚点，"
-            "不得再使用 0-800 深度值或 0-1000 归一化坐标冒充 pixel_y：\n"
+            "\n左侧语义分段已经选择以下 PP-StructureV3 几何锚点。右侧图元应复用这些 geometry_refs：\n"
             f"{json.dumps(rows, ensure_ascii=False)}\n"
         )
+    geometry_catalog = geometry_prompt_catalog(geometry or {})
+    geometry_catalog_json = json.dumps(
+        geometry_catalog,
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
     common = f"""
 你正在对同一张表格—图片嵌入混合型地层柱状图执行分段视觉 OCR。
 图片 ID：{task.image_id}
 图题：{task.caption or '无'}
 已确认子类：{classification.subtype.value}
 原图真实尺寸：width={image_width}，height={image_height}。
+PP-StructureV3 几何目录（ID 与像素坐标均由程序生成；只选择 ID，不估算坐标）：
+{geometry_catalog_json}
 
 共同约束：
 1. 只读取当前图片直接可见内容，不用正文常识补值；无法辨认时写入 uncertainties。
-2. 坐标必须使用上述原图真实像素，原点为左上角；x 只能在 0 到 {image_width}，y 只能在 0 到 {image_height}。区间给 top_y、bottom_y，点标注给 pixel_y；禁止使用 1000 或其他归一化画布。
+2. 禁止输出 content_bbox、bbox、pixel_y、top_y、bottom_y；轨道只选 pp_track_*，区间/点只用 geometry_refs 选择 pp_cell_* 或 pp_ocr_*。
 3. id 使用简短稳定英文或拼音，不得在不同对象间重复；evidence 必须引用图中可见文字、刻度、色条或曲线。
 4. 只输出指定 segment 的 JSON，不输出 Markdown、解释或思维过程。
 {track_catalog}
@@ -90,11 +105,10 @@ def build_segmented_table_prompt(
 
     instructions = {
         "layout": """
-本次只做坐标系重建和轨道拆分，不抽取地层区间：
-- 读取原图 width/height、有效表格 content_bbox。
+本次只做轨道语义标注和纵轴类型判断，不抽取地层区间：
 - layout_family 从 stratigraphic_column_table、multi_track_well_log、imaging_log_panel、stratigraphic_summary_table 中单选；无法归入时用 other_table_hybrid。
-- 若存在深度或厚度轴，列出至少 3 个、优先全部可见 calibration_points；若只有离散表格行而无数值轴，则 kind=relative_sequence、unit=无量纲，并以内容顶部 value=0、底部 value=1 建立两个明确的行序锚点。
-- tracks 从左到右覆盖图片实际存在的主栏，例如地层层级、代号、深度/厚度、岩性、文字描述、曲线、成像测井、相、储层、高亮区间、井号；没有的栏不要虚构。
+- 若存在连续深度轴，kind=depth 并从目录选择其 track_id 与 calibration_ocr_ids；逐层厚度数字不是连续深度轴，必须使用 kind=thickness，程序会退化到相对层序而不生成伪深度。
+- tracks 只能选择 PP 目录中实际存在的 pp_track_*，补充地层层级、深度、岩性、曲线、相、储层等角色；没有的栏不要虚构。
 输出：
 {
   "schema_version":"table_embedded_hybrid.segment.v1",
@@ -103,8 +117,8 @@ def build_segmented_table_prompt(
   "diagram_id":"",
   "diagram_name":"",
   "image_size":{"width":0,"height":0},
-  "coordinate_system":{"content_bbox":[0,0,0,0],"vertical_axis":{"kind":"thickness|depth","unit":"m","increases":"downward","calibration_points":[{"pixel_y":0,"value":0,"evidence":""}]}},
-  "tracks":[{"id":"","order":0,"role":"stratigraphy|depth|lithology|curve|text|facies|reservoir|well","header":"","bbox":[0,0,0,0],"parser":"","evidence":""}],
+  "coordinate_system":{"vertical_axis":{"kind":"thickness|depth|relative_sequence","unit":"m|无量纲","increases":"downward|upward","track_id":"pp_track_*","calibration_ocr_ids":["pp_ocr_*"]}},
+  "tracks":[{"id":"pp_track_*","role":"stratigraphy|depth|lithology|curve|text|facies|reservoir|well","header":"","parser":"","evidence":""}],
   "uncertainties":[]
 }
 """,
@@ -120,9 +134,9 @@ def build_segmented_table_prompt(
   "schema_version":"table_embedded_hybrid.segment.v1",
   "segment":"stratigraphy_lithology",
   "primitives":{
-    "stratigraphic_intervals":[{"id":"","name":"","parent_id":"","rank":"","track_id":"","top_y":0,"bottom_y":0,"evidence":"","confidence":0.0}],
+    "stratigraphic_intervals":[{"id":"","name":"","parent_id":"","rank":"","track_id":"pp_track_*","geometry_refs":["pp_cell_*"],"evidence":"","confidence":0.0}],
     "reference_intervals":[],
-    "lithology_intervals":[{"id":"","name":"","track_id":"","top_y":0,"bottom_y":0,"evidence":"","confidence":0.0}],
+    "lithology_intervals":[{"id":"","name":"","track_id":"pp_track_*","geometry_refs":["pp_cell_*"],"evidence":"","confidence":0.0}],
     "geological_feature_intervals":[]
   },
   "uncertainties":[]
@@ -134,7 +148,7 @@ def build_segmented_table_prompt(
 - curve_tracks 逐条记录可见曲线名称、单位和刻度，包括但不限于 GR、SP、AC、DEN、CNL、电阻率、TOC、矿物含量、脆性指数、含气量或海平面曲线。
 - curve_observations 按可稳定对应的层段或深度段记录高低、增减、峰谷或异常响应；刻度不清时只写 qualitative_response，不虚构数值。
 - reservoir_intervals 记录图中明确的储层、油气层、甜点、高亮色带或优质页岩段；没有则为空。
-- point_markers 只逐个读取井号及中心 pixel_y；其他点状标签放入 objects。objects 还可保存组合、孔隙类型、成像测井面板、储层成因说明等非连续对象。
+- point_markers 只逐个读取井号并选择 geometry_refs；其他点状标签放入 objects。objects 还可保存组合、孔隙类型、成像测井面板、储层成因说明等非连续对象。
 - 必须从有效内容顶部一直读取到底部，不能只抽取上半图；每个坐标都应与上面的已知地层/井段像素边界比较。
 - 对成像测井双面板，应分别建立面板对象和对应深度段；对纯测井图，不得虚构沉积相、储层成因或井号。
 - explicit_relations 只允许图中竖排文字或同一储层行明确表达的关系；其余跨轨关系由程序按纵轴生成。
@@ -143,12 +157,12 @@ def build_segmented_table_prompt(
   "schema_version":"table_embedded_hybrid.segment.v1",
   "segment":"facies_reservoir_wells",
   "primitives":{
-    "facies_intervals":[{"id":"","name":"","track_id":"","top_y":0,"bottom_y":0,"evidence":"","confidence":0.0}],
+    "facies_intervals":[{"id":"","name":"","track_id":"pp_track_*","geometry_refs":["pp_cell_*"],"evidence":"","confidence":0.0}],
     "curve_tracks":[{"id":"","name":"","track_id":"","scale_min":null,"scale_max":null,"unit":"","scale_direction":"","evidence":""}],
-    "curve_observations":[{"id":"","name":"","curve_ids":[],"track_id":"","top_y":0,"bottom_y":0,"qualitative_response":"","evidence":"","confidence":0.0}],
-    "reservoir_intervals":[{"id":"","name":"","track_id":"","top_y":0,"bottom_y":0,"evidence":"","confidence":0.0}],
+    "curve_observations":[{"id":"","name":"","curve_ids":[],"track_id":"pp_track_*","geometry_refs":["pp_cell_*"],"qualitative_response":"","evidence":"","confidence":0.0}],
+    "reservoir_intervals":[{"id":"","name":"","track_id":"pp_track_*","geometry_refs":["pp_cell_*"],"evidence":"","confidence":0.0}],
     "oil_layer_intervals":[],
-    "point_markers":[{"id":"","name":"","kind":"well","track_id":"","pixel_y":0,"evidence":"","confidence":0.0}],
+    "point_markers":[{"id":"","name":"","kind":"well","track_id":"pp_track_*","geometry_refs":["pp_cell_*","pp_ocr_*"],"evidence":"","confidence":0.0}],
     "objects":[{"id":"","name":"","entity_type":"oil_layer_group|pore_type|imaging_log|embedded_panel|geological_object","evidence":"","confidence":0.0}],
     "explicit_relations":[{"source_id":"","relation_type":"","target_id":"","evidence":"","confidence":0.0}]
   },
@@ -222,166 +236,229 @@ def merge_segmented_table_payloads(segments: Mapping[str, Mapping[str, Any]]) ->
     }
 
 
+def _track_header_map(payload: Mapping[str, Any]) -> dict[str, str]:
+    """中文说明：合并 VLM 表头、PP-OCR 表头和重复轨道语义，生成稳定的轨道表头属性。"""
+
+    result: dict[str, str] = {}
+    tracks = payload.get("tracks")
+    if not isinstance(tracks, list):
+        return result
+    for track in tracks:
+        if not isinstance(track, Mapping):
+            continue
+        track_id = str(track.get("id") or "").strip()
+        if not track_id:
+            continue
+        values: list[str] = []
+        for raw in (
+            track.get("header"),
+            track.get("ppstructure_header_text"),
+            *(track.get("semantic_headers") if isinstance(track.get("semantic_headers"), list) else []),
+        ):
+            text = str(raw or "").strip()
+            if text and text not in values:
+                values.append(text)
+        result[track_id] = " / ".join(values)
+    return result
+
+
+def _geometry_track_ids(item: Mapping[str, Any], payload: Mapping[str, Any]) -> list[str]:
+    """中文说明：优先采用显式 track_id，并用 PP cell/OCR 引用补足节点所在轨道。"""
+
+    track_ids: list[str] = []
+    explicit = str(item.get("track_id") or "").strip()
+    if explicit:
+        track_ids.append(explicit)
+    refs = item.get("geometry_refs")
+    geometry = payload.get("ppstructure_geometry")
+    if not isinstance(refs, list) or not isinstance(geometry, Mapping):
+        return track_ids
+    ref_ids = {str(value) for value in refs if str(value)}
+    for field in ("cells", "ocr_lines"):
+        records = geometry.get(field)
+        if not isinstance(records, list):
+            continue
+        for record in records:
+            if not isinstance(record, Mapping) or str(record.get("id") or "") not in ref_ids:
+                continue
+            candidates = record.get("track_ids")
+            if not isinstance(candidates, list):
+                candidates = [record.get("track_id")]
+            for value in candidates:
+                track_id = str(value or "").strip()
+                if track_id and track_id not in track_ids:
+                    track_ids.append(track_id)
+    return track_ids
+
+
+def _node_candidates(payload: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """中文说明：只枚举前三段已经确认的节点，第四次调用不得新增任何候选。"""
+
+    headers = _track_header_map(payload)
+    diagram_id = str(payload.get("diagram_id") or "table_embedded_hybrid_diagram").strip()
+    candidates = [
+        {
+            "id": diagram_id,
+            "name": str(payload.get("diagram_name") or "表格嵌入混合地层图"),
+            "node_kind": "stratigraphic_profile",
+            "track_header": "整图",
+            "evidence": "整张图片及图题",
+        }
+    ]
+    primitives = payload.get("primitives")
+    if not isinstance(primitives, Mapping):
+        raise ValueError("节点规范化前缺少 primitives")
+    seen = {diagram_id}
+    for field in NODE_FIELDS:
+        records = primitives.get(field, [])
+        if not isinstance(records, list):
+            raise ValueError(f"primitives.{field} 必须是数组")
+        for index, raw in enumerate(records):
+            if not isinstance(raw, Mapping):
+                continue
+            fallback = f"{field}_{index}"
+            local_id = str(raw.get("id") or fallback).strip()
+            if not local_id or local_id in seen:
+                raise ValueError(f"节点规范化发现缺失或重复局部 ID：{local_id!r}")
+            seen.add(local_id)
+            track_ids = _geometry_track_ids(raw, payload)
+            track_headers = [headers[value] for value in track_ids if headers.get(value)]
+            candidates.append(
+                {
+                    "id": local_id,
+                    "name": str(raw.get("name") or local_id),
+                    "node_kind": str(raw.get("entity_type") or field.removesuffix("s")),
+                    "track_id": " / ".join(track_ids),
+                    "track_header": " / ".join(dict.fromkeys(track_headers)),
+                    "evidence": str(raw.get("evidence") or "")[:500],
+                }
+            )
+    return candidates
+
+
+def build_node_enrichment_prompt(task: ImageExtractionTask, payload: Mapping[str, Any]) -> str:
+    """中文说明：携带图题、正文上下文和已确认节点，请 VLM 仅补充领域官方名称。"""
+
+    candidates = _node_candidates(payload)
+    context = "\n".join(str(value) for value in task.references if str(value).strip())[:6000]
+    return f"""
+你正在规范化一张地质表格图中已经抽取完成的知识图谱节点。
+图题：{task.caption or '无'}
+相邻正文上下文：{context or '无'}
+已确认节点（id、当前名称、类型、所在轨道表头和图内证据）：
+{json.dumps(candidates, ensure_ascii=False, separators=(',', ':'))}
+
+你可以使用地质学、地层学、测井学领域知识以及上面的图题和正文上下文，但必须遵守：
+1. 只能返回上面已有的 id，不能新增、删除、合并或拆分节点，不能生成关系或坐标。
+2. official_name 填写该节点最规范、完整的官方中文名或行业标准名；缩写可在上下文足够时展开。
+3. 若无法可靠规范化，official_name 必须原样保留当前名称，basis 使用 insufficient_context_keep_original，禁止猜测具体组、段、井号或岩性。
+4. 每个输入 id 必须且只能返回一次，official_name 不得为空。
+5. 只输出 JSON：
+{{"schema_version":"{NODE_ENRICHMENT_SCHEMA_VERSION}","nodes":[{{"id":"","official_name":"","basis":"standardized_domain_term|expanded_abbreviation|already_official|insufficient_context_keep_original","confidence":0.0}}]}}
+""".strip()
+
+
+def apply_node_enrichment(payload: Mapping[str, Any], enrichment: Mapping[str, Any]) -> dict[str, Any]:
+    """中文说明：按局部 ID 写入官方名，并以确定性轨道映射写入每个节点的 track_header。"""
+
+    if str(enrichment.get("schema_version") or "") != NODE_ENRICHMENT_SCHEMA_VERSION:
+        raise ValueError(f"节点规范化响应必须使用 {NODE_ENRICHMENT_SCHEMA_VERSION}")
+    raw_nodes = enrichment.get("nodes")
+    if not isinstance(raw_nodes, list):
+        raise ValueError("节点规范化响应的 nodes 必须是数组")
+    expected = _node_candidates(payload)
+    expected_ids = {item["id"] for item in expected}
+    by_id: dict[str, dict[str, Any]] = {}
+    for index, raw in enumerate(raw_nodes):
+        if not isinstance(raw, Mapping):
+            raise ValueError(f"节点规范化 nodes[{index}] 不是对象")
+        local_id = str(raw.get("id") or "").strip()
+        official_name = str(raw.get("official_name") or "").strip()
+        if local_id not in expected_ids or local_id in by_id or not official_name:
+            raise ValueError(f"节点规范化返回未知、重复或空名称节点：{local_id!r}")
+        try:
+            confidence = round(max(0.0, min(1.0, float(raw.get("confidence")))), 3)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"节点 {local_id} 缺少有效 confidence") from exc
+        by_id[local_id] = {
+            "official_name": official_name,
+            "official_name_basis": str(raw.get("basis") or "insufficient_context_keep_original"),
+            "official_name_confidence": confidence,
+        }
+    missing = sorted(expected_ids - set(by_id))
+    if missing:
+        raise ValueError(f"节点规范化响应缺少节点：{missing}")
+
+    enriched = deepcopy(dict(payload))
+    candidate_by_id = {item["id"]: item for item in expected}
+    diagram_id = str(enriched.get("diagram_id") or "table_embedded_hybrid_diagram")
+    enriched["diagram_official_name"] = by_id[diagram_id]["official_name"]
+    enriched["diagram_official_name_basis"] = by_id[diagram_id]["official_name_basis"]
+    enriched["diagram_official_name_confidence"] = by_id[diagram_id]["official_name_confidence"]
+    enriched["diagram_track_header"] = "整图"
+    primitives = enriched["primitives"]
+    for field in NODE_FIELDS:
+        for index, item in enumerate(primitives.get(field, [])):
+            local_id = str(item.get("id") or f"{field}_{index}").strip()
+            item["id"] = local_id
+            item.update(by_id[local_id])
+            item["track_header"] = candidate_by_id[local_id]["track_header"]
+    enriched["node_enrichment"] = deepcopy(dict(enrichment))
+    return enriched
+
+
+def enrich_table_node_names(
+    task: ImageExtractionTask,
+    vlm_client: Any,
+    payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    """中文说明：执行第 4 次受约束 VLM 调用，只为现有节点补充官方名。"""
+
+    response = vlm_client.describe_image(
+        task.image_path,
+        build_node_enrichment_prompt(task, payload),
+        task_name=f"表格嵌入混合节点官方名规范化:{task.image_id}",
+        response_format={"type": "json_object"},
+        max_tokens=int(os.getenv("STRATIGRAPHIC_TABLE_NODE_ENRICHMENT_MAX_TOKENS", "12288")),
+    )
+    enrichment = response if isinstance(response, Mapping) else safe_json_loads(str(response or ""))
+    if not isinstance(enrichment, Mapping):
+        raise ValueError("节点官方名规范化响应不是 JSON 对象")
+    return apply_node_enrichment(payload, enrichment)
+
+
 def validate_and_repair_pixel_geometry(
     task: ImageExtractionTask,
     payload: dict[str, Any],
+    *,
+    geometry: Mapping[str, Any] | None = None,
+    geometry_provider: Any | None = None,
 ) -> dict[str, Any]:
-    """中文说明：以真实图片尺寸复核坐标，丢弃越界刻度并裁剪跨边界图元，避免单个坐标误差拖垮整图。"""
+    """中文说明：兼容原入口名称，但现在用 PP-StructureV3 全量替换 VLM 像素坐标。"""
 
-    image_width, image_height = _source_image_size(task)
-    payload["image_size"] = {"width": image_width, "height": image_height}
-    raw_uncertainties = payload.get("uncertainties")
-    uncertainties = list(raw_uncertainties) if isinstance(raw_uncertainties, list) else []
-    geometry_corrections: list[str] = []
-
-    def coordinate(value: Any, *, name: str) -> float:
-        """中文说明：把单个像素字段转换为有限浮点数，范围修复由各几何对象按语义处理。"""
-
-        try:
-            number = float(value)
-        except (TypeError, ValueError) as exc:
-            raise ValueError(f"{name} 不是有效像素坐标：{value!r}") from exc
-        if number != number or number in (float("inf"), float("-inf")):
-            raise ValueError(f"{name} 不是有限像素坐标：{value!r}")
-        return number
-
-    def clipped(value: Any, *, name: str, upper: int) -> float:
-        """中文说明：把与图片边界相交的框或区间裁剪到真实画布，并记录可审计的不确定性。"""
-
-        number = coordinate(value, name=name)
-        repaired = max(0.0, min(float(upper), number))
-        if repaired != number:
-            geometry_corrections.append(f"{name} 从 {number:g} 裁剪为 {repaired:g}")
-        return repaired
-
-    coordinate_system = payload.get("coordinate_system")
-    if not isinstance(coordinate_system, Mapping):
-        raise ValueError("分段合并结果缺少 coordinate_system")
-    bbox = coordinate_system.get("content_bbox")
-    if not isinstance(bbox, list) or len(bbox) != 4:
-        raise ValueError("coordinate_system.content_bbox 必须是四元素数组")
-    x0 = clipped(bbox[0], name="content_bbox.x0", upper=image_width)
-    y0 = clipped(bbox[1], name="content_bbox.y0", upper=image_height)
-    x1 = clipped(bbox[2], name="content_bbox.x1", upper=image_width)
-    y1 = clipped(bbox[3], name="content_bbox.y1", upper=image_height)
-    if x1 <= x0 or y1 <= y0:
-        raise ValueError("coordinate_system.content_bbox 必须具有正宽高")
-    coordinate_system["content_bbox"] = [x0, y0, x1, y1]
-
-    axis = coordinate_system.get("vertical_axis")
-    calibration_points = axis.get("calibration_points") if isinstance(axis, Mapping) else None
-    if not isinstance(calibration_points, list) or len(calibration_points) < 2:
-        raise ValueError("真实 OCR 纵轴至少需要两个 calibration_points")
-    valid_calibration_points: list[dict[str, Any]] = []
-    for index, point in enumerate(calibration_points):
-        if not isinstance(point, Mapping):
-            raise ValueError(f"calibration_points[{index}] 必须是对象")
-        pixel_y = coordinate(point.get("pixel_y"), name=f"calibration_points[{index}].pixel_y")
-        if pixel_y < 0 or pixel_y > image_height:
-            # 中文说明：越界轴刻度通常是模型按等间距外推的不可见值，必须删除而不是压到图像边缘。
-            geometry_corrections.append(
-                f"calibration_points[{index}] 的 pixel_y={pixel_y:g} 越界，已删除该不可见刻度"
-            )
-            continue
-        valid_point = dict(point)
-        valid_point["pixel_y"] = pixel_y
-        valid_calibration_points.append(valid_point)
-    if len(valid_calibration_points) < 2:
-        raise ValueError("删除越界刻度后，真实 OCR 纵轴不足两个 calibration_points")
-    axis["calibration_points"] = valid_calibration_points
-
-    tracks = payload.get("tracks")
-    if not isinstance(tracks, list) or not tracks:
-        raise ValueError("真实 OCR 结果缺少 tracks")
-    for index, track in enumerate(tracks):
-        raw_bbox = track.get("bbox") if isinstance(track, Mapping) else None
-        if not isinstance(raw_bbox, list) or len(raw_bbox) != 4:
-            raise ValueError(f"tracks[{index}].bbox 必须是四元素数组")
-        tx0 = clipped(raw_bbox[0], name=f"tracks[{index}].x0", upper=image_width)
-        ty0 = clipped(raw_bbox[1], name=f"tracks[{index}].y0", upper=image_height)
-        tx1 = clipped(raw_bbox[2], name=f"tracks[{index}].x1", upper=image_width)
-        ty1 = clipped(raw_bbox[3], name=f"tracks[{index}].y1", upper=image_height)
-        if tx1 <= tx0 or ty1 <= ty0:
-            raise ValueError(f"tracks[{index}].bbox 必须具有正宽高")
-        track["bbox"] = [tx0, ty0, tx1, ty1]
-
-    primitives = payload.get("primitives")
-    if not isinstance(primitives, Mapping):
-        raise ValueError("真实 OCR 结果缺少 primitives")
-    known_track_ids = {
-        str(track.get("id") or "")
-        for track in tracks
-        if isinstance(track, Mapping) and str(track.get("id") or "")
-    }
-    for field in INTERVAL_FIELDS:
-        items = primitives.get(field)
-        if not isinstance(items, list):
-            raise ValueError(f"primitives.{field} 必须是数组")
-        valid_items: list[dict[str, Any]] = []
-        for index, item in enumerate(items):
-            if not isinstance(item, Mapping):
-                raise ValueError(f"primitives.{field}[{index}] 必须是对象")
-            track_id = str(item.get("track_id") or "")
-            if track_id and track_id not in known_track_ids:
-                raise ValueError(
-                    f"primitives.{field}[{index}].track_id={track_id!r} 未在 layout 轨道中定义"
-                )
-            raw_top_y = coordinate(item.get("top_y"), name=f"primitives.{field}[{index}].top_y")
-            raw_bottom_y = coordinate(item.get("bottom_y"), name=f"primitives.{field}[{index}].bottom_y")
-            if raw_bottom_y <= 0 or raw_top_y >= image_height:
-                geometry_corrections.append(
-                    f"primitives.{field}[{index}] 完全位于图片外，已删除"
-                )
-                continue
-            top_y = clipped(raw_top_y, name=f"primitives.{field}[{index}].top_y", upper=image_height)
-            bottom_y = clipped(
-                raw_bottom_y,
-                name=f"primitives.{field}[{index}].bottom_y",
-                upper=image_height,
-            )
-            if bottom_y <= top_y:
-                raise ValueError(f"primitives.{field}[{index}] 的 bottom_y 必须大于 top_y")
-            valid_item = dict(item)
-            valid_item["top_y"] = top_y
-            valid_item["bottom_y"] = bottom_y
-            valid_items.append(valid_item)
-        primitives[field] = valid_items
-    point_markers = primitives.get("point_markers")
-    if not isinstance(point_markers, list):
-        raise ValueError("primitives.point_markers 必须是数组")
-    valid_point_markers: list[dict[str, Any]] = []
-    for index, item in enumerate(point_markers):
-        if not isinstance(item, Mapping):
-            raise ValueError(f"primitives.point_markers[{index}] 必须是对象")
-        track_id = str(item.get("track_id") or "")
-        if track_id and track_id not in known_track_ids:
-            raise ValueError(
-                f"primitives.point_markers[{index}].track_id={track_id!r} 未在 layout 轨道中定义"
-            )
-        pixel_y = coordinate(item.get("pixel_y"), name=f"primitives.point_markers[{index}].pixel_y")
-        if pixel_y < 0 or pixel_y > image_height:
-            geometry_corrections.append(
-                f"primitives.point_markers[{index}].pixel_y={pixel_y:g} 越界，已删除该点"
-            )
-            continue
-        valid_item = dict(item)
-        valid_item["pixel_y"] = pixel_y
-        valid_point_markers.append(valid_item)
-    primitives["point_markers"] = valid_point_markers
-    for correction in geometry_corrections:
-        uncertainty = f"geometry_repair: {correction}"
-        if uncertainty not in uncertainties:
-            uncertainties.append(uncertainty)
-    payload["uncertainties"] = uncertainties
-    return payload
+    resolved_geometry = (
+        dict(geometry)
+        if isinstance(geometry, Mapping)
+        else extract_ppstructure_geometry(task.image_path, geometry_provider)
+    )
+    return apply_ppstructure_geometry(payload, resolved_geometry)
 
 
 def extract_segmented_table_visual(
     task: ImageExtractionTask,
     vlm_client: Any,
     classification: StratigraphicSubtypeClassification,
+    *,
+    geometry: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """中文说明：对同一图片依次调用三次短响应 VLM，并返回可供六阶段算法消费的完整结构。"""
+    """中文说明：PP-StructureV3 先跑一次，三次 VLM 只复用几何 ID 完成语义识别。"""
+
+    geometry_provider = getattr(vlm_client, "ppstructure_geometry_extractor", None)
+    resolved_geometry = (
+        dict(geometry)
+        if isinstance(geometry, Mapping)
+        else extract_ppstructure_geometry(task.image_path, geometry_provider)
+    )
 
     max_tokens = {
         # 中文说明：宽幅综合柱状表可能包含十余条轨道，布局 JSON 需要更高上限以避免在最后一条轨道处截断。
@@ -403,6 +480,7 @@ def extract_segmented_table_visual(
                         "stratigraphic_intervals"
                     )
                 ),
+                geometry=resolved_geometry,
             ),
             task_name=(
                 f"表格嵌入混合专用OCR:{segment}_v2:{task.image_id}"
@@ -413,4 +491,9 @@ def extract_segmented_table_visual(
             max_tokens=max_tokens[segment],
         )
         segments[segment] = _parse_segment(response, segment)
-    return validate_and_repair_pixel_geometry(task, merge_segmented_table_payloads(segments))
+    resolved_payload = validate_and_repair_pixel_geometry(
+        task,
+        merge_segmented_table_payloads(segments),
+        geometry=resolved_geometry,
+    )
+    return enrich_table_node_names(task, vlm_client, resolved_payload)

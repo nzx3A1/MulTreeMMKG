@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from PIL import Image
 
 from src.extractors.image_extractor.schema_models import ImageExtractionContext, ImageExtractionTask
 from src.extractors.image_extractor.stratigraphic_profile import (
@@ -86,7 +87,7 @@ def test_each_subtype_uses_a_distinct_extraction_algorithm() -> None:
         for subtype in StratigraphicProfileSubtype
     }
     assert algorithms == {
-        "coordinate_track_specialized_depth_alignment_graph_assembly",
+        "ppstructurev3_geometry_semantic_vlm_depth_alignment_graph_assembly",
         "surface_topology_spatial_extraction",
         "axis_layer_correlation_extraction",
     }
@@ -99,6 +100,55 @@ class RecordingOfflineVLM:
         """中文说明：初始化 Prompt 调用记录。"""
 
         self.prompts: list[str] = []
+
+    def ppstructure_geometry_extractor(self, image_path: str) -> dict[str, Any]:
+        """中文说明：离线测试注入确定性的 PP 几何契约，避免下载或运行真实 OCR 模型。"""
+
+        with Image.open(image_path) as image:
+            width, height = image.size
+        bbox = [0, 0, width, height]
+        return {
+            "schema_version": "ppstructurev3.table_geometry.v1",
+            "engine": "offline_contract_fixture",
+            "coordinate_space": "original_pixels",
+            "source_image_path": str(Path(image_path).resolve()),
+            "image_size": {"width": width, "height": height},
+            "content_bbox": bbox,
+            "tracks": [
+                {
+                    "id": "pp_track_000",
+                    "order": 0,
+                    "bbox": bbox,
+                    "header_text": "测试地层",
+                }
+            ],
+            "cells": [
+                {
+                    "id": "pp_cell_0000",
+                    "bbox": bbox,
+                    "ocr_ids": ["pp_ocr_0000"],
+                    "text": "测试层",
+                    "track_ids": ["pp_track_000"],
+                }
+            ],
+            "ocr_lines": [
+                {
+                    "id": "pp_ocr_0000",
+                    "text": "测试层",
+                    "confidence": 1.0,
+                    "bbox": bbox,
+                    "cell_id": "pp_cell_0000",
+                    "track_id": "pp_track_000",
+                }
+            ],
+            "rule_lines": {
+                "available": True,
+                "method": "offline_contract_fixture",
+                "vertical_lines": [0, width],
+                "horizontal_lines": [0, height],
+            },
+            "quality": {"ocr_line_count": 1, "cell_count": 1, "track_count": 1},
+        }
 
     def describe_image(self, image_path: str, prompt: str, **kwargs: Any) -> dict[str, Any]:
         """中文说明：按 task_name 区分子分类与抽取响应，且不创建网络或模型客户端。"""
@@ -114,6 +164,25 @@ class RecordingOfflineVLM:
                 "subtype": subtype,
                 "confidence": 0.96,
                 "evidence": ["测试可见版式证据"],
+            }
+        if "表格嵌入混合节点官方名规范化" in str(kwargs.get("task_name") or ""):
+            # 中文说明：第四次调用只覆盖完整抽取已经产生的两个节点，不得新增节点或关系。
+            return {
+                "schema_version": "table_embedded_hybrid.node_enrichment.v1",
+                "nodes": [
+                    {
+                        "id": "test_table",
+                        "official_name": "测试混合地层表",
+                        "basis": "standardized_domain_term",
+                        "confidence": 0.95,
+                    },
+                    {
+                        "id": "unit_1",
+                        "official_name": "测试层",
+                        "basis": "already_official",
+                        "confidence": 0.99,
+                    },
+                ],
             }
         if "table_embedded_hybrid.v1" in prompt:
             # 中文说明：表格混合分支必须返回专用几何协议，不能再用原通用地层 JSON。
@@ -165,6 +234,84 @@ class RecordingOfflineVLM:
                 },
                 "uncertainties": [],
             }
+        if "three_dimensional_stratigraphic_model.v1" in prompt:
+            # 中文说明：三维分支返回专用层序与上下文协议，验证外层确实分发到新子目录。
+            return {
+                "schema_version": "three_dimensional_stratigraphic_model.v1",
+                "model": {
+                    "id": "model_1",
+                    "name": "测试三维地层模型",
+                    "visible_surfaces": ["top", "front", "side"],
+                    "topology_evidence": "测试块体可见三个面",
+                    "evidence": "测试块体可见三个面",
+                    "confidence": 0.95,
+                },
+                "lithologies": [],
+                "stratigraphic_units": [
+                    {
+                        "id": "unit_lower",
+                        "name": "下层",
+                        "column_id": "main_section",
+                        "order_bottom_to_top": 0,
+                        "evidence": "侧壁下部",
+                        "confidence": 0.9,
+                    },
+                    {
+                        "id": "unit_upper",
+                        "name": "上层",
+                        "column_id": "main_section",
+                        "order_bottom_to_top": 1,
+                        "evidence": "侧壁上部",
+                        "confidence": 0.9,
+                    },
+                ],
+                "wells": [],
+                "faults": [],
+                "zones": [],
+                "fluids": [],
+                "objects": [],
+                "relations": [],
+                "context_relations": [],
+                "uncertainties": [],
+            }
+        if "two_dimensional_stratigraphic_log.v1" in prompt:
+            # 中文说明：二维专用目录已实现，返回最小合法实体协议验证调度而不触发真实模型。
+            return {
+                "schema_version": "two_dimensional_stratigraphic_log.v1",
+                "diagram_type": "geological_section",
+                "diagram_name": "测试二维剖面",
+                "coordinate_system": {},
+                "entities": [
+                    {
+                        "id": "unit_2d_upper",
+                        "name": "测试二维上层",
+                        "type": "stratigraphic_unit",
+                        "bbox": [100, 100, 900, 300],
+                        "evidence": "测试二维上层标签",
+                        "confidence": 0.9,
+                    },
+                    {
+                        "id": "unit_2d_lower",
+                        "name": "测试二维下层",
+                        "type": "stratigraphic_unit",
+                        "bbox": [100, 300, 900, 600],
+                        "evidence": "测试二维下层标签",
+                        "confidence": 0.9,
+                    }
+                ],
+                "relations": [],
+                "stratigraphic_sequences": [
+                    {
+                        "id": "test_sequence",
+                        "context_id": "regional",
+                        "ordered_unit_ids_top_to_bottom": ["unit_2d_upper", "unit_2d_lower"],
+                        "evidence": "测试二维上下层序",
+                        "confidence": 0.9,
+                    }
+                ],
+                "spatial_groups": [],
+                "uncertainties": [],
+            }
         return {
             "diagram_type": "offline_test",
             "stratigraphic_units": [
@@ -182,23 +329,25 @@ class RecordingOfflineVLM:
 
 
 @pytest.mark.parametrize(
-    ("chunk_index", "expected_subtype", "expected_algorithm"),
+    ("chunk_index", "expected_subtype", "expected_algorithm", "expected_status"),
     [
         (
             0,
             "table_embedded_hybrid",
-            "coordinate_track_specialized_depth_alignment_graph_assembly",
+            "ppstructurev3_geometry_semantic_vlm_depth_alignment_graph_assembly",
+            "completed",
         ),
-        (4, "three_dimensional_stratigraphic_model", "surface_topology_spatial_extraction"),
-        (18, "two_dimensional_stratigraphic_log", "axis_layer_correlation_extraction"),
+        (4, "three_dimensional_stratigraphic_model", "surface_topology_spatial_extraction", "completed"),
+        (18, "two_dimensional_stratigraphic_log", "axis_layer_correlation_extraction", "completed"),
     ],
 )
 def test_extractor_dispatches_the_selected_strategy(
     chunk_index: int,
     expected_subtype: str,
     expected_algorithm: str,
+    expected_status: str,
 ) -> None:
-    """中文说明：以三张真实代表图验证子分类结果真正控制后续视觉算法 Prompt。"""
+    """中文说明：验证三个已实现子类型分别进入专用目录，不再回退到旧通用算法。"""
 
     chunk = _chunks()[chunk_index]
     image_path = str(chunk["image_path"][0])
@@ -223,12 +372,13 @@ def test_extractor_dispatches_the_selected_strategy(
         ),
     )
 
-    assert graph.metadata.extra["status"] == "completed"
+    assert graph.metadata.extra["status"] == expected_status
     assert graph.metadata.extra["stratigraphic_subtype"] == expected_subtype
     assert graph.metadata.extra["subtype_extraction_algorithm"] == expected_algorithm
     assert graph.metadata.extra["subtype_classification_vlm_called"] is True
-    assert graph.metadata.extra["vlm_call_count"] == 2
-    assert len(vlm.prompts) == 2
+    expected_call_count = 3 if expected_subtype == "table_embedded_hybrid" else 2
+    assert graph.metadata.extra["vlm_call_count"] == expected_call_count
+    assert len(vlm.prompts) == expected_call_count
     assert "只能从以下三个 subtype 中选择一个" in vlm.prompts[0]
     assert expected_algorithm in vlm.prompts[1]
 

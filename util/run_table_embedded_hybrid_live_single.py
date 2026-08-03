@@ -32,8 +32,11 @@ from src.extractors.image_extractor.stratigraphic_profile.table_embedded_hybrid.
     is_table_embedded_hybrid_payload,
 )
 from src.extractors.image_extractor.stratigraphic_profile.table_embedded_hybrid.segmented_vlm import (
+    NODE_ENRICHMENT_SCHEMA_VERSION,
     SEGMENT_ORDER,
+    apply_node_enrichment,
     merge_segmented_table_payloads,
+    validate_and_repair_pixel_geometry,
 )
 from src.extractors.image_extractor.vlm_classification import VLMImageClassifier
 from src.utils.json_io import write_json
@@ -42,7 +45,8 @@ from src.utils.vlm_client import VLMClient
 
 
 DEFAULT_IMAGE_PATH = PROJECT_ROOT / "data" / "mineru_output" / "鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制_吴东旭" / "images" / "787873a7863480cdb8cd2b32373fe10780afb8365cc9153ebd6aa6e0ebcea629.jpg"
-DEFAULT_OUTPUT = PROJECT_ROOT / "src" / "extractors" / "image_extractor" / "stratigraphic_profile" / "three_dimensional_stratigraphic_model" / "table_embedded_hybrid_live_api_single_extraction_result.json"
+# 中文说明：单图结果默认写入当前子类型自己的 result 目录，避免与三维地层模型结果混放。
+DEFAULT_OUTPUT = PROJECT_ROOT / "src" / "extractors" / "image_extractor" / "stratigraphic_profile" / "table_embedded_hybrid" / "result" / "table_embedded_hybrid_live_api_single_extraction_result.json"
 
 # 中文说明：该常量逐字段保存用户指定的唯一测试 Chunk，避免测试时误取清单中的其他图片。
 LIVE_TEST_CHUNK: dict[str, Any] = {
@@ -89,7 +93,7 @@ class RecordingVLMClient:
         prompt_sha256 = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
         request_model = (
             self.extraction_model
-            if "视觉抽取" in task_name or "专用OCR" in task_name
+            if "视觉抽取" in task_name or "专用OCR" in task_name or "官方名规范化" in task_name
             else self.classification_model
         )
         kwargs.setdefault("model", request_model)
@@ -214,6 +218,19 @@ def _find_extraction_payload(calls: list[Mapping[str, Any]]) -> dict[str, Any]:
     return {}
 
 
+def _find_node_enrichment(calls: list[Mapping[str, Any]]) -> dict[str, Any]:
+    """中文说明：从调用审计中读取第 4 次节点官方名响应，供断点结果确定性重建。"""
+
+    for call in reversed(calls):
+        payload = call.get("parsed_response")
+        if (
+            isinstance(payload, Mapping)
+            and str(payload.get("schema_version") or "") == NODE_ENRICHMENT_SCHEMA_VERSION
+        ):
+            return dict(payload)
+    return {}
+
+
 def _load_cached_calls(output_path: Path) -> list[Mapping[str, Any]]:
     """中文说明：从同一单图结果读取可复用 API 记录，损坏或异图文件一律视为无缓存。"""
 
@@ -269,6 +286,10 @@ def run_live_pipeline(
     extraction_payload = _find_extraction_payload(recorder.calls)
     intermediate: dict[str, Any] = {}
     if is_table_embedded_hybrid_payload(extraction_payload):
+        extraction_payload = validate_and_repair_pixel_geometry(classified_task, extraction_payload)
+        node_enrichment = _find_node_enrichment(recorder.calls)
+        if node_enrichment:
+            extraction_payload = apply_node_enrichment(extraction_payload, node_enrichment)
         intermediate = TableEmbeddedHybridPipeline().run(classified_task, extraction_payload)
 
     graph_payload = graph.to_dict()
@@ -306,7 +327,7 @@ def run_live_pipeline(
         "source_chunk": dict(chunk),
         "target_subtype": "table_embedded_hybrid",
         "events_extracted": False,
-        "algorithm": "视觉大类分类 → 视觉子分类 → 坐标系重建 → 轨道拆分 → 专用OCR/内容解析 → 深度/层序对齐 → 结构化中间结果 → 确定性知识图谱装配",
+        "algorithm": "视觉大类分类 → 视觉子分类 → PP-StructureV3 像素几何 → 三段 VLM 语义 ID 选择 → OCR 深度轴/相对层序 → 结构化中间结果 → 确定性知识图谱装配",
         "api_execution": {
             "real_api_called": bool(recorder.calls),
             "configured_model": settings.vlm.model,
@@ -343,11 +364,10 @@ def run_live_pipeline(
                 "source_image_path": classified_task.image_path,
                 "source_image_filename": Path(classified_task.image_path).name,
                 "real_vlm_called": bool(recorder.calls),
-                "real_ocr_called": any(
-                    "视觉抽取" in str(call.get("task_name"))
-                    or "专用OCR" in str(call.get("task_name"))
-                    for call in recorder.calls
-                ),
+                "real_ocr_called": bool(intermediate.get("ppstructure_geometry")),
+                "ppstructure_runtime": dict(
+                    intermediate.get("ppstructure_geometry", {}).get("runtime", {})
+                ) if intermediate else {},
                 "classification": classification.to_dict(),
                 "extractor_route": routed_kind.value,
                 "stratigraphic_subtype": subtype,

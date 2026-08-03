@@ -10,6 +10,7 @@ from PIL import Image
 from ..subclassifier import StratigraphicProfileSubtype
 from ...schema_models import ImageExtractionTask
 from .layout import LinearDepthTransform, detect_rule_lines, fit_vertical_axis, rebuild_tracks
+from .ppstructure_geometry import ensure_ppstructure_geometry
 
 
 TABLE_EMBEDDED_HYBRID_SCHEMA_VERSION = "table_embedded_hybrid.v1"
@@ -23,6 +24,7 @@ INTERVAL_FIELDS = (
     "geological_feature_intervals",
     "curve_observations",
 )
+NODE_FIELDS = (*INTERVAL_FIELDS, "curve_tracks", "point_markers", "objects")
 
 
 def is_table_embedded_hybrid_payload(payload: Mapping[str, Any]) -> bool:
@@ -76,10 +78,11 @@ def _normalize_interval(
     top_value = transform.value_at(top_y)
     bottom_value = transform.value_at(bottom_y)
     shallow, deep = sorted((top_value, bottom_value))
-    reserved = {"id", "name", "top_y", "bottom_y", "confidence", "evidence"}
+    reserved = {"id", "name", "official_name", "top_y", "bottom_y", "confidence", "evidence"}
     return {
         "id": local_id,
         "name": name,
+        "official_name": str(raw.get("official_name") or name),
         "kind": field.removesuffix("s"),
         "top_y": round(top_y, 3),
         "bottom_y": round(bottom_y, 3),
@@ -103,10 +106,11 @@ def _normalize_point(
     local_id = str(raw.get("id") or f"point_marker_{index}").strip()
     name = str(raw.get("name") or local_id).strip()
     pixel_y = float(raw.get("pixel_y"))
-    reserved = {"id", "name", "pixel_y", "confidence", "evidence"}
+    reserved = {"id", "name", "official_name", "pixel_y", "confidence", "evidence"}
     return {
         "id": local_id,
         "name": name,
+        "official_name": str(raw.get("official_name") or name),
         "kind": str(raw.get("kind") or "point_marker"),
         "pixel_y": round(pixel_y, 3),
         "vertical_value": round(transform.value_at(pixel_y), 3),
@@ -269,7 +273,7 @@ def _normalize_objects(raw_objects: Any) -> list[dict[str, Any]]:
         if not local_id or local_id in seen_ids:
             raise ValueError(f"primitives.objects[{index}].id 缺失或重复：{local_id!r}")
         seen_ids.add(local_id)
-        reserved = {"id", "name", "entity_type", "evidence", "confidence", "attributes"}
+        reserved = {"id", "name", "official_name", "entity_type", "evidence", "confidence", "attributes"}
         attributes = {key: value for key, value in raw.items() if key not in reserved}
         if isinstance(raw.get("attributes"), Mapping):
             attributes.update(dict(raw["attributes"]))
@@ -277,6 +281,7 @@ def _normalize_objects(raw_objects: Any) -> list[dict[str, Any]]:
             {
                 "id": local_id,
                 "name": str(raw.get("name") or local_id),
+                "official_name": str(raw.get("official_name") or raw.get("name") or local_id),
                 "entity_type": str(raw.get("entity_type") or "geological_object"),
                 "evidence": str(raw.get("evidence") or "图内可见对象标签"),
                 "confidence": _confidence(raw.get("confidence")),
@@ -328,12 +333,13 @@ class TableEmbeddedHybridPipeline:
     """执行坐标重建、轨道拆分、专用解析、深度对齐和中间结果装配。"""
 
     def run(self, task: ImageExtractionTask, payload: Mapping[str, Any]) -> dict[str, Any]:
-        """中文说明：把真实 VLM 返回的单张混合表格图元转换为确定、可审计的中间结果。"""
+        """中文说明：先确保坐标来自 PP-StructureV3，再把 VLM 语义转换为可审计中间结果。"""
 
         if not is_table_embedded_hybrid_payload(payload):
             raise ValueError(
                 f"专用响应必须使用 schema_version={TABLE_EMBEDDED_HYBRID_SCHEMA_VERSION}"
             )
+        payload = ensure_ppstructure_geometry(payload, task.image_path)
         width, height, size_source = _image_size(task.image_path)
         if width <= 0 or height <= 0:
             raise ValueError("图片尺寸必须大于零")
@@ -345,7 +351,14 @@ class TableEmbeddedHybridPipeline:
             raise ValueError("响应缺少 coordinate_system.vertical_axis")
         transform = fit_vertical_axis(vertical_axis)
         content_bbox = coordinate_system.get("content_bbox") or [0, 0, width, height]
-        grid_evidence = detect_rule_lines(task.image_path, content_bbox)
+        ppstructure_geometry = payload.get("ppstructure_geometry")
+        ppstructure_geometry = ppstructure_geometry if isinstance(ppstructure_geometry, Mapping) else {}
+        pp_rule_lines = ppstructure_geometry.get("rule_lines")
+        grid_evidence = (
+            dict(pp_rule_lines)
+            if isinstance(pp_rule_lines, Mapping)
+            else detect_rule_lines(task.image_path, content_bbox)
+        )
         tracks = rebuild_tracks(
             payload.get("tracks"),
             image_width=width,
@@ -399,11 +412,11 @@ class TableEmbeddedHybridPipeline:
             "schema_version": "table_embedded_hybrid.intermediate.v1",
             "subtype": StratigraphicProfileSubtype.TABLE_EMBEDDED_HYBRID.value,
             "algorithm": {
-                "name": "coordinate_track_specialized_depth_alignment_graph_assembly",
+                "name": "ppstructurev3_geometry_semantic_vlm_depth_alignment_graph_assembly",
                 "stages": [
-                    "coordinate_reconstruction",
-                    "track_segmentation",
-                    "specialized_parsing",
+                    "ppstructurev3_layout_ocr_and_cell_geometry",
+                    "semantic_track_and_cell_id_selection",
+                    "ppstructure_pixel_coordinate_resolution",
                     "depth_and_sequence_alignment",
                     "structured_intermediate_result",
                     "deterministic_knowledge_graph_assembly",
@@ -420,6 +433,19 @@ class TableEmbeddedHybridPipeline:
             "diagram": {
                 "id": str(payload.get("diagram_id") or task.image_id),
                 "name": str(payload.get("diagram_name") or task.caption or "表格嵌入混合地层图"),
+                "official_name": str(
+                    payload.get("diagram_official_name")
+                    or payload.get("diagram_name")
+                    or task.caption
+                    or "表格嵌入混合地层图"
+                ),
+                "track_header": str(payload.get("diagram_track_header") or "整图"),
+                "official_name_basis": str(
+                    payload.get("diagram_official_name_basis") or "insufficient_context_keep_original"
+                ),
+                "official_name_confidence": _confidence(
+                    payload.get("diagram_official_name_confidence"), 1.0
+                ),
                 "layout_family": str(payload.get("layout_family") or "other_table_hybrid"),
                 "width": width,
                 "height": height,
@@ -428,8 +454,11 @@ class TableEmbeddedHybridPipeline:
             "coordinate_system": {
                 "axis_kind": str(vertical_axis.get("kind") or "depth"),
                 "content_bbox": list(content_bbox),
+                "coordinate_source": "PP-StructureV3",
+                "vlm_pixel_coordinates_used": False,
                 "vertical_transform": transform.to_dict(),
             },
+            "ppstructure_geometry": ppstructure_geometry,
             "grid_detection": grid_evidence,
             "tracks": tracks,
             "parsed": parsed,
@@ -444,9 +473,22 @@ class TableEmbeddedHybridPipeline:
                 "curve_track_count": len(parsed["curve_tracks"]),
                 "point_marker_count": len(parsed["point_markers"]),
                 "object_count": len(parsed["objects"]),
+                "node_enrichment_count": 1 + sum(
+                    len(parsed.get(field, [])) for field in NODE_FIELDS
+                ),
                 "alignment_relation_count": len(alignments),
                 "explicit_relation_count": len(explicit_relations),
                 "axis_rmse": transform.rmse,
+                "ppstructure_ocr_line_count": int(
+                    (ppstructure_geometry.get("quality") or {}).get("ocr_line_count", 0)
+                ),
+                "ppstructure_cell_count": int(
+                    (ppstructure_geometry.get("quality") or {}).get("cell_count", 0)
+                ),
+                "ppstructure_track_count": int(
+                    (ppstructure_geometry.get("quality") or {}).get("track_count", 0)
+                ),
+                "vlm_pixel_coordinates_used": False,
                 "unresolved_track_ids": unresolved_tracks,
                 "dropped_explicit_relations": dropped_explicit_relations,
                 "uncertainties": [str(item) for item in payload.get("uncertainties", [])],

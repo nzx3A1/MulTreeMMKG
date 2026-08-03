@@ -1,7 +1,6 @@
-"""地层、剖面、地震与测井图片抽取器及其配套能力。"""
+"""地层、剖面、地震与测井图片的子分类与调度入口。"""
 
 from .extractor import StratigraphicProfileExtractor
-from .graph import build_stratigraphic_profile_graph
 from .subclassifier import (
     StratigraphicProfileSubtype,
     StratigraphicProfileSubtypeClassifier,
@@ -15,6 +14,16 @@ from .table_embedded_hybrid import (
     build_table_embedded_hybrid_graph,
     build_table_embedded_hybrid_prompt,
 )
+from .three_dimensional_stratigraphic_model import (
+    ThreeDimensionalStratigraphicModelPipeline,
+    build_three_dimensional_stratigraphic_model_graph,
+    build_three_dimensional_stratigraphic_model_prompt,
+)
+from .two_dimensional_stratigraphic_log import (
+    TwoDimensionalStratigraphicLogPipeline,
+    build_two_dimensional_stratigraphic_log_graph,
+    build_two_dimensional_stratigraphic_log_prompt,
+)
 
 __all__ = [
     "StratigraphicProfileExtractor",
@@ -23,9 +32,14 @@ __all__ = [
     "StratigraphicSubtypeClassification",
     "VLMStratigraphicProfileSubtypeClassifier",
     "build_stratigraphic_subclassification_prompt",
-    "build_stratigraphic_profile_graph",
     "get_stratigraphic_subtype_strategy",
     "TableEmbeddedHybridPipeline",
     "build_table_embedded_hybrid_graph",
     "build_table_embedded_hybrid_prompt",
+    "ThreeDimensionalStratigraphicModelPipeline",
+    "build_three_dimensional_stratigraphic_model_graph",
+    "build_three_dimensional_stratigraphic_model_prompt",
+    "TwoDimensionalStratigraphicLogPipeline",
+    "build_two_dimensional_stratigraphic_log_graph",
+    "build_two_dimensional_stratigraphic_log_prompt",
 ]

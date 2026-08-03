@@ -74,6 +74,8 @@ def _merge_task_graphs(chunk: Mapping[str, Any], task_graphs: Sequence[Graph]) -
             "stratigraphic_subtype_name": graph.metadata.extra.get("stratigraphic_subtype_name"),
             "stratigraphic_subtype_confidence": graph.metadata.extra.get("stratigraphic_subtype_confidence"),
             "stratigraphic_subtype_evidence": graph.metadata.extra.get("stratigraphic_subtype_evidence"),
+            # 中文说明：保留单图抽取器的底层错误，避免批量聚合后只剩下笼统的 model_error 状态。
+            "model_errors": list(graph.metadata.extra.get("model_errors") or []),
         }
         for graph in task_graphs
     ]

@@ -37,3 +37,8 @@ tenacity>=8.2.0
 python-dotenv>=1.0.0
 loguru>=0.7.0
 Pillow>=10.0.0
+
+# ---- 表格图片像素几何（PP-StructureV3） ----
+# 中文说明：doc-parser extra 会安装 PaddleX 的 OCR/表格结构依赖；CPU 版 Paddle 由代码默认关闭 oneDNN 兼容问题路径。
+paddlepaddle==3.3.1
+paddleocr[doc-parser]==3.7.0

@@ -29,6 +29,7 @@ from src.extractors.image_extractor.stratigraphic_profile import (
 )
 from src.extractors.image_extractor.stratigraphic_profile.table_embedded_hybrid import (
     TableEmbeddedHybridPipeline,
+    apply_node_enrichment,
     is_table_embedded_hybrid_payload,
     validate_and_repair_pixel_geometry,
 )
@@ -40,16 +41,18 @@ from src.utils.vlm_client import VLMClient
 from util.run_table_embedded_hybrid_live_single import (
     RecordingVLMClient,
     _find_extraction_payload,
+    _find_node_enrichment,
 )
 
 
 DEFAULT_SOURCE = PROJECT_ROOT / "src" / "extractors" / "image_extractor" / "stratigraphic_profile" / "testImage" / "image_chunks_stratigraphic_profile.json"
-DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "src" / "extractors" / "image_extractor" / "stratigraphic_profile" / "three_dimensional_stratigraphic_model"
+# 中文说明：批量结果固定归档到表格嵌入混合型子目录，保持实现、说明和运行产物同源。
+DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "src" / "extractors" / "image_extractor" / "stratigraphic_profile" / "table_embedded_hybrid" / "result"
 DEFAULT_OUTPUT = DEFAULT_OUTPUT_DIR / "table_embedded_hybrid_live_batch_results.json"
 DEFAULT_NODES_OUTPUT = DEFAULT_OUTPUT_DIR / "table_embedded_hybrid_live_batch_nodes.json"
 DEFAULT_RELATIONS_OUTPUT = DEFAULT_OUTPUT_DIR / "table_embedded_hybrid_live_batch_relations.json"
 # 中文说明：修改分类边界、坐标修复或图谱语义后递增，防止整图断点绕过新的确定性算法。
-BATCH_PIPELINE_REVISION = "2026-07-27.3"
+BATCH_PIPELINE_REVISION = "2026-08-03.node-enrichment.1"
 
 
 def _load_chunks(source_path: Path) -> list[dict[str, Any]]:
@@ -218,7 +221,7 @@ def _write_state(
         "events_extracted": False,
         "model": settings.vlm.model,
         "base_url": settings.vlm.base_url,
-        "algorithm": "真实大类分类 → 真实地层子分类 → 非目标跳过 / 表格目标三段OCR → 坐标与轨道重建 → 深度对齐 → 确定性图谱装配",
+        "algorithm": "真实大类分类 → 真实地层子分类 → PP-StructureV3 像素几何 → 三段 VLM 语义 ID 选择 → 第四次 VLM 节点官方名规范化 → 轨道表头映射 → OCR 深度轴/相对层序 → 确定性图谱装配",
         "summary": summary,
         "results": results,
     }
@@ -301,6 +304,8 @@ def _full_result(
     route = graph.metadata.extra.get("routes", [{}])[0]
     route = route if isinstance(route, Mapping) else {}
     graph_status = str(graph.metadata.extra.get("status") or "unknown")
+    # 中文说明：聚合 Graph 中保留的单图异常要写入批量结果，便于定位 PP 模型、VLM 或结构校验故障。
+    model_errors = [str(error) for error in (route.get("model_errors") or []) if str(error)]
     calls = recorder.calls[call_start:]
     subtype_payload = {
         "subtype": route.get("stratigraphic_subtype") or "",
@@ -319,6 +324,9 @@ def _full_result(
             task,
             _find_extraction_payload(calls),
         )
+        node_enrichment = _find_node_enrichment(calls)
+        if node_enrichment:
+            extraction_payload = apply_node_enrichment(extraction_payload, node_enrichment)
         if not is_table_embedded_hybrid_payload(extraction_payload):
             raise ValueError("完成状态缺少可复原的 table_embedded_hybrid.v1 真实响应")
         intermediate = TableEmbeddedHybridPipeline().run(task, extraction_payload)
@@ -346,6 +354,7 @@ def _full_result(
         "structured_intermediate_result": intermediate,
         "graph": graph.to_dict(),
         "validation": {
+            "model_errors": model_errors,
             "reference_errors": reference_errors,
             "provenance_errors": provenance_errors,
             "event_count": event_count,

@@ -125,6 +125,8 @@ class VLMClient(BaseModel):
 
     # 中文说明：真实客户端支持复杂表格的多次短响应抽取；离线测试桩未声明时仍使用单次兼容路径。
     supports_segmented_table_extraction = True
+    # 中文说明：真实客户端允许三维地层模型按层界、图例、逐层识别和复核执行多轮调用。
+    supports_three_dimensional_lithology_multipass = True
 
     @staticmethod
     def image_to_data_url(image_path: str | Path) -> str:

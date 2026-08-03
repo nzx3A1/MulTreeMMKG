@@ -89,11 +89,17 @@ class TableEmbeddedHybridGraphBuilder:
             profile_local_id,
             str(diagram.get("name") or "表格嵌入混合地层图"),
             "stratigraphic_profile",
+            official_name=str(
+                diagram.get("official_name") or diagram.get("name") or "表格嵌入混合地层图"
+            ),
             attributes={
                 "width": diagram.get("width"),
                 "height": diagram.get("height"),
                 "subtype": self.intermediate.get("subtype"),
                 "coordinate_system": self.intermediate.get("coordinate_system"),
+                "track_header": str(diagram.get("track_header") or "整图"),
+                "official_name_basis": diagram.get("official_name_basis"),
+                "official_name_confidence": diagram.get("official_name_confidence"),
             },
             evidence=self.task.caption or "整张混合地层图的可见版面",
             confidence=1.0,
@@ -234,7 +240,7 @@ class TableEmbeddedHybridGraphBuilder:
     ) -> str:
         """中文说明：把一个规范化图元注册为节点，并保留深度、轨道及专用解析属性。"""
 
-        reserved = {"id", "name", "evidence", "confidence", "attributes"}
+        reserved = {"id", "name", "official_name", "evidence", "confidence", "attributes"}
         attributes = {key: value for key, value in item.items() if key not in reserved}
         raw_attributes = item.get("attributes")
         if isinstance(raw_attributes, Mapping):
@@ -243,6 +249,7 @@ class TableEmbeddedHybridGraphBuilder:
             local_id,
             str(item.get("name") or local_id),
             entity_type,
+            official_name=str(item.get("official_name") or item.get("name") or local_id),
             attributes=attributes,
             evidence=str(item.get("evidence") or "图内专用轨道可见图元"),
             confidence=_confidence(item.get("confidence")),
@@ -255,6 +262,7 @@ class TableEmbeddedHybridGraphBuilder:
         name: str,
         entity_type: str,
         *,
+        official_name: str,
         attributes: Mapping[str, Any],
         evidence: str,
         confidence: float,
@@ -269,6 +277,7 @@ class TableEmbeddedHybridGraphBuilder:
         self.entities[graph_id] = Entity(
             id=graph_id,
             name=name,
+            official_name=official_name,
             type=entity_type,
             attributes={**dict(attributes), "confidence": _confidence(confidence)},
             provenance=evidence,

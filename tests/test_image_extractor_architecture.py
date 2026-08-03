@@ -14,6 +14,7 @@ from src.extractors.image_extractor import (
     build_image_tasks,
     extract_from_images,
 )
+from src.extractors.image_extractor.pipeline import _merge_task_graphs
 from src.extractors.extractor_init import InitExtractor
 
 
@@ -156,3 +157,25 @@ def test_registry_allows_explicit_replacement_for_future_extension() -> None:
     replacement = ReplacementMapExtractor()
     registry.register(replacement, replace=True)
     assert registry.get(ImageExtractorKind.MAP_SPATIAL) is replacement
+
+
+def test_merge_task_graphs_preserves_model_errors() -> None:
+    """单图模型异常在合并后仍应可供批量入口输出真实根因。"""
+
+    graph = Graph.from_chunk(document_id="doc-1", chunk_id="chunk-1", modality="image")
+    # 中文说明：模拟 PP-StructureV3 初始化失败，验证聚合路由不会吞掉底层异常文本。
+    graph.metadata.extra.update(
+        {
+            "status": "model_error",
+            "image_id": "image-1",
+            "image_path": "data/images/a.jpg",
+            "extractor_kind": "stratigraphic_profile",
+            "model_called": True,
+            "model_errors": ["PP-StructureV3 模型目录不可读"],
+        }
+    )
+
+    merged = _merge_task_graphs(_chunk("A03"), [graph])
+
+    assert merged.metadata.extra["status"] == "model_error"
+    assert merged.metadata.extra["routes"][0]["model_errors"] == ["PP-StructureV3 模型目录不可读"]
