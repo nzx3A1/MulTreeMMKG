@@ -128,4 +128,4 @@ class Document(MMKGBaseModel):
         return self._chunk_section_index.get(chunk_id)
 
 
-DocumentSection.update_forward_refs()
+DocumentSection.model_rebuild()

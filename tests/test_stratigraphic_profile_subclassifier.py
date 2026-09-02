@@ -166,7 +166,7 @@ class RecordingOfflineVLM:
                 "evidence": ["测试可见版式证据"],
             }
         if "表格嵌入混合节点官方名规范化" in str(kwargs.get("task_name") or ""):
-            # 中文说明：第四次调用只覆盖完整抽取已经产生的两个节点，不得新增节点或关系。
+            # 中文说明：最终规范化调用只覆盖完整抽取已经产生的两个节点，不得新增节点或关系。
             return {
                 "schema_version": "table_embedded_hybrid.node_enrichment.v1",
                 "nodes": [
@@ -207,6 +207,7 @@ class RecordingOfflineVLM:
                     {
                         "id": "test_track",
                         "order": 0,
+                        "track_type": "table_text",
                         "role": "stratigraphy",
                         "header": "测试地层",
                         "bbox": [0, 0, 606, 807],

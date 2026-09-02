@@ -6,9 +6,6 @@ from typing import Any, Mapping
 
 from model import Entity, Event, Graph, Relation, SourceModality
 
-from .schema_models import RelevantSchema
-
-
 def _stable_id(prefix: str, *parts: Any) -> str:
     """根据文档及候选内容生成可复现 ID，支持跨 Chunk 实体去重。"""
 
@@ -28,13 +25,11 @@ def parse_extraction_payload(
     payload: Mapping[str, Any],
     *,
     chunk: Mapping[str, Any],
-    schema: RelevantSchema,
 ) -> Graph:
-    """只按字段格式和对象引用解析候选，不校验类型是否属于 Schema 白名单。"""
+    """按字段格式和对象引用解析自由类型候选，不读取任何 Schema。"""
 
     document_id = str(chunk.get("document_id") or "")
     chunk_id = str(chunk.get("id") or "")
-    concept_map = schema.concept_map
     rejected: list[dict[str, str]] = []
     accepted_count = 0
     entities: list[Entity] = []
@@ -43,7 +38,7 @@ def parse_extraction_payload(
     for index, candidate in enumerate(_items(payload, "entities"), start=1):
         temp_id = str(candidate.get("temp_id") or candidate.get("id") or "").strip()
         name = str(candidate.get("name") or "").strip()
-        raw_entity_type = candidate.get("type")
+        raw_entity_type = candidate.get("type") or candidate.get("type_zh")
         entity_type = str(raw_entity_type or "").strip() or "other"
         validation_errors: list[str] = []
         if not name:
@@ -62,7 +57,6 @@ def parse_extraction_payload(
         stable_id = _stable_id("ent", document_id, name or temp_id or index, entity_type)
         if temp_id:
             temp_to_stable[temp_id] = stable_id
-        concept = concept_map.get(entity_type)
         metadata = dict(candidate.get("metadata") or {}) if isinstance(candidate.get("metadata") or {}, Mapping) else {}
         metadata["validation"] = {
             "passed": not validation_errors,
@@ -78,17 +72,13 @@ def parse_extraction_payload(
         entities.append(Entity(
             id=stable_id, name=name, official_name=candidate.get("official_name"),
             type=entity_type,
-            type_zh=(concept.zh_name if concept else None) or candidate.get("type_zh"),
+            type_zh=candidate.get("type_zh"),
             aliases=list(candidate.get("aliases") or []) if isinstance(candidate.get("aliases") or [], list) else [],
             attributes=dict(candidate.get("attributes") or {}) if isinstance(candidate.get("attributes") or {}, Mapping) else {},
             provenance=str(candidate.get("provenance") or ""), normalized_id=candidate.get("normalized_id"),
             metadata=metadata,
         ))
 
-    relation_rules = {
-        (item.source_schema, item.relation_en.upper(), item.target_schema): item
-        for item in schema.relations
-    }
     entities_by_id = {entity.id: entity for entity in entities}
     relations: list[Relation] = []
     for index, candidate in enumerate(_items(payload, "relations"), start=1):
@@ -96,13 +86,8 @@ def parse_extraction_payload(
         target_ref = str(candidate.get("target_id") or "").strip()
         source_id = temp_to_stable.get(source_ref)
         target_id = temp_to_stable.get(target_ref)
-        raw_relation_type = candidate.get("type")
+        raw_relation_type = candidate.get("type") or candidate.get("relation_name") or candidate.get("type_zh")
         relation_type = str(raw_relation_type or "").strip().upper() or "OTHER"
-        # 中文说明：已知 Schema 关系只用于补充中文名，不参与候选通过与否的判断。
-        rule = next(
-            (item for key, item in relation_rules.items() if key[1] == relation_type),
-            None,
-        )
         validation_errors: list[str] = []
         if not source_id:
             validation_errors.append("source_entity_not_found")
@@ -110,12 +95,6 @@ def parse_extraction_payload(
             validation_errors.append("target_entity_not_found")
         if not str(raw_relation_type or "").strip():
             validation_errors.append("missing_type")
-        for field_name in ("source_name", "source_type", "target_name", "target_type"):
-            field_value = candidate.get(field_name)
-            if field_value is None or not str(field_value).strip():
-                validation_errors.append(f"missing_{field_name}")
-            elif not isinstance(field_value, str):
-                validation_errors.append(f"invalid_{field_name}_format")
         if candidate.get("attributes") is not None and not isinstance(candidate.get("attributes"), Mapping):
             validation_errors.append("invalid_attributes_format")
         if candidate.get("metadata") is not None and not isinstance(candidate.get("metadata"), Mapping):
@@ -128,7 +107,7 @@ def parse_extraction_payload(
         resolved_target_id = target_id or _stable_id("missing_ent", document_id, target_ref or "target", index)
         source_entity = entities_by_id.get(resolved_source_id)
         target_entity = entities_by_id.get(resolved_target_id)
-        # 中文说明：最终关系中的端点名称和类型统一取自已解析实体，保证四个冗余字段与 ID 同步。
+        # 中文说明：最终关系端点字段统一取自已解析实体，保证冗余字段与 ID 同步且无需 Schema 约束。
         source_name = source_entity.name if source_entity else str(candidate.get("source_name") or "")
         source_type = source_entity.type if source_entity else str(candidate.get("source_type") or "")
         target_name = target_entity.name if target_entity else str(candidate.get("target_name") or "")
@@ -151,8 +130,8 @@ def parse_extraction_payload(
         relations.append(Relation(
             id=_stable_id("rel", document_id, resolved_source_id, relation_type, resolved_target_id),
             type=relation_type,
-            relation_name=candidate.get("relation_name") or candidate.get("official_name"),
-            type_zh=(rule.relation_zh if rule else None) or candidate.get("type_zh"),
+            relation_name=candidate.get("relation_name") or candidate.get("official_name") or candidate.get("type_zh"),
+            type_zh=candidate.get("type_zh"),
             source_id=resolved_source_id, source_name=source_name, source_type=source_type,
             target_id=resolved_target_id, target_name=target_name, target_type=target_type,
             attributes=dict(candidate.get("attributes") or {}) if isinstance(candidate.get("attributes") or {}, Mapping) else {},
@@ -203,15 +182,22 @@ def parse_extraction_payload(
             provenance=str(candidate.get("provenance") or ""), metadata=metadata,
         ))
 
-    graph = Graph.from_chunk(document_id, chunk_id, SourceModality.TEXT, entities, relations, events,
-                             raw_response=dict(payload), stage="stage_04_text_extraction_front")
+    # 中文说明：文本抽取阶段只输出结构化实体、关系和校验结果，不把模型原始响应写入 Chunk Graph。
+    graph = Graph.from_chunk(
+        document_id,
+        chunk_id,
+        SourceModality.TEXT,
+        entities,
+        relations,
+        events,
+        stage="stage_04_text_extraction_front",
+    )
     graph.metadata.extra["validation"] = {
         "passed": not rejected,
         "accepted_count": accepted_count,
         "rejected_count": len(rejected), "rejected": rejected,
         "retained_invalid_count": len(rejected),
     }
-    graph.metadata.extra["schema_selection"] = schema.to_dict()
     return graph
 
 

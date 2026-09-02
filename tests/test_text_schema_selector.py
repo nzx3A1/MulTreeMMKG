@@ -9,16 +9,17 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping
 
 import pytest
+from neo4j.exceptions import ServiceUnavailable
 
 from src.extractors import collect_chunks
-from src.extractors.text_extractor import (
+from src.schemaProcess import (
     Neo4jSchemaRepository,
     SchemaSelector,
     SchemaSelectorConfig,
     build_document_context,
 )
-from src.extractors.text_extractor.schema_models import SchemaConcept
-from src.extractors.text_extractor.schema_selector import _lexical_score, _weighted_score
+from src.schemaProcess.schema_models import SchemaConcept
+from src.schemaProcess.schema_selector import _lexical_score, _weighted_score
 
 
 CONCEPT_ROWS = [
@@ -484,7 +485,11 @@ def test_live_north_china_craton_chunks_print_schema_selection_process() -> None
     """使用真实 Neo4j 和 Embedding 打印华北克拉通 Chunk 的两级选择过程及结果。"""
 
     selector = SchemaSelector()
-    result = selector.prepare_document(_north_china_craton_chunks())
+    try:
+        result = selector.prepare_document(_north_china_craton_chunks())
+    except ServiceUnavailable as exc:
+        # 中文说明：该用例用于联调本机 Neo4j，离线环境只跳过，不掩盖其他断言失败。
+        pytest.skip(f"本机 Neo4j 不可用，跳过联调用例：{exc}")
 
     log_path = _print_and_save_schema_selection_result(result)
 

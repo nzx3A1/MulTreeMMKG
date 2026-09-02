@@ -9,7 +9,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 ID = str
@@ -34,11 +34,12 @@ class MMKGBaseModel(BaseModel):
     model_dump 这类版本相关 API。
     """
 
-    class Config:
-        extra = "forbid"
-        validate_assignment = True
-        use_enum_values = True
-        allow_population_by_field_name = True
+    model_config = ConfigDict(
+        extra="forbid",
+        validate_assignment=True,
+        use_enum_values=True,
+        validate_by_name=True,
+    )
 
     def to_dict(self, **kwargs: Any) -> Dict[str, Any]:
         """将模型转换为普通字典，默认使用 JSON 兼容值。"""

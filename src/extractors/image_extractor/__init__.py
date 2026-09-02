@@ -9,7 +9,12 @@ from .classification import (
     VLMImageClassificationProvider,
 )
 from .factory import build_default_registry
-from .pipeline import build_image_tasks, extract_from_images, extract_table_embedded_hybrid_only
+from .pipeline import (
+    build_image_tasks,
+    extract_from_images,
+    extract_table_embedded_hybrid_only,
+    write_image_extraction_result,
+)
 from .registry import ImageExtractorRegistry
 from .router import ImageExtractorRouter
 from .schema_models import ImageExtractionContext, ImageExtractionTask, ImageExtractorKind
@@ -30,4 +35,5 @@ __all__ = [
     "build_image_tasks",
     "extract_from_images",
     "extract_table_embedded_hybrid_only",
+    "write_image_extraction_result",
 ]

@@ -38,6 +38,10 @@ from src.extractors.image_extractor.stratigraphic_profile.table_embedded_hybrid.
     merge_segmented_table_payloads,
     validate_and_repair_pixel_geometry,
 )
+from src.extractors.image_extractor.stratigraphic_profile.table_embedded_hybrid.visual_track_extraction import (
+    VISUAL_TRACK_SLICE_SCHEMA_VERSION,
+    apply_visual_track_slice_responses,
+)
 from src.extractors.image_extractor.vlm_classification import VLMImageClassifier
 from src.utils.json_io import write_json
 from src.utils.llm_client import safe_json_loads
@@ -219,7 +223,7 @@ def _find_extraction_payload(calls: list[Mapping[str, Any]]) -> dict[str, Any]:
 
 
 def _find_node_enrichment(calls: list[Mapping[str, Any]]) -> dict[str, Any]:
-    """中文说明：从调用审计中读取第 4 次节点官方名响应，供断点结果确定性重建。"""
+    """中文说明：从调用审计中读取最终节点官方名响应，供含可变切片调用数的结果确定性重建。"""
 
     for call in reversed(calls):
         payload = call.get("parsed_response")
@@ -231,8 +235,37 @@ def _find_node_enrichment(calls: list[Mapping[str, Any]]) -> dict[str, Any]:
     return {}
 
 
-def _load_cached_calls(output_path: Path) -> list[Mapping[str, Any]]:
-    """中文说明：从同一单图结果读取可复用 API 记录，损坏或异图文件一律视为无缓存。"""
+def _find_visual_track_slice_responses(
+    calls: list[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    """中文说明：从真实调用审计中收集逐块图例/曲线描述，供结果文件确定性重建。"""
+
+    responses: list[dict[str, Any]] = []
+    for call in calls:
+        payload = call.get("parsed_response")
+        if (
+            isinstance(payload, Mapping)
+            and str(payload.get("schema_version") or "") == VISUAL_TRACK_SLICE_SCHEMA_VERSION
+        ):
+            responses.append(dict(payload))
+    return responses
+
+
+def _load_chunk_from_json(input_path: Path) -> dict[str, Any]:
+    """中文说明：读取包含唯一图片 Chunk 的 JSON，允许单对象或单元素数组作为实时测试输入。"""
+
+    from src.utils.json_io import read_json
+
+    payload = read_json(input_path)
+    if isinstance(payload, list) and len(payload) == 1 and isinstance(payload[0], Mapping):
+        return dict(payload[0])
+    if isinstance(payload, Mapping):
+        return dict(payload)
+    raise ValueError(f"实时单图输入必须是单对象或单元素对象数组：{input_path}")
+
+
+def _load_cached_calls(output_path: Path, *, chunk_id: str) -> list[Mapping[str, Any]]:
+    """中文说明：按当前输入 Chunk 校验可复用 API 记录，损坏或异图文件一律视为无缓存。"""
 
     if not output_path.is_file():
         return []
@@ -247,7 +280,7 @@ def _load_cached_calls(output_path: Path) -> list[Mapping[str, Any]]:
     results = payload.get("results")
     if not isinstance(results, list) or not results or not isinstance(results[0], Mapping):
         return []
-    if str(results[0].get("chunk_id") or "") != str(LIVE_TEST_CHUNK["id"]):
+    if str(results[0].get("chunk_id") or "") != chunk_id:
         return []
     calls = results[0].get("vlm_api_calls")
     return list(calls) if isinstance(calls, list) else []
@@ -287,6 +320,10 @@ def run_live_pipeline(
     intermediate: dict[str, Any] = {}
     if is_table_embedded_hybrid_payload(extraction_payload):
         extraction_payload = validate_and_repair_pixel_geometry(classified_task, extraction_payload)
+        extraction_payload = apply_visual_track_slice_responses(
+            extraction_payload,
+            _find_visual_track_slice_responses(recorder.calls),
+        )
         node_enrichment = _find_node_enrichment(recorder.calls)
         if node_enrichment:
             extraction_payload = apply_node_enrichment(extraction_payload, node_enrichment)
@@ -302,6 +339,11 @@ def run_live_pipeline(
         if intermediate
         else []
     )
+    quality_gate_errors = (
+        list(intermediate.get("quality", {}).get("quality_gate_errors") or [])
+        if intermediate
+        else []
+    )
     completed = bool(
         extraction_payload
         and intermediate
@@ -310,6 +352,7 @@ def run_live_pipeline(
         and not reference_errors
         and not provenance_errors
         and not dropped_relations
+        and not quality_gate_errors
         and event_count == 0
     )
     entity_types = Counter(entity.type for entity in graph.entities)
@@ -327,7 +370,7 @@ def run_live_pipeline(
         "source_chunk": dict(chunk),
         "target_subtype": "table_embedded_hybrid",
         "events_extracted": False,
-        "algorithm": "视觉大类分类 → 视觉子分类 → PP-StructureV3 像素几何 → 三段 VLM 语义 ID 选择 → OCR 深度轴/相对层序 → 结构化中间结果 → 确定性知识图谱装配",
+        "algorithm": "视觉大类分类 → 视觉子分类 → PP-StructureV3 像素几何 → table_text/legend/curve 顺序分类与文字实体识别 → legend 后 curve 的文字邻轨投影切片 → VLM 表头与切片数值/图例识别 → OCR 深度轴/相对层序 → 确定性知识图谱装配",
         "api_execution": {
             "real_api_called": bool(recorder.calls),
             "configured_model": settings.vlm.model,
@@ -352,6 +395,7 @@ def run_live_pipeline(
             "reference_error_count": len(reference_errors),
             "provenance_error_count": len(provenance_errors),
             "dropped_explicit_relation_count": len(dropped_relations),
+            "quality_gate_error_count": len(quality_gate_errors),
             "entity_types": dict(sorted(entity_types.items())),
             "relation_types": dict(sorted(relation_types.items())),
         },
@@ -381,6 +425,7 @@ def run_live_pipeline(
                     "provenance_errors": provenance_errors,
                     "event_count": event_count,
                     "dropped_explicit_relations": dropped_relations,
+                    "quality_gate_errors": quality_gate_errors,
                 },
             }
         ],
@@ -393,12 +438,18 @@ def main() -> None:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description="真实调用 API 测试一张表格嵌入混合地层图片")
+    parser.add_argument("--input", type=Path, help="单个 Chunk JSON；支持单对象或单元素数组")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT, help="完整抽取结果 JSON")
     parser.add_argument("--no-resume", action="store_true", help="忽略已有结果中的成功阶段并全部重新请求")
     args = parser.parse_args()
 
-    cached_calls = [] if args.no_resume else _load_cached_calls(args.output)
-    result = run_live_pipeline(cached_calls=cached_calls)
+    chunk = _load_chunk_from_json(args.input) if args.input else dict(LIVE_TEST_CHUNK)
+    cached_calls = (
+        []
+        if args.no_resume
+        else _load_cached_calls(args.output, chunk_id=str(chunk.get("id") or ""))
+    )
+    result = run_live_pipeline(chunk, cached_calls=cached_calls)
     write_json(args.output, result)
     summary = result["summary"]
     first = result["results"][0]

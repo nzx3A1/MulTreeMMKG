@@ -31,7 +31,7 @@ class Entity(MMKGBaseModel):
     id: ID                             # 实体唯一标识
     name: str                          # 实体名称
     official_name: Optional[str] = None  # 实体官方名称或标准名称
-    type: str                          # 实体类型（来自 Schema 白名单）
+    type: str                          # 实体语义类型（可由自由抽取直接给出或后续映射）
     type_zh: Optional[str] = None       # 实体类型中文名称
     aliases: List[str] = Field(default_factory=list)  # 别名列表
     attributes: Dict[str, Any] = Field(default_factory=dict)  # 属性键值对

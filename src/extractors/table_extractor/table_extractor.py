@@ -1,7 +1,7 @@
 """表格模态抽取总入口：识别 HTML、解析行列并生成统一 Graph。
 
-该模块同时提供可导入的 ``extract_from_tables`` 和直接运行 CLI。结构图始终由
-确定性规则生成；领域实体只在表头或记录键提供明确证据时创建。
+该模块同时提供可导入的 ``extract_from_tables`` 和直接运行 CLI。VLM 只判断图片
+表格的记录方向、表头和主题字段，网格展开与 Graph 装配仍由确定性规则完成。
 """
 from __future__ import annotations
 
@@ -21,6 +21,7 @@ from model import Entity, Graph, Relation, SourceModality
 from src.graph.graph_validator import validate_graph
 from src.utils.json_io import read_json, write_json
 from src.utils.llm_client import DisabledLLMClient, LLMClient
+from src.utils.vlm_client import VLMClient
 
 from src.extractors.table_extractor.schema_models import (
     RecognizedTable,
@@ -36,12 +37,11 @@ from src.extractors.table_extractor.table_parse import (
     collect_table_sources,
     recognize_table_source,
 )
+from src.extractors.table_extractor.visual_semantics import analyze_table_visual_semantics
 
 
 DEFAULT_INPUT_PATH = PROJECT_ROOT / "output" / "stage_02_document_tree.json"
 DEFAULT_OUTPUT_PATH = PROJECT_ROOT / "output" / "stage_04_table_extraction.json"
-DEFAULT_RECOGNITION_PATH = PROJECT_ROOT / "output" / "stage_04_table_recognition.json"
-DEFAULT_REPORT_PATH = PROJECT_ROOT / "output" / "stage_04_table_tasks.json"
 DEFAULT_WORK_DIR = PROJECT_ROOT / "output" / "table_extraction"
 
 SUBJECT_HEADER_TYPES: tuple[tuple[tuple[str, ...], str, str], ...] = (
@@ -122,14 +122,45 @@ def _refine_context_type(header: str, value: str, inferred_type: str) -> str:
 
 
 def infer_semantic_plan(table: RecognizedTable, llm_client: Any | None = None) -> TableSemanticPlan:
-    """用规则优先确定记录方向、数据起点和领域主键，必要时允许 LLM 补充。"""
+    """优先采用 VLM 视觉语义，缺失时用 HTML 规则和可选文本 LLM 补充。"""
 
     grid = table.grid
+    visual = table.details.get("visual_semantics")
+    if isinstance(visual, Mapping) and visual.get("status") == "success":
+        orientation = str(visual.get("orientation") or grid.orientation)
+        headers = [str(item) for item in visual.get("headers") or []]
+        subject_header = str(visual.get("subject_header") or "")
+        subject_index = int(visual.get("subject_index", 0))
+        data_start_index = int(visual.get("data_start_index", 0))
+        if orientation == "horizontal" and len(headers) == grid.column_count:
+            # 中文说明：VLM 读取原图得到的字段文字用于最终记录属性；逻辑坐标仍完全来自 HTML。
+            grid.header_paths = headers
+        grid.orientation = orientation
+        inferred = _infer_subject(subject_header)
+        subject_type, subject_type_zh = inferred or ("TableRow", "表格行")
+        plan = TableSemanticPlan(
+            orientation=orientation,
+            data_start_row=data_start_index if orientation == "horizontal" else max(grid.header_rows, default=-1) + 1,
+            data_start_col=data_start_index if orientation == "vertical" else max(grid.header_columns, default=-1) + 1,
+            subject_column=subject_index if orientation == "horizontal" else None,
+            subject_row=subject_index if orientation == "vertical" else None,
+            subject_type=subject_type,
+            subject_type_zh=subject_type_zh,
+            headers=headers,
+            subject_header=subject_header,
+            analysis_source="vlm",
+            confidence=float(visual.get("confidence") or 0.0),
+            reasons=[str(visual.get("reason") or "VLM 根据原图识别记录方向、表头和主题字段")],
+        )
+        return plan
+
     header_end = max(grid.header_rows, default=-1)
     plan = TableSemanticPlan(
         orientation=grid.orientation,
         data_start_row=max(0, header_end + 1),
         data_start_col=max(grid.header_columns, default=-1) + 1,
+        headers=list(grid.header_paths),
+        analysis_source="rule",
         confidence=0.45,
         reasons=["使用 HTML 网格方向与表头边界"],
     )
@@ -156,6 +187,7 @@ def infer_semantic_plan(table: RecognizedTable, llm_client: Any | None = None) -
             plan.subject_row = row_index
             plan.data_start_col = column_index + 1
             plan.subject_type, plan.subject_type_zh = schema, zh_name
+            plan.subject_header = value
             plan.confidence = 0.9
             plan.reasons.append(f"转置表主键行命中：{value}")
             return plan
@@ -172,6 +204,7 @@ def infer_semantic_plan(table: RecognizedTable, llm_client: Any | None = None) -
             _, column_index, schema, zh_name, header = min(candidates)
             plan.subject_column = column_index
             plan.subject_type, plan.subject_type_zh = schema, zh_name
+            plan.subject_header = header
             plan.confidence = 0.9
             plan.reasons.append(f"横向表主键列命中：{header}")
             return plan
@@ -204,6 +237,7 @@ def infer_semantic_plan(table: RecognizedTable, llm_client: Any | None = None) -
                 plan.subject_type_zh = str(payload.get("subject_type_zh") or "表格行")
                 if plan.subject_column is not None or plan.subject_row is not None:
                     plan.confidence = 0.7
+                    plan.analysis_source = "llm_fallback"
                     plan.reasons.append("LLM 补充主键计划")
         except Exception as exc:
             plan.reasons.append(f"LLM 主键判断失败，保留规则计划：{exc}")
@@ -545,34 +579,86 @@ def _build_structural_graph(
     }
 
 
+_SUBSCRIPT_TRANSLATION = str.maketrans("0123456789+-=()", "₀₁₂₃₄₅₆₇₈₉₊₋₌₍₎")
+
+
+def _normalize_record_text(value: Any) -> str:
+    """清理 OCR/LaTeX 噪声，并保留地质层位中的 Unicode 下标。"""
+
+    text = _clean_name(value)
+    # 中文说明：兼容 MinerU 常见的 ${}_{1}$、${}\_{1}$ 以及 Markdown 转义丢失后的 ${}*{1}$。
+    text = re.sub(
+        r"\$\{\}\s*(?:\\?_+|\*)\s*\{?([0-9+\-=()]+)\}?\$",
+        lambda match: match.group(1).translate(_SUBSCRIPT_TRANSLATION),
+        text,
+    )
+    text = re.sub(
+        r"(?:\\?_+)\{([0-9+\-=()]+)\}",
+        lambda match: match.group(1).translate(_SUBSCRIPT_TRANSLATION),
+        text,
+    )
+    # 中文说明：中文 OCR 经常在同一词内部插入空格；仅删除汉字之间的空白，避免破坏英文编号。
+    return re.sub(
+        r"(?<=[\u3400-\u9fff₀-₉₊₋₌₍₎])\s+(?=[\u3400-\u9fff₀-₉₊₋₌₍₎])",
+        "",
+        text,
+    )
+
+
+def _attribute_key(header: Any, fallback: str) -> str:
+    """把视觉表头规范为稳定、紧凑的 JSON 属性名。"""
+
+    key = _normalize_record_text(header)
+    key = re.sub(r"\s+", "", key)
+    key = key.replace("/", "")
+    return key or fallback
+
+
+def _record_value(value: Any, cell: TableCell | None) -> Any:
+    """优先输出 JSON 数值类型，其余值执行轻量文本规范化。"""
+
+    if cell is not None and cell.value_type == "number" and cell.numeric_value is not None and not cell.comparator:
+        number = float(cell.numeric_value)
+        return int(number) if number.is_integer() else number
+    return _normalize_record_text(value)
+
+
+def _put_attribute(attributes: dict[str, Any], key: str, value: Any) -> None:
+    """避免重复多级表头静默覆盖前一个字段。"""
+
+    if key not in attributes:
+        attributes[key] = value
+        return
+    suffix = 2
+    while f"{key}_{suffix}" in attributes:
+        suffix += 1
+    attributes[f"{key}_{suffix}"] = value
+
+
 def _row_attributes(table: RecognizedTable, row_index: int) -> dict[str, Any]:
     """将一行数据按完整表头路径转换为领域实体属性。"""
 
     attributes: dict[str, Any] = {}
-    normalized_values: list[dict[str, Any]] = []
     for column_index, value in enumerate(table.grid.matrix[row_index]):
         header = table.grid.header_paths[column_index] if column_index < len(table.grid.header_paths) else f"列{column_index + 1}"
-        attributes[header] = value
         cell = _cell_at(table, row_index, column_index)
-        if cell and cell.value_type in {"number", "range"}:
-            normalized_values.append({
-                "field": header,
-                "raw_value": cell.raw_text,
-                "numeric_value": cell.numeric_value,
-                "min_value": cell.min_value,
-                "max_value": cell.max_value,
-                "comparator": cell.comparator,
-                "unit": cell.unit or _unit_from_header(header),
-            })
-    attributes["normalized_values"] = normalized_values
+        _put_attribute(
+            attributes,
+            _attribute_key(header, f"列{column_index + 1}"),
+            _record_value(value, cell),
+        )
     return attributes
 
 
-def _vertical_attributes(table: RecognizedTable, column_index: int, data_start_col: int) -> dict[str, Any]:
+def _vertical_attributes(
+    table: RecognizedTable,
+    column_index: int,
+    data_start_col: int,
+    visual_headers: Sequence[str] | None = None,
+) -> dict[str, Any]:
     """将转置表的一列转换为领域实体属性。"""
 
     attributes: dict[str, Any] = {}
-    normalized_values: list[dict[str, Any]] = []
     label_width = max(1, min(data_start_col, table.grid.column_count - 1))
     for row_index, row in enumerate(table.grid.matrix):
         labels = []
@@ -580,167 +666,85 @@ def _vertical_attributes(table: RecognizedTable, column_index: int, data_start_c
             value = _clean_name(row[label_col])
             if value and (not labels or labels[-1] != value):
                 labels.append(value)
-        key = " / ".join(labels) or f"行{row_index + 1}"
+        visual_key = str(visual_headers[row_index]) if visual_headers and row_index < len(visual_headers) else ""
+        key = visual_key or " / ".join(labels) or f"行{row_index + 1}"
         value = row[column_index] if column_index < len(row) else ""
-        attributes[key] = value
         cell = _cell_at(table, row_index, column_index)
-        if cell and cell.value_type in {"number", "range"}:
-            normalized_values.append({
-                "field": key,
-                "raw_value": cell.raw_text,
-                "numeric_value": cell.numeric_value,
-                "min_value": cell.min_value,
-                "max_value": cell.max_value,
-                "comparator": cell.comparator,
-                "unit": cell.unit or _unit_from_header(key),
-            })
-    attributes["normalized_values"] = normalized_values
+        _put_attribute(
+            attributes,
+            _attribute_key(key, f"行{row_index + 1}"),
+            _record_value(value, cell),
+        )
     return attributes
 
 
-def _add_domain_semantics(
+def _build_record_entities(
     table: RecognizedTable,
     plan: TableSemanticPlan,
     assembler: _GraphAssembler,
-    structural: Mapping[str, Any],
 ) -> list[Entity]:
-    """依据主键计划创建领域实体，并附加确定性属性与 Schema 合法关系。"""
+    """严格按数据行或数据列创建记录实体，不拆分任何表格结构或上下文节点。"""
 
-    if plan.subject_type == "TableRow":
-        return []
-    table_entity: Entity = structural["table"]
-    domain_entities: list[Entity] = []
-    record_entities_by_row: dict[int, Entity] = {}
-    lithology_entities_by_row: dict[int, Entity] = {}
+    record_entities: list[Entity] = []
     if plan.orientation == "vertical" and plan.subject_row is not None:
         for column_index in range(plan.data_start_col, table.grid.column_count):
-            name = _clean_name(table.grid.matrix[plan.subject_row][column_index])
+            name = _normalize_record_text(table.grid.matrix[plan.subject_row][column_index])
             if not name:
                 continue
             cell = _cell_at(table, plan.subject_row, column_index)
             entity = assembler.add_entity(
-                _stable_id("domain", table.source.document_id, plan.subject_type, name),
+                _stable_id(
+                    "domain_record",
+                    table.source.document_id,
+                    table.source.task_id,
+                    plan.subject_type,
+                    "column",
+                    column_index,
+                    name,
+                ),
                 name,
                 plan.subject_type,
-                attributes=_vertical_attributes(table, column_index, plan.data_start_col),
+                attributes=_vertical_attributes(
+                    table,
+                    column_index,
+                    plan.data_start_col,
+                    plan.headers if plan.analysis_source == "vlm" else None,
+                ),
                 provenance=_cell_provenance(table, cell),
                 metadata={"table_record_axis": "column", "column_index": column_index},
             )
-            domain_entities.append(entity)
+            record_entities.append(entity)
     elif plan.subject_column is not None:
         for row_index in range(plan.data_start_row, table.grid.row_count):
-            name = _clean_name(table.grid.matrix[row_index][plan.subject_column])
+            name = _normalize_record_text(table.grid.matrix[row_index][plan.subject_column])
             if not name:
                 continue
             cell = _cell_at(table, row_index, plan.subject_column)
             entity = assembler.add_entity(
-                _stable_id("domain", table.source.document_id, plan.subject_type, name),
+                _stable_id(
+                    "domain_record",
+                    table.source.document_id,
+                    table.source.task_id,
+                    plan.subject_type,
+                    "row",
+                    row_index,
+                    name,
+                ),
                 name,
                 plan.subject_type,
                 attributes=_row_attributes(table, row_index),
                 provenance=_cell_provenance(table, cell),
                 metadata={"table_record_axis": "row", "row_index": row_index},
             )
-            domain_entities.append(entity)
-            record_entities_by_row[row_index] = entity
-            if plan.subject_type == "Lithology":
-                lithology_entities_by_row[row_index] = entity
-
-    table_relation = {
-        "Sample": "REPORTS",
-        "Experiment": "REPORTS",
-        "AnalyticalMethod": "REPORTS",
-        "Lithology": "DESCRIBES",
-        "Reservoir": "DESCRIBES",
-        "ReservoirInterval": "DESCRIBES",
-        "Formation": "DESCRIBES",
-        "StratigraphicMember": "DESCRIBES",
-    }.get(plan.subject_type)
-    for entity in domain_entities:
-        if table_relation:
-            assembler.add_relation(table_entity, table_relation, entity, provenance=entity.provenance)
-        if entity.type == "Sample":
-            assembler.add_relation(entity, "RECORDED_IN", table_entity, provenance=entity.provenance)
-        for parameter in structural["parameters"].values():
-            assembler.add_relation(parameter, "DESCRIBES", entity, provenance=entity.provenance)
-
-    if plan.subject_type == "Sample" and plan.subject_column is not None:
-        # 中文说明：样品表逐行建立 Sample→井/地层/岩性上下文，属性值仍保留在样品和原始单元格中。
-        context_types = {"Well", "Formation", "StratigraphicMember", "ReservoirInterval", "Lithology"}
-        for row_index, sample in record_entities_by_row.items():
-            for column_index, header in enumerate(table.grid.header_paths):
-                if column_index == plan.subject_column:
-                    continue
-                inferred = _infer_subject(header)
-                if inferred is None:
-                    continue
-                raw_type, _ = inferred
-                value = _clean_name(table.grid.matrix[row_index][column_index])
-                context_type = _refine_context_type(header, value, raw_type)
-                if not value or context_type not in context_types:
-                    continue
-                cell = _cell_at(table, row_index, column_index)
-                context = assembler.add_entity(
-                    _stable_id("domain", table.source.document_id, context_type, value),
-                    value,
-                    context_type,
-                    attributes={"source_header": header},
-                    provenance=_cell_provenance(table, cell),
-                    metadata={"table_context": True},
-                )
-                if context not in domain_entities:
-                    domain_entities.append(context)
-                assembler.add_relation(sample, "COLLECTED_FROM", context, provenance=_cell_provenance(table, cell))
-                if context_type in {"Formation", "StratigraphicMember", "ReservoirInterval", "Lithology"}:
-                    assembler.add_relation(table_entity, "DESCRIBES", context, provenance=_cell_provenance(table, cell))
-                if context_type == "Lithology":
-                    lithology_entities_by_row[row_index] = context
-
-    # 中文说明：存在明确岩性实体时才建立 Lithology→Mineral；无岩性证据的样品表不虚构岩石类别。
-    if lithology_entities_by_row:
-        for column_index, header in enumerate(table.grid.header_paths):
-            mineral_name = next((name for name in MINERAL_NAMES if name in header), "")
-            if not mineral_name:
-                continue
-            mineral = assembler.add_entity(
-                _stable_id("mineral", mineral_name),
-                mineral_name,
-                "Mineral",
-                attributes={"source_header": header},
-                provenance=f"{_cell_provenance(table)} | column={column_index}",
-            )
-            if mineral not in domain_entities:
-                domain_entities.append(mineral)
-            for row_index, entity in lithology_entities_by_row.items():
-                cell = _cell_at(table, row_index, column_index)
-                if cell is not None and not cell.is_missing:
-                    assembler.add_relation(entity, "COMPOSED_OF", mineral, provenance=_cell_provenance(table, cell))
-    return domain_entities
+            record_entities.append(entity)
+    return record_entities
 
 
 def _required_domain_types(table: RecognizedTable, plan: TableSemanticPlan) -> dict[str, str]:
-    """在选择局部 Schema 前收集主键及样品上下文可能创建的全部领域类型。"""
+    """记录模式只需要主题实体类型，不再召回表头中出现的上下文实体类型。"""
 
-    required = {plan.subject_type: plan.subject_type_zh} if plan.subject_type else {}
-    if plan.subject_type != "Sample" or plan.subject_column is None:
-        return required
-    context_types = {"Well", "Formation", "StratigraphicMember", "ReservoirInterval", "Lithology"}
-    for column_index, header in enumerate(table.grid.header_paths):
-        inferred = _infer_subject(header)
-        if inferred is None or column_index == plan.subject_column:
-            continue
-        inferred_type, _ = inferred
-        values = [
-            _clean_name(table.grid.matrix[row_index][column_index])
-            for row_index in range(plan.data_start_row, table.grid.row_count)
-        ]
-        for value in values:
-            context_type = _refine_context_type(header, value, inferred_type)
-            if value and context_type in context_types:
-                required[context_type] = DOMAIN_TYPE_ZH[context_type]
-    if any(any(name in header for name in MINERAL_NAMES) for header in table.grid.header_paths):
-        required["Mineral"] = DOMAIN_TYPE_ZH["Mineral"]
-    return required
+    _ = table
+    return {plan.subject_type: plan.subject_type_zh} if plan.subject_type else {}
 
 
 def build_table_graph(
@@ -749,7 +753,7 @@ def build_table_graph(
     schema_selector: TableSchemaSelector | None = None,
     llm_client: Any | None = None,
 ) -> Graph:
-    """将一张已通过质量门的标准表格转换为结构与领域统一 Graph。"""
+    """将表格转换为纯记录 Graph：每个数据行或数据列仅生成一个实体。"""
 
     selector = schema_selector or TableSchemaSelector()
     plan = infer_semantic_plan(table, llm_client=llm_client)
@@ -757,8 +761,7 @@ def build_table_graph(
     required_types = _required_domain_types(table, plan)
     schema = selector.select(table, required_types=required_types)
     assembler = _GraphAssembler(table, schema)
-    structural = _build_structural_graph(table, assembler)
-    domain_entities = _add_domain_semantics(table, plan, assembler, structural)
+    record_entities = _build_record_entities(table, plan, assembler)
     graph = Graph.from_chunk(
         table.source.document_id,
         table.source.task_id,
@@ -777,9 +780,10 @@ def build_table_graph(
             "column_count": table.grid.column_count,
         },
         "semantic_plan": plan.to_dict(),
+        "visual_semantics": table.details.get("visual_semantics"),
         "schema_selection": schema.to_dict(),
-        "domain_entity_count": len(domain_entities),
-        "skipped_schema_relations": assembler.skipped_relations,
+        "record_entity_count": len(record_entities),
+        "record_only": True,
         "validation": validation,
     })
     return graph
@@ -789,9 +793,8 @@ def extract_from_tables(
     chunks: Sequence[Mapping[str, Any] | TableSource],
     llm_client: Any | None = None,
     *,
+    vlm_client: Any | None = None,
     output_path: str | Path | None = None,
-    recognition_output_path: str | Path | None = None,
-    report_output_path: str | Path | None = None,
     work_dir: str | Path | None = None,
     engine: str = "auto",
     rapid_model: str = "unitable",
@@ -799,6 +802,7 @@ def extract_from_tables(
     ocr_device: str = "cpu",
     ocr_backend: str = "onnxruntime",
     ocr_limit_side_len: int = 1600,
+    use_vlm_semantic: bool = True,
     use_llm_semantic: bool = False,
     minimum_score: float = 0.55,
     show_progress: bool = True,
@@ -822,6 +826,10 @@ def extract_from_tables(
     ) if any(str(item.kind) == "image" for item in sources) else None
     selector = TableSchemaSelector()
     semantic_client = llm_client if use_llm_semantic else DisabledLLMClient()
+    # 中文说明：只在确有表格原图时创建视觉客户端；HTML/Markdown-only 输入继续使用确定性规则。
+    active_vlm_client = vlm_client
+    if use_vlm_semantic and active_vlm_client is None and any(item.image_path for item in sources):
+        active_vlm_client = VLMClient()
     graphs: list[Graph] = []
     recognized_tables: list[RecognizedTable] = []
     reports: list[TableTaskReport] = []
@@ -851,6 +859,18 @@ def extract_from_tables(
                 if show_progress:
                     print(f"  质量门未通过：score={recognized.quality.score:.3f}，已保留人工复核产物")
                 continue
+            if use_vlm_semantic and active_vlm_client is not None and recognized.source.image_path:
+                try:
+                    visual_semantics = analyze_table_visual_semantics(recognized, active_vlm_client)
+                    visual_semantics["status"] = "success"
+                    recognized.details["visual_semantics"] = visual_semantics
+                    write_json(Path(recognized.artifact_dir) / "visual_semantics.json", visual_semantics)
+                except Exception as exc:
+                    # 中文说明：视觉服务异常时保留 HTML 规则结果并显式记录降级原因，单表不因此丢失。
+                    failure = {"status": "failed", "error": str(exc), "fallback": "html_rules"}
+                    recognized.details["visual_semantics"] = failure
+                    recognized.quality.warnings.append(f"vlm_semantic_failed:{exc}")
+                    write_json(Path(recognized.artifact_dir) / "visual_semantics.json", failure)
             graph = build_table_graph(recognized, schema_selector=selector, llm_client=semantic_client)
             graphs.append(graph)
             reports.append(TableTaskReport(
@@ -878,13 +898,31 @@ def extract_from_tables(
             if show_progress:
                 print(f"  失败：{exc}")
 
-    if recognition_output_path is not None:
-        write_json(recognition_output_path, [item.to_dict() for item in recognized_tables])
     if output_path is not None:
-        write_json(output_path, [graph.to_dict() for graph in graphs])
-    if report_output_path is not None:
-        write_json(report_output_path, [report.to_dict() for report in reports])
+        write_table_extraction_result(output_path, graphs, status="completed")
     return graphs
+
+
+def write_table_extraction_result(
+    path: str | Path,
+    graphs: Sequence[Graph],
+    *,
+    status: str,
+) -> None:
+    """按文本抽取最终文件的统一结构保存表格 Graph 和统计信息。"""
+
+    result = {
+        "_status": status,
+        "statistics": {
+            "graph_count": len(graphs),
+            "completed_table_chunk_count": len(graphs),
+            "entity_count": sum(len(graph.entities) for graph in graphs),
+            "relation_count": sum(len(graph.relations) for graph in graphs),
+            "event_count": sum(len(graph.events) for graph in graphs),
+        },
+        "graphs": [graph.to_dict() for graph in graphs],
+    }
+    write_json(path, result)
 
 
 def _build_cli() -> argparse.ArgumentParser:
@@ -893,8 +931,6 @@ def _build_cli() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="将 Stage-02/03 表格转换为标准 HTML 和表格知识图谱")
     parser.add_argument("--input", type=Path, default=DEFAULT_INPUT_PATH, help="Stage-02/03 JSON")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT_PATH, help="表格 Graph JSON")
-    parser.add_argument("--recognition-output", type=Path, default=DEFAULT_RECOGNITION_PATH, help="HTML与网格识别 JSON")
-    parser.add_argument("--report-output", type=Path, default=DEFAULT_REPORT_PATH, help="逐表任务报告 JSON")
     parser.add_argument("--work-dir", type=Path, default=DEFAULT_WORK_DIR, help="逐表 HTML、明细和可视化目录")
     parser.add_argument("--engine", choices=("auto", "rapidtable", "mineru"), default="auto", help="图片表格识别引擎")
     parser.add_argument("--rapid-model", choices=("unitable", "slanetplus", "ppstructure_zh"), default="unitable", help="RapidTable 结构模型")
@@ -926,8 +962,6 @@ def main() -> int:
         sources,
         client,
         output_path=args.output,
-        recognition_output_path=args.recognition_output,
-        report_output_path=args.report_output,
         work_dir=args.work_dir,
         engine=args.engine,
         rapid_model=args.rapid_model,
@@ -951,4 +985,5 @@ __all__ = [
     "build_table_graph",
     "extract_from_tables",
     "infer_semantic_plan",
+    "write_table_extraction_result",
 ]

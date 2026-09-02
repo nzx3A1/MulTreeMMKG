@@ -16,7 +16,7 @@ python util\run_table_embedded_hybrid_live_batch.py
 真实模型结果同时包含：
 
 1. PP-StructureV3 原图像素几何、OCR 刻度、轨道和 VLM 语义图元组成的结构化中间结果；
-2. 第四次 VLM 节点规范化产生的 `official_name`，以及程序按 PP/VLM 轨道映射写入的 `attributes.track_header`；
+2. 图例后曲线按左右最近 table_text 轨道实体数择优切片后的 VLM 数值/图例识别，以及最终节点规范化产生的 `official_name`；
 3. 具备逐图来源、视觉证据和显式/推导标记的节点与关系；
 4. 空事件列表，当前任务不扩展事件抽取。
 

@@ -19,11 +19,21 @@ from .ppstructure_geometry import (
     extract_ppstructure_geometry,
     geometry_prompt_catalog,
 )
+from .visual_track_extraction import (
+    describe_adjacent_visual_track_slices,
+    validate_vlm_track_types,
+)
+from .vlm_options import table_embedded_hybrid_vlm_timeout_secs
 
 
 SEGMENT_ORDER = ("layout", "stratigraphy_lithology", "facies_reservoir_wells")
 NODE_ENRICHMENT_SCHEMA_VERSION = "table_embedded_hybrid.node_enrichment.v1"
-NODE_FIELDS = (*INTERVAL_FIELDS, "curve_tracks", "point_markers", "objects")
+NODE_FIELDS = (
+    *(field for field in INTERVAL_FIELDS if field != "track_intervals"),
+    "curve_tracks",
+    "point_markers",
+    "objects",
+)
 
 
 def _source_image_size(task: ImageExtractionTask) -> tuple[int, int]:
@@ -55,6 +65,7 @@ def build_segmented_table_prompt(
             {
                 "id": str(track.get("id") or ""),
                 "role": str(track.get("role") or ""),
+                "track_type": str(track.get("track_type") or ""),
                 "header": str(track.get("header") or ""),
             }
             for track in known_tracks
@@ -108,7 +119,10 @@ PP-StructureV3 几何目录（ID 与像素坐标均由程序生成；只选择 I
 本次只做轨道语义标注和纵轴类型判断，不抽取地层区间：
 - layout_family 从 stratigraphic_column_table、multi_track_well_log、imaging_log_panel、stratigraphic_summary_table 中单选；无法归入时用 other_table_hybrid。
 - 若存在连续深度轴，kind=depth 并从目录选择其 track_id 与 calibration_ocr_ids；逐层厚度数字不是连续深度轴，必须使用 kind=thickness，程序会退化到相对层序而不生成伪深度。
-- tracks 只能选择 PP 目录中实际存在的 pp_track_*，补充地层层级、深度、岩性、曲线、相、储层等角色；没有的栏不要虚构。
+- tracks 必须覆盖 PP 目录中从左到右的全部实际轨道；id 只能选择 pp_track_*，程序会按 bbox.x 强制重排 order，模型不得遗漏或虚构轨道。
+- 每条轨道必须由 VLM 独立填写 track_type：纯文字/数字单元格列为 table_text；以颜色、纹理、符号或图像块表达内容的列为 legend；连续曲线或曲线型测井响应列为 curve。
+- 轨道类型判断必须按三遍完成：第一遍先确认全部 table_text，第二遍只在剩余轨道中确认 legend，第三遍再确认 curve；最终 tracks 数组仍按原图从左到右输出。
+- role 继续描述地层、代号、深度、岩性、曲线、孔隙度、渗透率、相、储层、井或说明文字等领域职责；track_type 与 role 不得混为一项。
 输出：
 {
   "schema_version":"table_embedded_hybrid.segment.v1",
@@ -118,14 +132,16 @@ PP-StructureV3 几何目录（ID 与像素坐标均由程序生成；只选择 I
   "diagram_name":"",
   "image_size":{"width":0,"height":0},
   "coordinate_system":{"vertical_axis":{"kind":"thickness|depth|relative_sequence","unit":"m|无量纲","increases":"downward|upward","track_id":"pp_track_*","calibration_ocr_ids":["pp_ocr_*"]}},
-  "tracks":[{"id":"pp_track_*","role":"stratigraphy|depth|lithology|curve|text|facies|reservoir|well","header":"","parser":"","evidence":""}],
+  "tracks":[{"id":"pp_track_*","track_type":"table_text|legend|curve","role":"stratigraphy|code|depth|lithology|curve|porosity|permeability|text|facies|reservoir|well|other","header":"","parser":"","evidence":""}],
   "uncertainties":[]
 }
 """,
         "stratigraphy_lithology": """
 本次只读取左半部的地层层级、代号、厚度轴、岩性剖面和岩性简述：
 - stratigraphic_intervals 完整保留当前图片可见的系/统/组/段/亚段、测井小层或表格行层级；parent_id 必须指向已输出父层。图中没有地层层级时返回空数组。
+- PP 几何目录若包含 submember_groups，每个 rows 单元格必须各自输出一个 rank=submember 的节点，不得因主体文字重复而合并；resolved_name 有跨列锚点时应原样使用，并保留对应 cell_id。
 - lithology_intervals 按图中可见岩性文字与对应纵向区间读取；不要仅凭图例花纹猜名称。
+- 完整图例中每个岩性名称都输出 legend_entries，geometry_refs 选择名称文字的 pp_ocr_*；样方矩形与剖面纹理坐标由程序匹配。
 - reference_intervals 用于井段、高亮重点段、甜点段、成像测井解释段或其他明确但不属于地层单位的连续区间；没有则返回空数组。
 - geological_feature_intervals 只保留图中明确标注的裂缝、孔洞、断层、顶底板等连续特征区间。
 - 多轨测井或成像面板不要求创造地层单位；应优先忠实读取深度段、可见岩性和高亮区间。
@@ -137,6 +153,7 @@ PP-StructureV3 几何目录（ID 与像素坐标均由程序生成；只选择 I
     "stratigraphic_intervals":[{"id":"","name":"","parent_id":"","rank":"","track_id":"pp_track_*","geometry_refs":["pp_cell_*"],"evidence":"","confidence":0.0}],
     "reference_intervals":[],
     "lithology_intervals":[{"id":"","name":"","track_id":"pp_track_*","geometry_refs":["pp_cell_*"],"evidence":"","confidence":0.0}],
+    "legend_entries":[{"id":"","name":"","geometry_refs":["pp_ocr_*"],"evidence":"","confidence":0.0}],
     "geological_feature_intervals":[]
   },
   "uncertainties":[]
@@ -145,20 +162,20 @@ PP-StructureV3 几何目录（ID 与像素坐标均由程序生成；只选择 I
         "facies_reservoir_wells": """
 本次读取其余曲线、相、储层/高亮、井号、嵌入图像面板及说明栏：
 - facies_intervals 记录图片实际可见的沉积相或微相区间；没有则为空。
-- curve_tracks 逐条记录可见曲线名称、单位和刻度，包括但不限于 GR、SP、AC、DEN、CNL、电阻率、TOC、矿物含量、脆性指数、含气量或海平面曲线。
+- curve_tracks 逐条记录可见曲线名称、单位、左右端刻度、颜色、图元形态和线性/对数刻度，包括但不限于 GR、SP、AC、DEN、CNL、RS、RD、测井/岩心孔隙度与渗透率。
 - curve_observations 按可稳定对应的层段或深度段记录高低、增减、峰谷或异常响应；刻度不清时只写 qualitative_response，不虚构数值。
 - reservoir_intervals 记录图中明确的储层、油气层、甜点、高亮色带或优质页岩段；没有则为空。
 - point_markers 只逐个读取井号并选择 geometry_refs；其他点状标签放入 objects。objects 还可保存组合、孔隙类型、成像测井面板、储层成因说明等非连续对象。
 - 必须从有效内容顶部一直读取到底部，不能只抽取上半图；每个坐标都应与上面的已知地层/井段像素边界比较。
 - 对成像测井双面板，应分别建立面板对象和对应深度段；对纯测井图，不得虚构沉积相、储层成因或井号。
-- explicit_relations 只允许图中竖排文字或同一储层行明确表达的关系；其余跨轨关系由程序按纵轴生成。
+- explicit_relations 只允许图中竖排文字或同一储层行明确表达的领域关系，禁止输出 aligned_with；程序只在左右紧邻轨道之间生成深度对齐边。
 输出：
 {
   "schema_version":"table_embedded_hybrid.segment.v1",
   "segment":"facies_reservoir_wells",
   "primitives":{
     "facies_intervals":[{"id":"","name":"","track_id":"pp_track_*","geometry_refs":["pp_cell_*"],"evidence":"","confidence":0.0}],
-    "curve_tracks":[{"id":"","name":"","track_id":"","scale_min":null,"scale_max":null,"unit":"","scale_direction":"","evidence":""}],
+    "curve_tracks":[{"id":"","name":"","track_id":"pp_track_*","left_value":null,"right_value":null,"scale_min":null,"scale_max":null,"unit":"","color":"red|blue|green|cyan|black|unknown","visual_form":"continuous_curve|filled_profile|sample_bars","scale_transform":"linear|log10","evidence":""}],
     "curve_observations":[{"id":"","name":"","curve_ids":[],"track_id":"pp_track_*","geometry_refs":["pp_cell_*"],"qualitative_response":"","evidence":"","confidence":0.0}],
     "reservoir_intervals":[{"id":"","name":"","track_id":"pp_track_*","geometry_refs":["pp_cell_*"],"evidence":"","confidence":0.0}],
     "oil_layer_intervals":[],
@@ -183,7 +200,10 @@ def _parse_segment(response: Any, expected_segment: str) -> dict[str, Any]:
         raise ValueError(
             f"表格分段响应错位：expected={expected_segment}，actual={payload.get('segment')}"
         )
-    return dict(payload)
+    validated = dict(payload)
+    if expected_segment == "layout":
+        validated["tracks"] = validate_vlm_track_types(validated.get("tracks"))
+    return validated
 
 
 def merge_segmented_table_payloads(segments: Mapping[str, Mapping[str, Any]]) -> dict[str, Any]:
@@ -198,6 +218,8 @@ def merge_segmented_table_payloads(segments: Mapping[str, Mapping[str, Any]]) ->
         "curve_tracks": [],
         "point_markers": [],
         "objects": [],
+        "legend_entries": [],
+        "curve_traces": [],
         "explicit_relations": [],
     }
     owners: dict[str, str] = {}
@@ -292,7 +314,7 @@ def _geometry_track_ids(item: Mapping[str, Any], payload: Mapping[str, Any]) -> 
 
 
 def _node_candidates(payload: Mapping[str, Any]) -> list[dict[str, Any]]:
-    """中文说明：只枚举前三段已经确认的节点，第四次调用不得新增任何候选。"""
+    """中文说明：只枚举整图和切片阶段已经确认的节点，最终规范化调用不得新增候选。"""
 
     headers = _track_header_map(payload)
     diagram_id = str(payload.get("diagram_id") or "table_embedded_hybrid_diagram").strip()
@@ -412,14 +434,15 @@ def enrich_table_node_names(
     vlm_client: Any,
     payload: Mapping[str, Any],
 ) -> dict[str, Any]:
-    """中文说明：执行第 4 次受约束 VLM 调用，只为现有节点补充官方名。"""
+    """中文说明：执行最终受约束 VLM 调用，只为现有节点补充官方名。"""
 
     response = vlm_client.describe_image(
         task.image_path,
         build_node_enrichment_prompt(task, payload),
         task_name=f"表格嵌入混合节点官方名规范化:{task.image_id}",
         response_format={"type": "json_object"},
-        max_tokens=int(os.getenv("STRATIGRAPHIC_TABLE_NODE_ENRICHMENT_MAX_TOKENS", "12288")),
+        max_tokens=int(os.getenv("STRATIGRAPHIC_TABLE_NODE_ENRICHMENT_MAX_TOKENS", "16384")),
+        timeout=table_embedded_hybrid_vlm_timeout_secs(),
     )
     enrichment = response if isinstance(response, Mapping) else safe_json_loads(str(response or ""))
     if not isinstance(enrichment, Mapping):
@@ -462,9 +485,9 @@ def extract_segmented_table_visual(
 
     max_tokens = {
         # 中文说明：宽幅综合柱状表可能包含十余条轨道，布局 JSON 需要更高上限以避免在最后一条轨道处截断。
-        "layout": int(os.getenv("STRATIGRAPHIC_TABLE_LAYOUT_MAX_TOKENS", "4096")),
-        "stratigraphy_lithology": int(os.getenv("STRATIGRAPHIC_TABLE_GEOLOGY_MAX_TOKENS", "8192")),
-        "facies_reservoir_wells": int(os.getenv("STRATIGRAPHIC_TABLE_RESERVOIR_MAX_TOKENS", "8192")),
+        "layout": int(os.getenv("STRATIGRAPHIC_TABLE_LAYOUT_MAX_TOKENS", "8192")),
+        "stratigraphy_lithology": int(os.getenv("STRATIGRAPHIC_TABLE_GEOLOGY_MAX_TOKENS", "16384")),
+        "facies_reservoir_wells": int(os.getenv("STRATIGRAPHIC_TABLE_RESERVOIR_MAX_TOKENS", "16384")),
     }
     segments: dict[str, dict[str, Any]] = {}
     for segment in SEGMENT_ORDER:
@@ -489,11 +512,18 @@ def extract_segmented_table_visual(
             ),
             response_format={"type": "json_object"},
             max_tokens=max_tokens[segment],
+            timeout=table_embedded_hybrid_vlm_timeout_secs(),
         )
         segments[segment] = _parse_segment(response, segment)
     resolved_payload = validate_and_repair_pixel_geometry(
         task,
         merge_segmented_table_payloads(segments),
         geometry=resolved_geometry,
+    )
+    # 中文说明：table_text 实体先完成，再按 legend、curve 顺序使用左右最近文字轨道的实体范围逐块裁剪识别。
+    resolved_payload = describe_adjacent_visual_track_slices(
+        task,
+        vlm_client,
+        resolved_payload,
     )
     return enrich_table_node_names(task, vlm_client, resolved_payload)

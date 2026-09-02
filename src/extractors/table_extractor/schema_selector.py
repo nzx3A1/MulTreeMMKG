@@ -9,8 +9,8 @@ from dataclasses import replace
 import re
 from typing import Any, Mapping, Sequence
 
-from src.extractors.text_extractor.schema_models import RelevantSchema, SchemaConcept, SchemaRelation
-from src.extractors.text_extractor.schema_repository import Neo4jSchemaRepository
+from src.schemaProcess.schema_models import RelevantSchema, SchemaConcept, SchemaRelation
+from src.schemaProcess.schema_repository import Neo4jSchemaRepository
 
 from .schema_models import RecognizedTable
 

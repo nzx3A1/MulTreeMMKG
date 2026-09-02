@@ -26,6 +26,8 @@ RELATION_NAMES = {
     "aligned_with": "深度对齐于",
     "located_in": "位于",
     "higher_response_than": "响应高于",
+    "has_track": "具有轨道",
+    "located_in_track": "位于轨道",
 }
 
 ENTITY_TYPE_BY_FIELD = {
@@ -39,6 +41,7 @@ ENTITY_TYPE_BY_FIELD = {
     "curve_observations": "curve_response_interval",
     "curve_tracks": "log_curve",
     "point_markers": "well",
+    "track_intervals": "track_interval",
 }
 
 
@@ -77,6 +80,7 @@ class TableEmbeddedHybridGraphBuilder:
         self.entities: dict[str, Entity] = {}
         self.relations: dict[str, Relation] = {}
         self.local_to_graph: dict[str, str] = {}
+        self.track_graph_ids: dict[str, str] = {}
 
     def build(self) -> Graph:
         """中文说明：先注册剖面及全部专用图元，再按确定性规则装配包含、层序和深度对齐关系。"""
@@ -107,11 +111,49 @@ class TableEmbeddedHybridGraphBuilder:
         parsed = self.intermediate.get("parsed")
         if not isinstance(parsed, Mapping):
             raise ValueError("中间结果缺少 parsed")
-        for field, entity_type in ENTITY_TYPE_BY_FIELD.items():
+        for track in self._records(self.intermediate.get("tracks")):
+            track_id = str(track.get("id") or "").strip()
+            if not track_id:
+                continue
+            header = str(
+                track.get("header")
+                or track.get("semantic_header_text")
+                or track.get("ppstructure_header_text")
+                or track_id
+            )
+            track_graph_id = self._add_entity(
+                f"track::{track_id}",
+                header,
+                "diagram_track",
+                official_name=header,
+                attributes={
+                    key: value
+                    for key, value in track.items()
+                    if key not in {"id", "header", "evidence"}
+                } | {"track_header": header},
+                evidence=str(track.get("evidence") or f"PP-StructureV3 与表头语义确定轨道 {header}"),
+                confidence=_confidence(track.get("confidence"), 0.92),
+            )
+            self.track_graph_ids[track_id] = track_graph_id
+            self._add_relation(
+                profile_id,
+                "has_track",
+                track_graph_id,
+                evidence=f"综合柱状图包含轨道：{header}",
+                confidence=_confidence(track.get("confidence"), 0.95),
+                explicit=True,
+                basis="visible_semantic_track",
+            )
+        for field, default_entity_type in ENTITY_TYPE_BY_FIELD.items():
             for item in self._records(parsed.get(field)):
                 local_id = str(item.get("id") or "").strip()
                 if not local_id:
                     continue
+                entity_type = (
+                    str(item.get("entity_type") or default_entity_type)
+                    if field == "track_intervals"
+                    else default_entity_type
+                )
                 graph_id = self._add_entity_from_record(local_id, item, entity_type)
                 self._add_relation(
                     profile_id,
@@ -122,6 +164,7 @@ class TableEmbeddedHybridGraphBuilder:
                     explicit=True,
                     basis="visible_track_membership",
                 )
+                self._link_entity_to_track(graph_id, item)
         for item in self._records(parsed.get("objects")):
             local_id = str(item.get("id") or "").strip()
             if not local_id:
@@ -140,6 +183,7 @@ class TableEmbeddedHybridGraphBuilder:
                 explicit=True,
                 basis="visible_diagram_membership",
             )
+            self._link_entity_to_track(graph_id, item)
         for item in self._records(self.intermediate.get("alignment_relations")):
             source_id = self.local_to_graph.get(str(item.get("source_id") or ""))
             target_id = self.local_to_graph.get(str(item.get("target_id") or ""))
@@ -182,9 +226,18 @@ class TableEmbeddedHybridGraphBuilder:
             raw_response={"structured_intermediate_result": dict(self.intermediate)},
             stage="stage_04_image_table_embedded_hybrid_extraction",
         )
+        quality = self.intermediate.get("quality")
+        quality = quality if isinstance(quality, Mapping) else {}
+        quality_gate_errors = list(quality.get("quality_gate_errors") or [])
         graph.metadata.extra.update(
             {
-                "status": "completed" if self.entities else "empty",
+                "status": (
+                    "failed_quality_gate"
+                    if quality_gate_errors
+                    else "completed"
+                    if self.entities
+                    else "empty"
+                ),
                 "extractor_kind": "stratigraphic_profile",
                 "extractor_name": "表格—图像嵌入混合型地层图抽取器",
                 "stratigraphic_subtype": "table_embedded_hybrid",
@@ -199,13 +252,37 @@ class TableEmbeddedHybridGraphBuilder:
                 "algorithm": self.intermediate.get("algorithm"),
                 "coordinate_system": self.intermediate.get("coordinate_system"),
                 "track_count": len(self.intermediate.get("tracks", [])),
-                "quality": self.intermediate.get("quality"),
+                "quality": quality,
+                "quality_gate_errors": quality_gate_errors,
             }
         )
         reference_errors = graph.validate_references()
         if reference_errors:
             raise ValueError(f"确定性 Graph 引用校验失败：{reference_errors}")
         return graph
+
+    def _link_entity_to_track(self, graph_id: str, item: Mapping[str, Any]) -> None:
+        """中文说明：将每个轨道内容节点显式连到所属语义轨道，保留列级结构。"""
+
+        track_id = str(item.get("track_id") or "")
+        track_graph_id = self.track_graph_ids.get(track_id)
+        if not track_graph_id:
+            return
+        track = self.entities[track_graph_id]
+        entity = self.entities[graph_id]
+        self._add_relation(
+            graph_id,
+            "located_in_track",
+            track_graph_id,
+            evidence=f"{entity.name} 的几何引用位于 {track.name} 轨道",
+            confidence=min(
+                _confidence(item.get("confidence"), 0.85),
+                _confidence(track.attributes.get("confidence"), 0.92),
+            ),
+            explicit=True,
+            basis="ppstructure_semantic_track_membership",
+            attributes={"track_id": track_id},
+        )
 
     @staticmethod
     def _records(value: Any) -> Iterable[Mapping[str, Any]]:
@@ -245,6 +322,10 @@ class TableEmbeddedHybridGraphBuilder:
         raw_attributes = item.get("attributes")
         if isinstance(raw_attributes, Mapping):
             attributes.update(dict(raw_attributes))
+        track_graph_id = self.track_graph_ids.get(str(item.get("track_id") or ""))
+        if track_graph_id:
+            # 中文说明：自动补全的轨道节点不进入最终规范化调用，由图结构确定性补全表头。
+            attributes.setdefault("track_header", self.entities[track_graph_id].name)
         return self._add_entity(
             local_id,
             str(item.get("name") or local_id),

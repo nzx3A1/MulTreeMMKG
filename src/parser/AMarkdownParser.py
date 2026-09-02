@@ -9,7 +9,9 @@ from __future__ import annotations
 import argparse
 import html
 import json
+import os
 import re
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Iterable
@@ -27,8 +29,11 @@ FORMULA_RE = re.compile(r"\$\$\s*([\s\S]*?)\s*\$\$")
 REFERENCE_HEADING_RE = re.compile(r"^#{2,6}\s+.*?(References|参考文献)", re.IGNORECASE)
 MARKUP_TAG_RE = re.compile(r"</?(?:sup|sub|span|b|strong|i|em)[^>]*>", re.IGNORECASE)
 TABLE_LAYOUT_MODEL_NAME = "PicoDet_layout_1x_table"
+# 默认使用第 0 张 GPU；如需切换设备，可通过 AMARKDOWN_PADDLE_DEVICE 覆盖，例如 cpu 或 gpu:1。
+TABLE_LAYOUT_DEVICE = os.getenv("AMARKDOWN_PADDLE_DEVICE", "gpu:0")
 TABLE_CONTINUATION_THRESHOLD = 0.95
 _TABLE_LAYOUT_MODEL: Any | None = None
+_CUDA_DLL_HANDLES: list[Any] = []
 TableImageDetector = Callable[[Path, float], bool]
 
 
@@ -471,6 +476,32 @@ def slugify_title(title: str) -> str:
     return slug or "section"
 
 
+def prepare_cuda_dll_search_path() -> None:
+    """将当前 Conda 环境中的 CUDA 动态库目录加入 Windows 搜索路径。"""
+
+    if os.name != "nt" or not TABLE_LAYOUT_DEVICE.startswith("gpu"):
+        return
+
+    site_packages = Path(sys.prefix) / "Lib" / "site-packages"
+    candidate_directories: list[Path] = []
+    nvidia_root = site_packages / "nvidia"
+    if nvidia_root.is_dir():
+        # NVIDIA pip 包可能把 DLL 放在 bin 或 bin/x86_64 子目录中。
+        for package_directory in nvidia_root.iterdir():
+            for relative_directory in (Path("bin"), Path("bin") / "x86_64"):
+                candidate_directories.append(package_directory / relative_directory)
+    candidate_directories.append(site_packages / "torch" / "lib")
+
+    for directory in candidate_directories:
+        if not directory.is_dir():
+            continue
+        directory_text = str(directory)
+        os.environ["PATH"] = directory_text + os.pathsep + os.environ.get("PATH", "")
+        if hasattr(os, "add_dll_directory"):
+            # 保存句柄，避免 Windows DLL 搜索目录在函数返回后失效。
+            _CUDA_DLL_HANDLES.append(os.add_dll_directory(directory_text))
+
+
 def detect_table_image_with_picodet(image_path: Path, threshold: float = TABLE_CONTINUATION_THRESHOLD) -> bool:
     """使用表格专用 PicoDet 模型判断后续图片是否仍属于当前表格。"""
 
@@ -481,13 +512,16 @@ def detect_table_image_with_picodet(image_path: Path, threshold: float = TABLE_C
 
     try:
         if _TABLE_LAYOUT_MODEL is None:
+            prepare_cuda_dll_search_path()
             from paddleocr import LayoutDetection
 
-            # treeSchemeKG 的 Windows CPU 环境关闭 MKLDNN，规避 Paddle 3.3.x 的 PIR 转换错误。
+            # 显式指定 GPU 设备，确保 PaddleOCR 的表格版面检测使用第 0 张显卡。
             _TABLE_LAYOUT_MODEL = LayoutDetection(
                 model_name=TABLE_LAYOUT_MODEL_NAME,
+                device=TABLE_LAYOUT_DEVICE,
                 enable_mkldnn=False,
             )
+            print(f"PaddleOCR 表格检测设备：{TABLE_LAYOUT_DEVICE}")
 
         results = _TABLE_LAYOUT_MODEL.predict(str(image_path), batch_size=1, layout_nms=True)
         best_score = 0.0
@@ -521,6 +555,15 @@ def resolve_markdown_image_path(image_ref: str, asset_base_dir: Path | None) -> 
     return (asset_base_dir / image_path).resolve()
 
 
+def serialize_asset_path(image_ref: str, asset_base_dir: Path | None) -> str:
+    """将资源路径转换为 JSON 输出字符串；已知 Markdown 目录时输出绝对路径。"""
+
+    # parse_text 未提供源文件目录时保留原始引用，parse_file 会传入目录并输出绝对路径。
+    if asset_base_dir is None:
+        return image_ref
+    return str(resolve_markdown_image_path(image_ref, asset_base_dir))
+
+
 def populate_section_assets(
     node: SectionNode,
     reference_text: str = "",
@@ -541,7 +584,12 @@ def populate_section_assets(
         table_image_detector,
         table_continuation_threshold,
     )
-    images, image_spans = extract_images(raw, reference_text, excluded_spans=table_spans)
+    images, image_spans = extract_images(
+        raw,
+        reference_text,
+        asset_base_dir=asset_base_dir,
+        excluded_spans=table_spans,
+    )
     formulas, formula_spans = extract_formulas(raw, reference_text, asset_counters)
 
     node.table = tables
@@ -683,7 +731,11 @@ def extract_captioned_image_tables(
         caption = clean_inline_text("\n".join(caption_lines), strip_markup=False)
         table_numbers = extract_labeled_numbers(caption, labels=("表", "Table"))
         contexts = find_table_reference_contexts(reference_text, table_numbers)
-        image_paths = [item.group(1).strip() for item in table_image_matches]
+        # 将图片表格中的 Markdown 相对引用转换为相对于 full.md 的绝对路径后写入 JSON。
+        image_paths = [
+            serialize_asset_path(item.group(1).strip(), asset_base_dir)
+            for item in table_image_matches
+        ]
         tables.append(
             {
                 # 图片表格只保存干净路径，去掉 Markdown 的 ![](  ) 包装符号。
@@ -704,6 +756,7 @@ def extract_images(
     text: str,
     reference_text: str = "",
     excluded_spans: Iterable[tuple[int, int]] = (),
+    asset_base_dir: Path | None = None,
 ) -> tuple[list[dict[str, Any]], list[tuple[int, int]]]:
     """提取普通图片组；已归类为图片表格的图片不会被重复提取。"""
 
@@ -723,7 +776,11 @@ def extract_images(
             index += 1
 
         caption, caption_end = extract_caption_after(text, group_end, keywords=("图", "Fig"))
-        paths = [item.group(1).strip() for item in group]
+        # 普通图片与图片表格统一输出绝对路径，便于后续模块直接读取资源文件。
+        paths = [
+            serialize_asset_path(item.group(1).strip(), asset_base_dir)
+            for item in group
+        ]
         figure_numbers = extract_labeled_numbers(caption, labels=("图", "Fig"))
         images.append(
             {
@@ -964,7 +1021,7 @@ def main() -> None:
     cli.add_argument(
         "input",
         nargs="?",
-        default=project_root() / "data" / "mineru_output"/"鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟",
+        default=project_root() / "data" / "mineru_output"/"鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制_吴东旭",
         help="MinerU 导出的 full.md 路径或目录；不传则默认扫描 data/mineru_output",
     )
     cli.add_argument("-o", "--output", help="输出 JSON 文件路径；目录输入且不传时默认写入 output/amarkdown_parser_results.json")

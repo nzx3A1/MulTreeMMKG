@@ -91,7 +91,10 @@ def test_chunk_with_multiple_paths_expands_and_merges_without_model_calls(tmp_pa
     assert results[0].metadata.extra["image_task_count"] == 2
     assert all(route["extractor_kind"] == "map_spatial" for route in results[0].metadata.extra["routes"])
     assert all(route["model_called"] is False for route in results[0].metadata.extra["routes"])
-    assert len(json.loads(output_path.read_text(encoding="utf-8"))) == 1
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    assert payload["_status"] == "completed"
+    assert payload["statistics"]["graph_count"] == 1
+    assert len(payload["graphs"]) == 1
 
 
 def test_images_in_same_chunk_can_use_individual_mock_classifications() -> None:

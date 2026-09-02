@@ -1,7 +1,7 @@
 """Embedding 客户端封装。
 
 为实体对齐、文本相似度计算等模块提供统一向量接口，并附带余弦相似度工具。
-真实服务调用采用 requests 直接调用 SiliconFlow embeddings API。
+真实服务调用采用 requests 直接调用 Ollama ``/api/embed`` API。
 """
 from __future__ import annotations
 
@@ -25,39 +25,26 @@ class EmbeddingClient:
         self.config = config or settings.embedding
 
     def encode(self, texts: List[str]) -> List[List[float]]:
-        """将文本列表编码为向量列表。"""
+        """使用 Ollama 批量接口将文本列表编码为向量列表。"""
 
         if not texts:
             return []
-
-        results: List[List[float]] = []
-        for text in texts:
-            embedding = self._get_embedding(text)
-            if embedding is not None:
-                results.append(embedding)
-        return results
+        valid_texts = [text for text in texts if isinstance(text, str) and text.strip()]
+        if not valid_texts:
+            return []
+        return self._get_embeddings(valid_texts)
 
     def encode_one(self, text: str) -> List[float]:
         """编码单条文本。"""
 
-        embedding = self._get_embedding(text)
-        return embedding if embedding is not None else []
+        embeddings = self.encode([text])
+        return embeddings[0] if embeddings else []
 
-    def _get_embedding(self, text: str) -> List[float] | None:
-        """调用 SiliconFlow API 获取文本的嵌入向量。"""
+    def _get_embeddings(self, texts: List[str]) -> List[List[float]]:
+        """调用 Ollama API 获取一批文本的嵌入向量。"""
 
-        if not text or not isinstance(text, str):
-            return None
-
-        payload = {
-            "model": self.config.model,
-            "input": text,
-            "encoding_format": "float",
-        }
-        headers = {
-            "Authorization": f"Bearer {self.config.api_key}",
-            "Content-Type": "application/json",
-        }
+        payload = {"model": self.config.model, "input": texts}
+        headers = {"Content-Type": "application/json"}
 
         try:
             response = requests.post(
@@ -68,27 +55,38 @@ class EmbeddingClient:
             )
             response.raise_for_status()
             data = response.json()
-            rows = data.get("data", [])
-            if not rows or not isinstance(rows[0].get("embedding"), list):
-                logger.error("向量接口响应中缺少有效的 embedding 数据")
-                return None
+            embeddings = data.get("embeddings")
+            if not isinstance(embeddings, list) or len(embeddings) != len(texts):
+                logger.error(
+                    "Ollama 向量接口返回数量不匹配：期望 %s，实际 %s",
+                    len(texts),
+                    len(embeddings) if isinstance(embeddings, list) else "无效格式",
+                )
+                return []
+            if any(not isinstance(embedding, list) for embedding in embeddings):
+                logger.error("Ollama 向量接口响应中包含无效 embedding")
+                return []
 
-            embedding = rows[0]["embedding"]
-            if self.config.dimensions and len(embedding) != self.config.dimensions:
+            dimensions = {len(embedding) for embedding in embeddings}
+            if len(dimensions) != 1:
+                logger.error("Ollama 同一批次返回了不同维度的向量：%s", dimensions)
+                return []
+            actual_dimensions = dimensions.pop()
+            if self.config.dimensions and actual_dimensions != self.config.dimensions:
                 logger.error(
                     "向量维度不匹配：期望 %s，实际 %s",
                     self.config.dimensions,
-                    len(embedding),
+                    actual_dimensions,
                 )
-                return None
-            return embedding
+                return []
+            return embeddings
         except requests.HTTPError as exc:
             response_text = exc.response.text[:1000] if exc.response is not None else ""
-            logger.error("获取嵌入向量失败: %s；服务端响应: %s", exc, response_text)
+            logger.error("Ollama 获取嵌入向量失败: %s；服务端响应: %s", exc, response_text)
         except (requests.RequestException, ValueError) as exc:
-            logger.error("获取嵌入向量失败: %s", exc)
+            logger.error("Ollama 获取嵌入向量失败: %s", exc)
 
-        return None
+        return []
 
     @staticmethod
     def cosine_similarity(left: Iterable[float], right: Iterable[float]) -> float:
@@ -104,4 +102,3 @@ class EmbeddingClient:
         if left_norm == 0.0 or right_norm == 0.0:
             return 0.0
         return dot / (left_norm * right_norm)
-

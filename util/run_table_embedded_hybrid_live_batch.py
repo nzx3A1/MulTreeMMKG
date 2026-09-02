@@ -30,6 +30,7 @@ from src.extractors.image_extractor.stratigraphic_profile import (
 from src.extractors.image_extractor.stratigraphic_profile.table_embedded_hybrid import (
     TableEmbeddedHybridPipeline,
     apply_node_enrichment,
+    apply_visual_track_slice_responses,
     is_table_embedded_hybrid_payload,
     validate_and_repair_pixel_geometry,
 )
@@ -42,6 +43,7 @@ from util.run_table_embedded_hybrid_live_single import (
     RecordingVLMClient,
     _find_extraction_payload,
     _find_node_enrichment,
+    _find_visual_track_slice_responses,
 )
 
 
@@ -52,7 +54,7 @@ DEFAULT_OUTPUT = DEFAULT_OUTPUT_DIR / "table_embedded_hybrid_live_batch_results.
 DEFAULT_NODES_OUTPUT = DEFAULT_OUTPUT_DIR / "table_embedded_hybrid_live_batch_nodes.json"
 DEFAULT_RELATIONS_OUTPUT = DEFAULT_OUTPUT_DIR / "table_embedded_hybrid_live_batch_relations.json"
 # 中文说明：修改分类边界、坐标修复或图谱语义后递增，防止整图断点绕过新的确定性算法。
-BATCH_PIPELINE_REVISION = "2026-08-03.node-enrichment.1"
+BATCH_PIPELINE_REVISION = "2026-08-08.adjacent-track-slice-vlm.1"
 
 
 def _load_chunks(source_path: Path) -> list[dict[str, Any]]:
@@ -221,7 +223,7 @@ def _write_state(
         "events_extracted": False,
         "model": settings.vlm.model,
         "base_url": settings.vlm.base_url,
-        "algorithm": "真实大类分类 → 真实地层子分类 → PP-StructureV3 像素几何 → 三段 VLM 语义 ID 选择 → 第四次 VLM 节点官方名规范化 → 轨道表头映射 → OCR 深度轴/相对层序 → 确定性图谱装配",
+        "algorithm": "真实大类分类 → 真实地层子分类 → PP-StructureV3 像素几何 → 三段 VLM 轨道类型与语义 ID 选择 → 相邻轨道切片 VLM 描述 → 最终节点官方名规范化 → OCR 深度轴/相对层序 → 确定性图谱装配",
         "summary": summary,
         "results": results,
     }
@@ -319,10 +321,16 @@ def _full_result(
     reference_errors = graph.validate_references()
     provenance_errors: list[str] = []
     dropped_relations: list[dict[str, Any]] = []
-    if graph_status == "completed":
+    quality_gate_errors: list[str] = []
+    if graph_status in {"completed", "failed_quality_gate"}:
         extraction_payload = validate_and_repair_pixel_geometry(
             task,
             _find_extraction_payload(calls),
+        )
+        # 中文说明：批量断点结果必须重放逐块 VLM 描述，避免审计 JSON 与实际图谱内容不一致。
+        extraction_payload = apply_visual_track_slice_responses(
+            extraction_payload,
+            _find_visual_track_slice_responses(calls),
         )
         node_enrichment = _find_node_enrichment(calls)
         if node_enrichment:
@@ -332,9 +340,10 @@ def _full_result(
         intermediate = TableEmbeddedHybridPipeline().run(task, extraction_payload)
         provenance_errors = _validate_provenance(graph, task)
         dropped_relations = list(intermediate.get("quality", {}).get("dropped_explicit_relations") or [])
+        quality_gate_errors = list(intermediate.get("quality", {}).get("quality_gate_errors") or [])
     event_count = len(graph.events)
     status = "completed" if graph_status == "completed" else "skipped_non_target" if graph_status == "skipped_non_target" else "failed"
-    if reference_errors or provenance_errors or dropped_relations or event_count:
+    if reference_errors or provenance_errors or dropped_relations or quality_gate_errors or event_count:
         status = "failed"
     return {
         "manifest_index": int(chunk["manifest_index"]),
@@ -359,6 +368,7 @@ def _full_result(
             "provenance_errors": provenance_errors,
             "event_count": event_count,
             "dropped_explicit_relations": dropped_relations,
+            "quality_gate_errors": quality_gate_errors,
         },
     }
 

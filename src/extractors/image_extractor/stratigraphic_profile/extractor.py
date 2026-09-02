@@ -21,11 +21,14 @@ from .table_embedded_hybrid import (
     apply_ppstructure_geometry,
     build_table_embedded_hybrid_graph,
     build_table_embedded_hybrid_prompt,
+    describe_adjacent_visual_track_slices,
     enrich_table_node_names,
     extract_ppstructure_geometry,
     extract_segmented_table_visual,
     is_table_embedded_hybrid_payload,
+    validate_vlm_track_types,
 )
+from .table_embedded_hybrid.vlm_options import table_embedded_hybrid_vlm_timeout_secs
 from .three_dimensional_stratigraphic_model import (
     ThreeDimensionalStratigraphicModelPipeline,
     build_three_dimensional_stratigraphic_model_graph,
@@ -170,7 +173,12 @@ class StratigraphicProfileExtractor(BaseImageExtractor):
                 classification,
                 geometry=geometry,
             )
-            content_vlm_calls = 4
+            slice_count = int(
+                (
+                    ((visual.get("visual_track_extraction") or {}).get("adjacent_slice_description") or {})
+                ).get("completed_count", 0)
+            ) if isinstance(visual, Mapping) else 0
+            content_vlm_calls = 4 + slice_count
         else:
             response = vlm_client.describe_image(
                 task.image_path,
@@ -178,12 +186,22 @@ class StratigraphicProfileExtractor(BaseImageExtractor):
                 task_name=f"表格嵌入混合抽取:{task.image_id}",
                 response_format={"type": "json_object"},
                 max_tokens=int(os.getenv("STRATIGRAPHIC_PROFILE_VLM_MAX_TOKENS", "16384")),
+                timeout=table_embedded_hybrid_vlm_timeout_secs(),
             )
             visual = response if isinstance(response, Mapping) else safe_json_loads(str(response or ""))
             if isinstance(visual, Mapping):
+                visual = dict(visual)
+                visual["tracks"] = validate_vlm_track_types(visual.get("tracks"))
                 visual = apply_ppstructure_geometry(visual, geometry)
+                # 中文说明：单次整图兼容入口也执行相邻轨道裁剪，保证与三段正式入口使用同一语义。
+                visual = describe_adjacent_visual_track_slices(task, vlm_client, visual)
                 visual = enrich_table_node_names(task, vlm_client, visual)
-            content_vlm_calls = 2
+            slice_count = int(
+                (
+                    ((visual.get("visual_track_extraction") or {}).get("adjacent_slice_description") or {})
+                ).get("completed_count", 0)
+            ) if isinstance(visual, Mapping) else 0
+            content_vlm_calls = 2 + slice_count
         if not isinstance(visual, Mapping) or not is_table_embedded_hybrid_payload(visual):
             raise ValueError("子目录未返回 table_embedded_hybrid.v1 结构")
         intermediate = TableEmbeddedHybridPipeline().run(task, visual)

@@ -16,7 +16,15 @@ logger = get_logger("extractors.text_extractor.pipeline")
 def _dump_graph(graph: Graph) -> dict[str, Any]:
     """兼容 Pydantic v1/v2 地序列化 Graph。"""
 
-    return graph.model_dump(mode="json") if hasattr(graph, "model_dump") else graph.dict()
+    serialized = graph.model_dump(mode="json") if hasattr(graph, "model_dump") else graph.dict()
+    metadata = serialized.get("metadata")
+    if isinstance(metadata, dict):
+        # 中文说明：落盘前再次移除调试响应和旧 Schema 选择结果，保证断点续跑也不会恢复历史字段。
+        metadata.pop("raw_response", None)
+        extra = metadata.get("extra")
+        if isinstance(extra, dict):
+            extra.pop("schema_selection", None)
+    return serialized
 
 
 def write_text_extraction_result(path: str | Path, graphs: Sequence[Graph], *, status: str) -> None:
@@ -55,10 +63,10 @@ def extract_text_chunks_to_file(
     output_path: str | Path,
     *,
     llm_client: Any,
-    schema_selector: Any | None = None,
+    max_workers: int,
     show_progress: bool = True,
 ) -> list[Graph]:
-    """逐段持久化文本 Graph，并跳过 JSONL 中已经成功完成的 Chunk。"""
+    """逐段持久化无 Schema 文本 Graph，并跳过 JSONL 中已经成功完成的 Chunk。"""
 
     from .text_extractor import extract_from_text
 
@@ -84,8 +92,11 @@ def extract_text_chunks_to_file(
 
     if pending:
         extract_from_text(
-            pending, llm_client, schema_selector,
-            on_graph_completed=persist, show_progress=show_progress,
+            pending,
+            llm_client,
+            max_workers=max_workers,
+            on_graph_completed=persist,
+            show_progress=show_progress,
         )
     write_text_extraction_result(output, completed, status="completed")
     logger.info(f"文本抽取持久化完成：Graph={len(completed)}，输出={output}")

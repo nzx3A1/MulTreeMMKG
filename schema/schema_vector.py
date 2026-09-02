@@ -1,7 +1,7 @@
 """为 Neo4j 中的 EntityConcept 节点生成并写入向量嵌入。
 
 脚本读取 ``config`` 中的 Neo4j 与 Embedding 配置，将节点的 category、
-description、examples、zhName 和 schema 属性拼成结构化文本后调用 SiliconFlow。
+description、examples、zhName 和 schema 属性拼成结构化文本后调用 Ollama。
 默认仅处理没有 embedding 的节点，可用 ``--force`` 强制重新生成全部向量。
 """
 from __future__ import annotations
@@ -87,33 +87,31 @@ def request_embeddings(
     config: EmbeddingConfig,
     retry_times: int,
 ) -> list[list[float]]:
-    """批量调用 SiliconFlow Embeddings API，并对暂时性请求错误进行重试。"""
-
-    if not config.api_key:
-        raise ValueError("Embedding API Key 为空，请在 config 或 EMBEDDING_API_KEY 中配置")
+    """批量调用 Ollama ``/api/embed``，并对暂时性请求错误进行重试。"""
 
     for attempt in range(1, retry_times + 1):
         try:
             response = session.post(
                 config.base_url,
-                headers={
-                    "Authorization": f"Bearer {config.api_key}",
-                    "Content-Type": "application/json",
-                },
-                json={"input": texts, "model": config.model, "encoding_format": "float"},
+                headers={"Content-Type": "application/json"},
+                json={"input": texts, "model": config.model},
                 timeout=config.timeout_secs,
             )
             response.raise_for_status()
-            rows = sorted(response.json().get("data", []), key=lambda row: row.get("index", 0))
-            vectors = [row.get("embedding") for row in rows]
-            if len(vectors) != len(texts) or any(not isinstance(vector, list) for vector in vectors):
-                raise ValueError("Embedding API 返回的向量数量或格式不正确")
+            response_payload = response.json()
+            vectors = response_payload.get("embeddings") if isinstance(response_payload, dict) else None
+            if (
+                not isinstance(vectors, list)
+                or len(vectors) != len(texts)
+                or any(not isinstance(vector, list) for vector in vectors)
+            ):
+                raise ValueError("Ollama Embedding API 返回的向量数量或格式不正确")
             return vectors
         except (requests.RequestException, ValueError) as exc:
             if attempt == retry_times:
-                raise RuntimeError(f"Embedding API 连续 {retry_times} 次调用失败") from exc
+                raise RuntimeError(f"Ollama Embedding API 连续 {retry_times} 次调用失败") from exc
             wait_seconds = 2 ** (attempt - 1)
-            LOGGER.warning("Embedding API 调用失败，%s 秒后重试：%s", wait_seconds, exc)
+            LOGGER.warning("Ollama Embedding API 调用失败，%s 秒后重试：%s", wait_seconds, exc)
             time.sleep(wait_seconds)
 
     raise RuntimeError("未能获取向量")

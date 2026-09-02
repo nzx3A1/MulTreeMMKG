@@ -3,8 +3,8 @@
   "_description": "Document -> Section -> Chunk 的多模态文档目录树。",
   "_produced_by": "src/skeleton/document_tree_builder.py::build_document_tree",
   "document": {
-    "id": "鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟",
-    "title": "鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义",
+    "id": "鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制_吴东旭",
+    "title": "鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制",
     "sections": [
       {
         "id": "0",
@@ -18,196 +18,259 @@
             "id": "0:text:0",
             "order": 0,
             "modality": "text",
-            "text": "作为形成于3．8 Ga 的古老陆核，华北克拉通经历了多阶段多期次的构造演化( Wu and Zhong，1998; 翟明国等，2014) 前人研究认为，华北克拉通基底于约2．5 Ga 由多个微陆块拼合形成，可划分为胶辽 前淮 许昌 阜平 济宁和阿拉善地块 6 个地块 ( Zhai et al． ，2005; Zhai and Santosh，2011 )2．25～2． 0 Ga 期间，其西北部 中部及东北－东部发育3 条主裂谷带，裂谷盆地进一步演化为洋盆并启动俯冲过程( Santosh，2010; Zhai and Santosh，2011;翟明国等，2021) 历经长期俯冲－增生作用后，克拉通于 1． 97～1． 82 Ga 通过陆块碰撞完成最终克拉通化，形成孔兹岩带( 北部) 中央造山带( 中部) 及胶－辽－吉带( 东部) 3 条主缝合带( Zhai and Peng，2007; Santosh et al． ，2011; 刘 建 辉 等，2025 )1．80 Ga 时期华北克拉通进入伸展构造环境，伴随区域性伸展作用，克拉通内发育多组陆内裂谷系统基性岩墙群及非造山岩浆活动产物( 李江海等，2001; 翟明国，2004; 陈杰等，2024)"
+            "text": "白云岩储层是碳酸盐岩油气藏的重要勘探领域。对全球 226 个大中型以上碳酸盐岩油气田（占全球碳酸盐岩油气储量的 90%）的统计表明，有102 个油气田和 50% 的储量分布于白云岩储集层中（白国平，2006）。在古生界海相碳酸盐岩大油气田中，白云岩储层占所有储层油气总可采储量的76.5%（王大鹏等，2016）。并且随着勘探的重心向天然气和深层转移，埋深3500 m和4500 m以下的深层—超深层日益成为勘探的重点。根据 2009年国土资源部颁布的探明储量公报 , 中国已发现探明储量超过 1000 万吨油气当量的深层碳酸盐岩油气田 17 个 , 主要分布于中国的鄂尔多斯、塔里木、四川等3 个盆地的不同层系的白云岩储层中。而其中储量规模最大的气田为鄂尔多斯盆地靖边气田（张宁宁等，2014）。"
           },
           {
             "id": "0:text:1",
             "order": 1,
             "modality": "text",
-            "text": "1．80～1． 75 Ga 是华北克拉通伸展作用的起始年代，这个阶段与南缘熊耳群火山岩及五台 恒山地区的基性岩墙群密切相关，期间岩浆活动记录了克拉通早期减薄和陆内伸展的地质过程。前人对这些岩浆事件进行了大量研究，认为这一时期的构造活动是 Columbia 超大陆裂解的初始( 陆松年等，2002;翟明 国 等，2014; 相 振 群，2014; Huang et al． ，2020) ，但对华北克拉通西南缘的研究仍有些薄弱( 赵太平等，2001，2004; 彭澎等，2004; 徐欢等，2020; 相振群等，2020; 李秋根等，2024) ，对地质事件的性质和构造背景的认识尚存在争议，如 Zhao 等( 2009) 根据火山岩地球化学特点，认为南缘的熊耳群火山岩具有钙碱性特点，形成于大陆边缘弧环境，而翟明国( 2004) 赵太平等( 2004) 姜盛洪( 2015)等认为其形成于与地幔柱相关的大陆裂解环境，Zhao 等( 2018) 相振群等( 2020) 认为南缘登封地区石秤花岗闪长岩是碰撞后形成的 因此，查明华北克拉通西南缘1．8 ～ 1．6 Ga 的构造事件性质及其动力学机制，对于探究华北克拉通的构造环境转变及其与哥伦比亚超大陆裂解的关系有着重要的意义。"
-          },
-          {
-            "id": "0:text:2",
-            "order": 2,
-            "modality": "text",
-            "text": "在1．80～1．75 Ga 期间，华北克拉通形成了广泛发育的双峰式火成岩组合，如熊耳群的双峰式火山－侵入岩。 最近，作者在位于鄂尔多斯盆地西南缘的陇县骑安沟地区，识别出一套新的由玄武安山岩与花岗斑岩组成的典型双峰式火成岩组合，对该套火成岩的岩石学特征 地球化学组成进行了研究，并进行了锆石 U-Pb 定年分析，厘定其成因机制及形成时代，进而为华北克拉通西部－鄂尔多斯盆地在中元古代的构造演化过程提供了重要证据，同时探究了其与南缘熊耳群岩浆事件及哥伦比亚超大陆裂解的关系。"
+            "text": "白云岩是储层发育的基础，白云岩储层孔隙的形成和保存与白云岩化的过程密切相关，二者是一个连续的过程。对于鄂尔多斯盆地奥陶系白云岩的形成，前人进行了大量的研究，提出了包括准同生云化、混合水云化、回流渗透云化、埋藏云化、热液云化、微生物云化等在内的多种白云石化模式（杨华等，2011，2012；黄正良等，2012；赵俊兴等，2005；苏中堂等，2011；王保全等，2009；姚泾利等，2009；赵卫卫等，2011）。但他们的研究主要针对某一个层位，或者某一种成因分别研究，而没有将其联系起来。笔者认为，基于盆地内奥陶系广泛发育的膏盐岩和白云岩互层沉积，有必要把白云岩的产状、层位等考虑在内。并且对其矿物类型加以研究，再联系地球化学分析数据，对不同类型白云岩形成过程之间的联系和区别进行详尽阐述。在此基础上，才能对储层形成的物质基础和过程有一个清晰的了解。\n因此，本文以鄂尔多斯盆地靖边气田的主力碳酸盐岩储层——奥陶系白云岩储层为例，对其储层发育特征和形成机理进行了详细表征和实验分析，以期加深对深层白云岩储层形成机制的理论认识，从而指导深层碳酸盐岩油气勘探。"
           }
         ]
       },
       {
-        "id": "4",
-        "title": "讨论",
+        "id": "1",
+        "title": "地质背景",
         "level": 2,
-        "order": 4,
+        "order": 1,
+        "parent_id": null,
+        "children": [],
+        "chunks": [
+          {
+            "id": "1:text:0",
+            "order": 0,
+            "modality": "text",
+            "text": "鄂尔多斯盆地位于中国中北部，总面积$3 2 \\times 1 0 ^ { 4 } ~ \\mathrm { k m } ^ { 2 }$ ，是中国第二大沉积盆地。奥陶纪时期，盆地是华北地台的一部分 , 位于华北地台西部（Yang et al., 2005）。由于具有坚实的太古代—早元古代花岗岩—变质岩基底，整个华北地台奥陶纪发育相对稳定的陆表海沉积。但因为受到构造运动和气候等因素的影响，盆地的相对海平面发生了频繁的振荡，形成了包括石灰岩、白云岩、含泥碳酸盐岩以及膏岩、盐岩等蒸发岩在内的丰富的岩性和沉积相组合（图1）。"
+          },
+          {
+            "id": "1:text:1",
+            "order": 1,
+            "modality": "text",
+            "text": "盆地奥陶系地层由下而上依次为冶里组，亮用山组和马家沟组。冶里组和亮甲山组主要岩性为含燧石结核或条带白云岩、泥质白云岩和竹叶状白云岩，层厚一般不超过 100 m。与之相比，马家沟组厚度在 100～900 m 之间，主要为碳酸盐岩和蒸发岩沉积，是鄂尔多斯盆地白云岩储层发育的主要层位。马家沟组地层从下到上可以分为马一—马六总共 6 个段。其中马一、马三和马五为相对海退期，以碳酸盐岩局限台地和蒸发台地相为主。岩性主要为白云岩，且发育了三大套的膏盐岩沉积。马二、马四和马六段为相对海侵期，主要为碳酸盐岩开阔台地和局限台地相，以白云岩和灰岩沉积为主。马五段根据相对海平面升降，从上到下又可以分为马五 —马五 十个亚段，其中马五 亚段为马五段主要的蒸发岩发育期（图2）。\n从图 2 可知，在海平面上升时期，波浪能量较高，发育了大量的颗粒滩沉积。而在海平面下降时期，潮间带和潮上带范围扩大，发育大量的蒸发岩沉积。这两种截然不同的沉积微相和岩性类型为后期储层的发育提供了重要的物质基础（Strohmengeret al., 2010）。\n图1 鄂尔多斯盆地奥陶系马家沟组马五段沉积相分布及靖边气田位置"
+          },
+          {
+            "id": "1:image:0",
+            "order": 2,
+            "modality": "image",
+            "image_path": [
+              "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制_吴东旭\\images\\a10add54f532f58ad45d313b7df33a2f4233ac579aa63991f325845ec8aaabad.jpg"
+            ],
+            "caption": "Fig. 1 Map showing the sedimentary facies distribution of Ma5 in the Ordos Basin and the location of the Jingbian gas field",
+            "references": [
+              "鄂尔多斯盆地位于中国中北部，总面积$3 2 \\times 1 0 ^ { 4 } ~ \\mathrm { k m } ^ { 2 }$ ，是中国第二大沉积盆地。奥陶纪时期，盆地是华北地台的一部分 , 位于华北地台西部（Yang et al., 2005）。由于具有坚实的太古代—早元古代花岗岩—变质岩基底，整个华北地台奥陶纪发育相对稳定的陆表海沉积。但因为受到构造运动和气候等因素的影响，盆地的相对海平面发生了频繁的振荡，形成了包括石灰岩、白云岩、含泥碳酸盐岩以及膏岩、盐岩等蒸发岩在内的丰富的岩性和沉积相组合（图1）。"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "2",
+        "title": "白云岩储层特征",
+        "level": 2,
+        "order": 2,
         "parent_id": null,
         "children": [
           {
-            "id": "4.1",
-            "title": "源区与岩体成因分析",
+            "id": "2.1",
+            "title": "孔隙类型及特征",
             "level": 3,
             "order": 0,
-            "parent_id": "4",
+            "parent_id": "2",
             "children": [
               {
-                "id": "4.1.1",
-                "title": "花岗斑岩源区与成因分析",
+                "id": "2.1.1",
+                "title": "第一大类为硬石膏铸模孔",
                 "level": 4,
                 "order": 0,
-                "parent_id": "4.1",
+                "parent_id": "2.1",
+                "children": [
+                  {
+                    "id": "2.1.1.1",
+                    "title": "硬石膏结核溶模孔",
+                    "level": 5,
+                    "order": 0,
+                    "parent_id": "2.1.1",
+                    "children": [],
+                    "chunks": [
+                      {
+                        "id": "2.1.1.1:text:0",
+                        "order": 0,
+                        "modality": "text",
+                        "text": "根据压实作用的影响程度，孔隙呈圆形或椭圆形，一般直径在 0.5\\~4 mm 之间。由于后期多期成岩作用叠加，导致孔隙充填物类型多样，充填程度可以为未充填、半充填或全充填。充填物主要有白云石、方解石、石英、渗流粉砂、硬石膏、铁方解石、黄铁矿、有机质等，其组合类型至少可以达到6 种（王琪等，2016; 刘新社等，2017）。"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "2.1.1.2",
+                    "title": "硬石膏柱状晶溶模孔",
+                    "level": 5,
+                    "order": 1,
+                    "parent_id": "2.1.1",
+                    "children": [],
+                    "chunks": [
+                      {
+                        "id": "2.1.1.2:text:0",
+                        "order": 0,
+                        "modality": "text",
+                        "text": "孔隙呈长条状、板柱状矩形分布，长度一般在 0.5\\~5 mm，最长可达 1 cm，宽度一般为 0.2\\~0.5mm。分布相对孤立，局部呈集合体形状出现。此类孔隙与硬石膏结核溶模孔发育于同一种环境，经常会伴生发育。充填物主要有白云石、方解石、石英、渗流粉砂、硬石膏等。"
+                      }
+                    ]
+                  }
+                ],
+                "chunks": [
+                  {
+                    "id": "2.1.1:text:0",
+                    "order": 0,
+                    "modality": "text",
+                    "text": "此类孔隙的最大特点是，分布相对孤立，孔隙之间的喉道相对较窄。但后期经风化壳岩溶作用改造以后，孔隙和喉道均会大幅增大。此类孔隙主要分布于潮上带的泥晶或泥粉晶白云岩中，可以细分为两种：硬石膏结核溶模孔和硬石膏柱状晶溶模孔（图 3）。"
+                  }
+                ]
+              },
+              {
+                "id": "2.1.2",
+                "title": "第二大类为白云石粒（晶）间孔",
+                "level": 4,
+                "order": 1,
+                "parent_id": "2.1",
+                "children": [
+                  {
+                    "id": "2.1.2.1",
+                    "title": "白云岩粒间孔",
+                    "level": 5,
+                    "order": 0,
+                    "parent_id": "2.1.2",
+                    "children": [],
+                    "chunks": [
+                      {
+                        "id": "2.1.2.1:text:0",
+                        "order": 0,
+                        "modality": "text",
+                        "text": "颗粒灰岩白云石化以后，原岩的颗粒形态清晰可辨，颗粒间发育粒间孔。孔隙呈立体连通网状，孔隙大小取决于颗粒大小，直径一般在200\\~500 μm，喉道直径一般在几十微米。充填物一般为方解石、白云石、硬石膏以及少量石英。"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "2.1.2.2",
+                    "title": "白云石晶间孔",
+                    "level": 5,
+                    "order": 1,
+                    "parent_id": "2.1.2",
+                    "children": [],
+                    "chunks": [
+                      {
+                        "id": "2.1.2.2:text:0",
+                        "order": 0,
+                        "modality": "text",
+                        "text": "颗粒灰岩白云石化程度较高，原岩的颗粒形态不可辨识，只能识别出孔隙存在于白云石晶体之间。孔隙一般呈不规则状多边形，边缘平直，直径一般在 50\\~500 μm。孔隙依靠晶体间缝隙连通，连通性取决于白云石晶体的分布。由于晶体分布的不均匀性，孔隙体经常呈不规则片状分布。\n需要指出的是，白云石粒间孔和白云石晶间孔并不是截然分开的，晶间孔只是粒间孔进一步白云化的产物。所以样品中经常可以见到残余颗粒结构的晶间孔和带有晶体结构的粒间孔。"
+                      },
+                      {
+                        "id": "2.1.2.2:image:0",
+                        "order": 1,
+                        "modality": "image",
+                        "image_path": [
+                          "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制_吴东旭\\images\\787873a7863480cdb8cd2b32373fe10780afb8365cc9153ebd6aa6e0ebcea629.jpg"
+                        ],
+                        "caption": "图2 鄂尔多斯盆地奥陶系白云岩储层分布柱状图\nFig. 2 The stratigraphic column showing of the Ordovician dolomite reservoir distribution in the Ordos Basin",
+                        "references": [
+                          "盆地奥陶系地层由下而上依次为冶里组，亮用山组和马家沟组。冶里组和亮甲山组主要岩性为含燧石结核或条带白云岩、泥质白云岩和竹叶状白云岩，层厚一般不超过 100 m。与之相比，马家沟组厚度在 100～900 m 之间，主要为碳酸盐岩和蒸发岩沉积，是鄂尔多斯盆地白云岩储层发育的主要层位。马家沟组地层从下到上可以分为马一—马六总共 6 个段。其中马一、马三和马五为相对海退期，以碳酸盐岩局限台地和蒸发台地相为主。岩性主要为白云岩，且发育了三大套的膏盐岩沉积。马二、马四和马六段为相对海侵期，主要为碳酸盐岩开阔台地和局限台地相，以白云岩和灰岩沉积为主。马五段根据相对海平面升降，从上到下又可以分为马五 —马五 十个亚段，其中马五 亚段为马五段主要的蒸发岩发育期（图2）。"
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "chunks": [
+                  {
+                    "id": "2.1.2:text:0",
+                    "order": 0,
+                    "modality": "text",
+                    "text": "此类孔隙的特点为，孔隙基本相互连通，孔隙之间的喉道与孔隙大小差别不大。孔隙主要分布于潮下带的颗粒滩或藻屑滩白云岩中，可以分为两种：白云岩粒间孔和白云岩晶间孔。"
+                  }
+                ]
+              }
+            ],
+            "chunks": []
+          },
+          {
+            "id": "2.2",
+            "title": "孔渗和孔喉特征",
+            "level": 3,
+            "order": 1,
+            "parent_id": "2",
+            "children": [
+              {
+                "id": "2.2.1",
+                "title": "孔渗特征",
+                "level": 4,
+                "order": 0,
+                "parent_id": "2.2",
                 "children": [],
                 "chunks": [
                   {
-                    "id": "4.1.1:text:0",
+                    "id": "2.2.1:text:0",
                     "order": 0,
                     "modality": "text",
-                    "text": "结合本研究区花岗岩样品主 微量数据及邻区保家山花岗岩样品数据 ( 徐欢等，2014) ，对盆地西南缘花岗斑岩源区进行了综合分析 研究区花岗斑岩样品 $\\mathrm { M g O }$ 含 量 ( 0． 89% ～ 0． 91%) 和 $\\mathrm { C a O }$ 含 量( 0． 30% ～ 0． 60%) 均较低，而 K O 和 $\\mathrm { N a } _ { 2 } \\mathrm { O }$ 含量较高，反映出碱性特征，同时稀土元素富集，尤其轻稀土元素富集，符合 A 型花岗斑岩的特征( 席振等，2024; 刘 伟 等，2024) ，在 $\\mathrm { \\left[ \\ K _ { 2 } O + N a _ { 2 } O \\right] / C a O ] }$ $\\scriptstyle \\left( \\ Z \\mathrm { r + N b + C e + Y } \\right)$ 图解( 图 $9 \\mathrm { a } )$ 中，本研究数据均落入在 A 型花岗斑岩中，同时在 $\\mathrm { N b - Y - C e }$ 图解中，研究数据落在 $\\mathbf { A } _ { 2 }$ 型花岗岩中( 图9b)"
+                    "text": "第一类孔隙和第二类孔隙的孔渗特征见图 4，孔隙度一般为 0%\\~15%，渗透率为 0.01\\~100 mD。二者孔隙度和渗透率都具有良好的相关性，基本呈正相关关系。\n但我们可以看到，在孔隙度小于 2.5% 的范围内，白云岩粒（晶）间孔的渗透率明显大于膏模孔的渗透率（图 4），说明在膏模孔形成初期，各个孔隙是相对孤立的，渗透率较低：而粒（晶）间孔则得益于其立体网状结构，渗透率相对较高。随着孔隙度增大同样体积内膏模孔的数量增多 孤立膏模孔相互之间产生联络，导致渗透率上升，与粒（晶）间孔隙相当。但局部仍然存在孔隙度较大而渗透率很小的膏模孔，表明其可能为孤立的较大孔洞，喉道很小，导致渗透率没有明显增大。\n综上可知，孔隙形成初期，孔隙结构对孔渗性能有重要影响，但后期随着孔隙度和渗透率的增高，其影响减弱，不同类型孔隙的孔渗性能趋"
                   },
                   {
-                    "id": "4.1.1:text:1",
+                    "id": "2.2.1:text:1",
                     "order": 1,
                     "modality": "text",
-                    "text": "Fig． 5 Chondrite-normalized REE patterns of zircon from igneous rocks ( normalized values after Sun and McDonough，1989)"
+                    "text": "照片a（陕290井，深度3758m），b（陕319井，深度3725m）和c（陕319井，深度3725m）分别为硬石膏结核铸模孔的薄片和岩芯。a中的铸模孔被白云石渗流粉砂半充填，可见示顶底构造；b中的铸模孔被白云石渗流粉砂、方解石和石英半充填。照片c（陕294井，深度3474 m）和h（陕187井，深度3125 m）分别为硬石膏柱状晶铸模孔的薄片和岩芯。c中的孔隙未充填，h中的孔隙被方解石全充填。\n照片d（靳8井，深度3663 m）、e（桃38井，深度3612 m）和i（靳8井，深度3663 m）分别为粒间孔的薄片和岩芯，其喉道和孔隙的直径差异较小。d为砂屑云岩，e为鲕粒云岩。照片f（桃17井，深度3782 m）为晶间孔的薄片，是d和e的进一步白云化产物\n图3 鄂尔多斯盆地奥陶系典型白云岩孔隙薄片和岩芯特征\nFig. 3 Core and thin-section photographs of typical Ordovician dolomite pores in the Ordos Basin\n于一致。"
                   },
                   {
-                    "id": "4.1.1:text:2",
+                    "id": "2.2.1:image:0",
                     "order": 2,
-                    "modality": "text",
-                    "text": "A 型花岗斑岩成因较为复杂，前人对 A 型花岗斑岩成因的研究主要包括以下几种观点: ① 由 I 型花岗质岩浆被抽离后，残留的下地壳麻粒岩的低程度熔融形成( King et al． ，1997; Bonin，2007) ; ② 由地壳岩石受幔源岩浆底侵加热发生熔融( Anderson，1983; Zhao and Zhai，2013) ; ③ 由地幔玄武质岩浆高度结晶分异 ( Kerr and Fryer，1993; 俞礽安等，2016) ; ④ 由壳源花岗质岩浆与幔源镁铁质岩浆混合作用形成 ( Yang et al． ，2006) 研究区花岗斑岩， Ti较高的 Zr 含量表明了花岗斑岩源区很可能来自地壳，同时产于地壳减薄的构造背景( Eby，1992) 地幔和地壳均值的Rb/Sr 值分别为0．03 和0．35，样品的 Rb /Sr 值( 2． 95 ～ 3． 55) 明显较高，其源区更可能来自上地壳 ( Taylor and McLennan，1985) 。 La /Nb值为 2． 42～2． 76，也暗示岩浆来自壳源( 刘伟等，2024) ; 稀土元素球粒陨石标准化分配曲线中出现明显的 Eu 负异常现象也反映壳源的特征( 潘少军等，2025) ; $\\mathbf { M } \\mathbf { g } ^ { \\# }$ 值是判断岩浆来源的重要参数，花岗斑岩的 $\\mathrm { M g } ^ { \\# }$ 值平均 29． 4，一般地幔物质如果参与成岩，岩体的 $\\mathbf { M } \\mathbf { g } ^ { \\# }$ 值会大于 45，因此花岗斑岩的低 $\\mathbf { M g } ^ { \\# }$ 值也是岩浆来自地壳的重要证据( ${ \\mathrm { R a p p ~ a n d ~ W a t s o n } } ,$ 1995; Smithies，2000) ; 花岗斑岩样品的铝饱和指数( A/CNK) 为 1． 04～1． 18，属过铝质，也与地壳熔融形"
+                    "modality": "image",
+                    "image_path": [
+                      "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制_吴东旭\\images\\7b51010d422cd8e9faa539486eb318184668f383a7fb133e179198ffb7b2e33d.jpg"
+                    ],
+                    "caption": "",
+                    "references": null
                   },
                   {
-                    "id": "4.1.1:text:3",
+                    "id": "2.2.1:image:1",
                     "order": 3,
+                    "modality": "image",
+                    "image_path": [
+                      "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制_吴东旭\\images\\9b16185cc734f608d2165f15b6d01c439e6cd2540d49f05255e35f34d0515749.jpg"
+                    ],
+                    "caption": "图4 两类白云岩储层的孔渗特征对比（膏模孔：N=1730，粒（晶）间孔：N=784）\nFig. 4 The contrast of porosity-permeability relationship between anhydrite mold pores (N=1730) and intergranular and intercrystalline pores (N=784)",
+                    "references": [
+                      "但我们可以看到，在孔隙度小于 2.5% 的范围内，白云岩粒（晶）间孔的渗透率明显大于膏模孔的渗透率（图 4），说明在膏模孔形成初期，各个孔隙是相对孤立的，渗透率较低：而粒（晶）间孔则得益于其立体网状结构，渗透率相对较高。随着孔隙度增大同样体积内膏模孔的数量增多 孤立膏模孔相互之间产生联络，导致渗透率上升，与粒（晶）间孔隙相当。但局部仍然存在孔隙度较大而渗透率很小的膏模孔，表明其可能为孤立的较大孔洞，喉道很小，导致渗透率没有明显增大。"
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "2.2.2",
+                "title": "3D-CT扫描表征",
+                "level": 4,
+                "order": 1,
+                "parent_id": "2.2",
+                "children": [],
+                "chunks": [
+                  {
+                    "id": "2.2.2:text:0",
+                    "order": 0,
                     "modality": "text",
-                    "text": "${ \\mathrm { F i g . } }$ 7 Plots of major element geochemistry for bimodal igneous rocks\n成的花岗质岩浆岩相似"
+                    "text": "3D CT 扫描选取的样品大小为直径 2.5 cm，长度 5 cm 的柱塞样，扫描分辨率为 8 μm。第一类孔隙中选取了经岩溶改造的硬石膏结核溶模孔进行了扫描，第二类孔隙中选取了残余部分颗粒结构的白云岩晶间孔进行了扫描（图5）。\n对比两者可知，改造后的硬石膏结核溶模孔的孔隙一般较大，直径在 0\\~450 μm，喉道相对较小，直径在 0\\~230 μm。最大孔隙和最大喉道直径相差一倍（图 5c）。而白云石晶间孔的孔隙一般较小，直径在 0\\~180 μm，喉道直径与其类似，在0\\~150 μm。最大孔隙和最大喉道直径相差不大（图5f）。这也与薄片下的观察结论一致。同时也表明，膏模孔受后期表生溶蚀的影响较大，可以明显提升其孔隙和喉道大小。"
                   },
                   {
-                    "id": "4.1.1:text:4",
-                    "order": 4,
-                    "modality": "text",
-                    "text": "( La/Yb) 值能够表示轻 重稀土元素的分异程度，δEu 值能有效指示斜长石结晶分异程度$\\left( \\mathrm { \\ L a } / \\mathrm { Y b } \\right) _ { \\mathrm { \\scriptsize ~ N } } { - } \\delta \\mathrm { E u }$ 图解可以反映出花岗斑岩与玄武质安山岩的源区物质来源与岩浆演化的连续性，通过图解可以看出花岗斑岩属于壳型( 图 $1 0 \\mathrm { a } )$ ，由此基本可以判断研究区花岗斑岩为地壳熔融形成的 相邻地区的保家山花岗斑岩同样属于 A 型花岗斑岩( 徐欢等，2014) ，在 $\\mathrm { L a } / \\mathrm { Y b } ) _ { \\textrm { N } } { - } \\delta \\mathrm { E u }$ 图解中投入壳型中，地球化学特征也与研究区花岗斑岩接近，综合来看，西南缘的花岗斑岩的源区应该为地壳岩浆。"
-                  },
-                  {
-                    "id": "4.1.1:text:5",
-                    "order": 5,
-                    "modality": "text",
-                    "text": "Fig． 8 Chondrite-normalized rare earth element ( REE) patterns ( a) and primitive mantle-normalized spider diagram of trace elements ( b) for bimodal igneous rocks ( normalized values after Sun and McDonough，1989)"
-                  },
-                  {
-                    "id": "4.1.1:image:0",
-                    "order": 6,
+                    "id": "2.2.2:image:0",
+                    "order": 1,
                     "modality": "image",
                     "image_path": [
-                      "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟\\images\\df0fd46b4a10bcfaf1f864c3c648b3be16071d305774fd7408576e0dcffbc2fe.jpg",
-                      "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟\\images\\bb32806e22bdaf78659de6d4e6481a87222ce602850f9a18d0595813040e8a96.jpg",
-                      "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟\\images\\38e23f0d874b0ed0549910b326e004adc7a996b3cd121f7cce6b8abb6365b6ab.jpg"
+                      "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制_吴东旭\\images\\c96d5ce0950a5285a35200aa21a76eefd5bd197749ffbe8e16742480957f7504.jpg",
+                      "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制_吴东旭\\images\\b26e606543ddf4d6b300c75ded85227c88be04689ea963f62c32169192c2fab6.jpg",
+                      "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制_吴东旭\\images\\9ecd7cae8904936532529afee13eba82e4e4777006efea3d07bd85c3ce3fb479.jpg",
+                      "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制_吴东旭\\images\\56b09ee5b635476e4afee19ce489d01f8b1a775a01ba7ac6857a1ac16e82660d.jpg",
+                      "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制_吴东旭\\images\\3386bf47f3609228435199afbfe2b3864d499f8b2033be58cc24bb66498ae370.jpg",
+                      "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制_吴东旭\\images\\30348594001578a6119b0e71053a0705074a1f7981763c0389243ceec76b6223.jpg"
                     ],
-                    "caption": "图 5 火成岩样品中锆石的稀土元素球粒陨石标准化配分曲线( 标准化值据 Sun and McDonough，1989)",
+                    "caption": "(a) 是硬石膏铸模孔的横截面，(b) 为同一样品的孔隙—喉道（node-link）模型，(c) 为同一样品的孔喉半径分布图。统99井， $\\stackrel { \\overline { { { U } } } } { } \\mathcal { \\overline { { { \\hbar } } } } _ { 9 } ,$ ，粉晶白云岩；(d) 为晶间孔的横截面，(e) 为同一样品的孔隙—喉道（node-link）模型，(f) 为同一样品的孔喉半径分布图。靳7井，马 $\\operatorname { \\overline { { \\mathbf { \\Pi } } } } _ { 9 }$ ，粗粉晶砂屑云岩\n图5 两类孔隙的3D-CT扫描表征\nFig. 5 3D-CT Scan characteristics of the two types of pores",
                     "references": [
-                      "Th/U 值是判别锆石成因的重要指标，岩浆成因锆石通常具有较高的 Th /U 值( Vavra et al． ，1996;杨长江等，2010; 李霄琦等，2025) 本文样品中锆石均具有较高的 Th/U 值，其中花岗斑岩中锆石的Th /U 值为 0． 56 ～ 0． 99，玄武安山岩中的锆石 Th /U值为0．57～0． 99( 表 1) ，指示样品中的锆石为岩浆成因。 样品中锆石的稀土元素球粒陨石标准化配分曲线( 图 5a 5b) 显示，花岗斑岩具有轻稀土元素( LREE ) 亏 损 $[ \\mathrm { \\ L a } / \\mathrm { S m } ] _ { \\mathrm { ~ N ~ } } < 0$ ．5］ 重 稀 土 元 素( HREE) 富集 $\\mathrm { [ \\ G d / Y b ] } _ { \\mathrm { \\Delta N } } { > } 2 . 0 \\mathrm { J }$ 特征，配分曲线呈左倾型，具有 Eu 负异常 玄武安山岩锆石的稀土元素配分模式与花岗斑岩相似( 图5c)"
+                      "3D CT 扫描选取的样品大小为直径 2.5 cm，长度 5 cm 的柱塞样，扫描分辨率为 8 μm。第一类孔隙中选取了经岩溶改造的硬石膏结核溶模孔进行了扫描，第二类孔隙中选取了残余部分颗粒结构的白云岩晶间孔进行了扫描（图5）。",
+                      "对比两者可知，改造后的硬石膏结核溶模孔的孔隙一般较大，直径在 0\\~450 μm，喉道相对较小，直径在 0\\~230 μm。最大孔隙和最大喉道直径相差一倍（图 5c）。而白云石晶间孔的孔隙一般较小，直径在 0\\~180 μm，喉道直径与其类似，在0\\~150 μm。最大孔隙和最大喉道直径相差不大（图5f）。这也与薄片下的观察结论一致。同时也表明，膏模孔受后期表生溶蚀的影响较大，可以明显提升其孔隙和喉道大小。"
                     ]
-                  },
-                  {
-                    "id": "4.1.1:image:1",
-                    "order": 7,
-                    "modality": "image",
-                    "image_path": [
-                      "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟\\images\\3801b410843bbfb7f5de2184d9f62dec8df10155ac7c669f9fcb0e9fbbed4cd2.jpg",
-                      "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟\\images\\1e10d6b6f18b15a0e2905651c57b600a6c760998e50954d00f93bcdbaf945c75.jpg",
-                      "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟\\images\\a9700e801fc1346d974c7b14091b8becaf8f570a66a5b18d66aa0a274117585b.jpg"
-                    ],
-                    "caption": "图 6 双峰式火成岩锆石 U-Pb 年龄谐和图\nFig． 6 U-Pb concordia diagrams of zircon from bimodal igneous rocks",
-                    "references": [
-                      "在测定锆石年龄时，我们采用 $^ { 2 0 7 } \\mathrm { P b } / ^ { 2 0 6 } \\mathrm { P b }$ 年龄表征较老 $\\mathrm { \\Lambda } | > 1 \\ \\mathrm { G a } )$ 的锆石， $^ { 2 0 6 } \\mathrm { P b } / ^ { 2 3 8 } \\mathrm { U }$ 年龄表征较年轻( $< 1 \\ \\mathrm { G a } )$ 的锆石( Black et al． ，2003) 两个花岗斑岩样品获得的加权平均年龄分别为 $1 ~ 7 9 4 { \\pm } 1 7 ~ \\mathrm { M a }$ $\\left( \\mathrm { \\ M S W D } = 0 . \\ 5 5 \\right)$ 和 $1 ~ 7 9 4 \\pm 1 0 ~ \\mathrm { { M a } \\left( \\ M S W D = 1 . ~ 1 7 \\right) }$ ( 图6a 6b) ，玄武安山岩获得的加权平均年龄为$1 ~ 8 0 3 { \\pm } 2 1 ~ \\mathrm { M a } \\ l ( ~ \\mathrm { M S W D } = 0 . 4 5 )$ ( 图 6c) 。"
-                    ]
-                  },
-                  {
-                    "id": "4.1.1:image:2",
-                    "order": 8,
-                    "modality": "image",
-                    "image_path": [
-                      "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟\\images\\c3ef38441a1abc281af240233395f672b3933bdf1e2caa1cedd859733da96c3b.jpg",
-                      "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟\\images\\b1d503a15bd3916d1fdf9e9f10262c2d96d61dcbc028db7c6e21bf1fe44dca2f.jpg",
-                      "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟\\images\\4ce0d0bf4ee3d4f3c6be6ada150d5d7631c2292b12a0b3f862d3cfb9f091d8f4.jpg",
-                      "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟\\images\\074d86cb480a5a945d971c041ac82933a80a25ef812b320665a21cb2208465b5.jpg"
-                    ],
-                    "caption": "图 7 双峰式火成岩主量元素分析图解\n$\\mathrm { a } { - } ( \\mathrm { \\ N a } _ { 2 } \\mathrm { O } { + } \\mathrm { K } _ { 2 } \\mathrm { O } ) \\ { - } \\mathrm { S i O }$ 图解( 底图据 Middlemost，1994) ; b—QAP 图解( 底图据 Le Maitre，1989) ; c—K O－SiO 判别图 ( 底图据 Middlemost，1994) ; d—A /NK－A /CNK 图解( 底图据 Shand，1943)\n$\\mathrm { a } { - } ( \\mathrm { N a } _ { 2 } \\mathrm { O } { + } \\mathrm { K } _ { 2 } \\mathrm { O } ) \\ { - } \\mathrm { S i O } _ { 2 }$ 2 diagram( base map after Middlemost，1994) ; b—QAP diagram ( base map after Le Maitre，1989) ;\n$\\mathrm { c } { - } \\mathrm { K } _ { 2 } 0 { - } \\mathrm { S i } 0 _ { 2 }$ discrimination diagram( base map after Middlemost，1994) ; d—A /NK－A /CNK diagram( base map after Shand，1943)",
-                    "references": [
-                      "骑安沟花岗斑岩的主量元素分析显示，其 $\\mathrm { S i O } _ { 2 }$ 含量较高，介于 70． 65% ～71． 12%之间，K O 含量也较高，为 5． 84% ～6． 54% 全碱含量( $\\mathrm { N a } _ { 2 } \\mathrm { O } + \\mathrm { K } _ { 2 } \\mathrm { O } )$ 为8． 41% ～ 8． 59%， $\\mathrm { N a } _ { 2 } \\mathrm { O } / \\mathrm { K } _ { 2 } \\mathrm { O }$ 值为 0． 29 ～ 0． 47 在深成岩岩性分类图解中投入正长花岗岩范围( 图7b)在 $\\mathrm { K } _ { 2 } \\mathrm { O } \\mathrm { - } \\mathrm { S i O }$ 2 图解中，样品属于钾玄岩系列( 图 7c) 。$\\mathrm { { A l } } _ { 2 } \\mathrm { { O } } _ { 3 }$ 含 量 为 12． 38% ～ 12． 66%，铝 饱 和 指 数$\\mathrm { \\left( \\ A / C N K \\right) }$ 较高，为 1． 04 ～1． 18，在 A/NK－A/CNK 图解中均落入过铝质区域( 图 7d) $\\mathrm { M g O }$ 含量为0． 89% ～ 0． 91% $\\mathbf { \\sigma } _ { \\mathbf { \\bullet } } \\mathrm { C a O }$ 含量为 0． 3% ～ 0． 6% 。 较低的$\\mathrm { M g O }$ 和 $\\mathrm { C a O }$ 含量以及较高的 $\\mathrm { S i O } _ { 2 }$ 含量，符合A 型花岗斑岩的典型特征。",
-                      "玄武安山岩样品的 $\\mathrm { S i O } _ { 2 }$ 含 量 为 54． 32% ～54． 46%，属中性岩浆岩。 在( $\\mathrm { N a } _ { 2 } \\mathrm { O } + \\mathrm { K } _ { 2 } \\mathrm { O } \\vert \\ { - } \\mathrm { S i O } _ { 2 }$ 图解中，样品点位于Irvine 线之下，属于亚碱性系列，投在玄武安山岩区域( 图 7a) ; 样品 $\\mathrm { K } _ { 2 } \\mathrm { O }$ 含量较低( 1． 11% ～1． 20%) ， $\\mathrm { N a } _ { 2 } \\mathrm { O }$ 含量较高( 4． 35% ～ 4． 38%) ，在K O－SiO 图解中主要属于钙碱性系列( 图7c)$\\mathrm { A l } _ { 2 } \\mathrm { O } _ { 3 }$ 含量较高，为 14． 31% ～14． 38%，铝饱和指数$\\mathrm { ~ ( ~ A / C N K ) ~ }$ 为 1． 04 ～ 1． 09，亦属过铝质岩石( 图 7d) 。此外，样品具有较高的全铁含量 $\\left( \\mathrm { \\ T F e } _ { 2 } \\mathbf { O } _ { 3 } = \\mathbf { \\Gamma } 1 2 \\right.$ ． 16%～ 12． 23%) ，而 TiO2 、 CaO 和 $\\mathrm { P } _ { 2 } 0 _ { 5 }$ 含量较低，平均值分别为 1． 22% 、 2． 78%和 0． 43% 。"
-                    ]
-                  },
-                  {
-                    "id": "4.1.1:image:3",
-                    "order": 9,
-                    "modality": "image",
-                    "image_path": [
-                      "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟\\images\\92fc8254109308e00c330badfb0cad6be6181fb774b77eb5fded93279dc4ff5f.jpg",
-                      "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟\\images\\d4988b07409ea7b4167848a911fc47d42e111eee3ae6037eb3ebbc244705a259.jpg"
-                    ],
-                    "caption": "图 8 双峰式火成岩的稀土元素球粒陨石标准化分布型式图( a) 及微量元素原始地幔标准化蛛网图( b)( 标准化值据 Sun and McDonough，1989)",
-                    "references": [
-                      "微量元素分析结果见表 3 在微量元素原始地幔标准化图解( 图8b) 中，花岗斑岩样品呈现出 LILE( Rb Ba K) 富集与 HFSE( Nb Ti P) 亏损特征，具显著 Sr 负异常 。 岩石具有较高的 Rb/Sr 值( 2． 95 ～3．55) ，远高于 I 型和 S 型花岗质岩石( 分别为 0． 61和 1． 81) ，与 A 型花岗斑岩地球化学特征类似( Whalen et al． ，1987) ，同时呈现高 $\\mathrm { G a } / \\mathrm { A l }$ 值，介于3． 61～3． 85 之间，平均 3． 73，与 A 型花岗斑岩特征相似( Frost et al． ，2001; 徐欢，2019) 玄武安山岩样品呈现 LILE( Rb、Ba、K、U) 富集与 HFSE( Nb、Ta) 亏损的特征，其 $\\mathrm { B a } / \\mathrm { T h } { > } 8 0 \\mathrm { , N b } / \\mathrm { L a } { < } 0 . 5$ 的比值特征符合俯冲带弧岩浆岩地球化学特征( Pearce et al． ，1984)",
-                      "在稀土元素球粒陨石标准化配分图解( 图 8a)中，花岗斑岩样品稀土总量较高 $\\mathrm { ~ ~ { ~ \\vert ~ \\Sigma ~ { ~ R E E } = 7 8 4 . ~ 8 1 \\times } ~ }$ $1 0 ^ { - 6 } \\sim 8 6 2 . 7 5 \\times 1 0 ^ { - 6 } )$ ，LREE /HREE = 11． 20 ～ 11． 31，具强 烈 LREE/HREE 分 馏， $\\mathrm { ~ \\left( ~ L a / Y b \\right) _ { \\mathrm { ~ N ~ } } = ~ 1 3 . ~ 2 1 ~ \\sim ~ }$ 14． 41，Eu 异常明显( $\\delta \\mathrm { E u } = 0 . 5 1 \\sim 0 . 5 2 )$ ，配分模式为轻稀土元素富集 重稀土元素平坦的右倾型; 玄武安山岩样品稀土总量低 $\\mathrm { ~ ( ~ \\Sigma R E E } = 1 9 0 . ~ 5 4 \\times 1 0 ^ { - 6 } ~ \\sim$ $1 9 5 . 5 1 \\times 1 0 ^ { - 6 } \\big )$ ， $\\mathrm { L R E E / H R E E } = 6 . \\ 5 9 \\sim 6 . \\ 8 7$ ，平均6．73，轻稀土元素富集，重稀土元素平坦化，轻重稀土元素分馏中等，球粒陨石标准化曲线总体右倾，$\\left( \\mathrm { \\ L a } / \\mathrm { Y b } \\right) _ { \\mathrm { \\scriptsize { N } } } = 6 . 5 9 \\sim 6 . 8 7$ ，Eu 异常不明显 $\\delta \\mathrm { E u } = 0 . 9 6 $ $\\sim 0 . 9 7 )$",
-                      "在微量元素原始地幔标准化蛛网图中可以发现Nb Ta 等高场强元素亏损( 图 8b) ，表明有地壳物质的加入，Rb、Th 等 LILE 元素富集也表明岩浆可能经历了上地壳物质的混染( 吴玉峰等，2016) 地壳相对于原始地幔熔体亏损 Nb、Ta 等难熔高场强元素( HFSE) ，并伴随显著降低的 Nb/Ta 值( 地壳中$\\mathrm { N b } / \\mathrm { T a } = 8 . 3 3 \\sim 1 3 . 3 3$ ，地幔中 $\\mathrm { N b } / \\mathrm { T a } = 1 8 . 2 7 )$ ( Nealet al． ，2002) ，玄武安山岩样品的 $\\mathrm { N b / T a }$ 值为 17． 8 ～18． 6; Zr/Hf 值可指示岩浆源区，地幔中 Zr/Hf 值约为 50，而地壳中 Zr /Hf 值约为 36( Anderson，1983) ，研究区玄武安山岩的 Zr/Hf 均值为 38; 受到混染的岩石 Sm/Nd 值一般均＜0． 3( 周伏顺等，2024) ，玄武安山岩的 Sm/Nd 值平均为 0． 2，这些都表明岩浆经历了地壳混染"
-                    ]
-                  },
-                  {
-                    "id": "4.1.1:image:4",
-                    "order": 10,
-                    "modality": "image",
-                    "image_path": [
-                      "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟\\images\\9437ebf8894b15d00ed203a20641dd73173b648be2f91988d1c9fa53ba595081.jpg",
-                      "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟\\images\\4148bc82d70206c7c06a0ac2a15409ca1e0a5132420a47289efae26559d31627.jpg"
-                    ],
-                    "caption": "图 9 花岗斑岩类型划分图\nFig． 9 Classification diagrams of granite porphyry types\n$\\mathrm { \\ a { - } ( K _ { 2 } O { + } N a _ { 2 } O ) \\ / C a O { - } ( \\ Z r { + } N b { + } C e { + } Y ) }$ 图解( 底图据 Whalen et al． ，1987) ; b—Nb－Y－Ce 图解( 底图据 Eby，1992)\na— $\\cdot \\left( \\mathrm { \\ K _ { 2 } O + N a _ { 2 } O } \\right) / \\mathrm { C a O - \\left( \\mathrm { \\ Z r + N b + C e + Y } \\right) }$ diagram ( base map from Whalen et al． ，1987) ; b—Nb－Y－Ce diagram ( base map from Eby，1992)",
-                    "references": [
-                      "结合本研究区花岗岩样品主 微量数据及邻区保家山花岗岩样品数据 ( 徐欢等，2014) ，对盆地西南缘花岗斑岩源区进行了综合分析 研究区花岗斑岩样品 $\\mathrm { M g O }$ 含 量 ( 0． 89% ～ 0． 91%) 和 $\\mathrm { C a O }$ 含 量( 0． 30% ～ 0． 60%) 均较低，而 K O 和 $\\mathrm { N a } _ { 2 } \\mathrm { O }$ 含量较高，反映出碱性特征，同时稀土元素富集，尤其轻稀土元素富集，符合 A 型花岗斑岩的特征( 席振等，2024; 刘 伟 等，2024) ，在 $\\mathrm { \\left[ \\ K _ { 2 } O + N a _ { 2 } O \\right] / C a O ] }$ $\\scriptstyle \\left( \\ Z \\mathrm { r + N b + C e + Y } \\right)$ 图解( 图 $9 \\mathrm { a } )$ 中，本研究数据均落入在 A 型花岗斑岩中，同时在 $\\mathrm { N b - Y - C e }$ 图解中，研究数据落在 $\\mathbf { A } _ { 2 }$ 型花岗岩中( 图9b)",
-                      "A 型花岗斑岩以碱性 无水 非造山带特征而闻名， $\\mathbf { \\nabla } _ { \\mathbf { \\beta } } \\mathbf { A } _ { 2 }$ 型花岗斑岩为造山后花岗斑岩，与碰撞后伸展 弧后拉张等机制相关( Loiselle and Wones，1979;万俊等，2017) 研究区花岗斑岩样品为 $\\mathrm { A } _ { 2 }$ 型花岗岩( 图 9b) ，在 Rb－( Yb+Ta) 图解( 图 13a) 中，样品落在板内构造环境中，在 $\\mathrm { A l } _ { 2 } \\mathrm { O } _ { 3 } - \\mathrm { S i O } _ { 2 }$ 图解( 图 13b) 中落在与裂谷有关和陆内造陆隆起的环境中"
-                    ]
-                  },
-                  {
-                    "id": "4.1.1:image:5",
-                    "order": 11,
-                    "modality": "image",
-                    "image_path": [
-                      "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟\\images\\27cdf4958d44827309aca221a350486d8292692a951e08ffd8db7d3d80cbf9b2.jpg",
-                      "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟\\images\\4a7d93e0b8a11ead076b6d6169cbb1d12b245a341f94365a569887e8983229d9.jpg"
-                    ],
-                    "caption": "图 10 双峰式火成岩成因判别图版\nFig． 10 Genetic discrimination diagram for bimodal igneous rocks\n$\\mathrm { a } { - } \\mathrm { ( \\ L a / Y b ) } _ { \\textrm { N } } { - } \\delta \\mathrm { E u }$ 图解( 底图据姜盛洪，2015) ; $\\mathrm { \\ b { - } N b / L a { - } \\big ( \\ T h / N b \\big ) _ { \\partial \\ p M } }$ 图解( 底图据王刚等，2019)\na—( La /Yb) N －δEu diagram( base map from Jiang Shenghong，2015) ; $\\mathrm { \\ b { - } N b / L a { - } \\big ( \\ T h / N b \\big ) _ { \\ p M } }$ diagram ( base map from Wang Gang et al． ，2019)",
-                    "references": [
-                      "在岩浆上升过程中，可能会经历地壳的混染导致岩浆的成分发生改变 在 $\\mathrm { \\Delta N b / L a - ( \\Delta T h / N b ) _ { \\Delta _ { \\it P M } } }$ 图解( 图10b) 中可以发现样品点均在遭受地壳混染区域，在( $\\mathrm { L a } / \\mathrm { Y b } ) _ { \\textrm { N } } – \\delta \\mathrm { E u }$ 图解( 图10b) 中也可以看到安山岩属于壳幔混合型。"
-                    ]
-                  },
-                  {
-                    "id": "4.1.1:table:0",
-                    "order": 12,
-                    "modality": "table",
-                    "markdown": "<table><tr><td rowspan=\"2\">点号</td><td colspan=\"3\"> $w_{\\text{B}}/10^{-6}$ </td><td rowspan=\"2\">Th/U</td><td colspan=\"6\">同位素比值</td><td colspan=\"6\">年龄/Ma</td></tr><tr><td>U</td><td>Th</td><td>Pb</td><td> $^{207}\\text{Pb}/^{206}\\text{Pb}$ </td><td>1σ</td><td> $^{207}\\text{Pb}/^{235}\\text{U}$ </td><td>1σ</td><td> $^{206}\\text{Pb}/^{238}\\text{U}$ </td><td>1σ</td><td> $^{207}\\text{Pb}/^{206}\\text{Pb}$ </td><td>1σ</td><td> $^{207}\\text{Pb}/^{235}\\text{U}$ </td><td>1σ</td><td> $^{206}\\text{Pb}/^{238}\\text{U}$ </td><td>1σ</td></tr><tr><td colspan=\"17\">LTX-1</td></tr><tr><td>01</td><td>14.85</td><td>23.50</td><td>10.07</td><td>0.63</td><td>0.112 1</td><td>0.003 4</td><td>4.952 4</td><td>0.152 3</td><td>0.320 5</td><td>0.007 5</td><td>1 834</td><td>53</td><td>1 811</td><td>26</td><td>1 792</td><td>38</td></tr><tr><td>02</td><td>41.48</td><td>47.32</td><td>21.05</td><td>0.88</td><td>0.111 7</td><td>0.002 8</td><td>4.901 2</td><td>0.130 9</td><td>0.318 2</td><td>0.007 3</td><td>1 828</td><td>45</td><td>1 803</td><td>23</td><td>1 781</td><td>36</td></tr><tr><td>03</td><td>46.14</td><td>46.38</td><td>21.20</td><td>0.99</td><td>0.111 6</td><td>0.002 9</td><td>4.889 9</td><td>0.132 4</td><td>0.317 9</td><td>0.007 3</td><td>1 826</td><td>46</td><td>1 803</td><td>23</td><td>1 780</td><td>36</td></tr><tr><td>04</td><td>39.51</td><td>44.94</td><td>19.70</td><td>0.88</td><td>0.111 3</td><td>0.002 8</td><td>4.790 3</td><td>0.128 6</td><td>0.312 3</td><td>0.007 1</td><td>1 821</td><td>46</td><td>1 783</td><td>23</td><td>1 752</td><td>35</td></tr><tr><td>05</td><td>35.23</td><td>39.50</td><td>17.18</td><td>0.89</td><td>0.112 4</td><td>0.002 9</td><td>4.790 2</td><td>0.129 0</td><td>0.309 2</td><td>0.007 1</td><td>1 838</td><td>46</td><td>1 783</td><td>23</td><td>1 737</td><td>35</td></tr><tr><td>06</td><td>26.03</td><td>36.51</td><td>15.41</td><td>0.71</td><td>0.110 7</td><td>0.002 9</td><td>4.722 9</td><td>0.129 6</td><td>0.309 5</td><td>0.007 1</td><td>1 811</td><td>47</td><td>1 771</td><td>23</td><td>1 738</td><td>35</td></tr><tr><td>07</td><td>45.29</td><td>48.69</td><td>21.42</td><td>0.93</td><td>0.107 6</td><td>0.002 7</td><td>4.615 7</td><td>0.120 2</td><td>0.311 3</td><td>0.007 1</td><td>1 759</td><td>44</td><td>1 752</td><td>21</td><td>1 747</td><td>35</td></tr><tr><td>08</td><td>21.91</td><td>27.66</td><td>11.76</td><td>0.79</td><td>0.106 4</td><td>0.003 0</td><td>4.573 6</td><td>0.132 3</td><td>0.311 8</td><td>0.007 2</td><td>1 739</td><td>50</td><td>1 745</td><td>24</td><td>1 749</td><td>35</td></tr><tr><td>09</td><td>16.86</td><td>25.58</td><td>10.87</td><td>0.66</td><td>0.109 1</td><td>0.003 1</td><td>4.797 7</td><td>0.139 8</td><td>0.319 0</td><td>0.007 4</td><td>1 785</td><td>50</td><td>1 785</td><td>25</td><td>1 785</td><td>36</td></tr><tr><td>10</td><td>17.32</td><td>27.10</td><td>11.67</td><td>0.64</td><td>0.110 8</td><td>0.003 1</td><td>4.932 5</td><td>0.143 8</td><td>0.323 0</td><td>0.007 5</td><td>1 813</td><td>50</td><td>1 808</td><td>25</td><td>1 804</td><td>37</td></tr><tr><td>11</td><td>18.17</td><td>27.35</td><td>11.42</td><td>0.66</td><td>0.107 7</td><td>0.003 0</td><td>4.641 1</td><td>0.136 0</td><td>0.312 8</td><td>0.007 2</td><td>1 760</td><td>51</td><td>1 757</td><td>26</td><td>1 754</td><td>36</td></tr><tr><td>12</td><td>33.62</td><td>39.12</td><td>17.16</td><td>0.86</td><td>0.109 1</td><td>0.002 9</td><td>4.702 8</td><td>0.129 0</td><td>0.312 8</td><td>0.007 2</td><td>1 784</td><td>47</td><td>1 768</td><td>23</td><td>1 754</td><td>36</td></tr><tr><td>13</td><td>38.13</td><td>41.69</td><td>18.48</td><td>0.91</td><td>0.107 8</td><td>0.002 8</td><td>4.675 3</td><td>0.127 8</td><td>0.314 6</td><td>0.007 2</td><td>1 763</td><td>47</td><td>1 763</td><td>23</td><td>1 763</td><td>35</td></tr><tr><td>14</td><td>37.29</td><td>41.75</td><td>18.24</td><td>0.89</td><td>0.106 1</td><td>0.002 8</td><td>4.543 3</td><td>0.123 6</td><td>0.310 6</td><td>0.007 1</td><td>1 734</td><td>47</td><td>1 739</td><td>23</td><td>1 744</td><td>35</td></tr><tr><td>15</td><td>17.82</td><td>25.50</td><td>10.48</td><td>0.70</td><td>0.112 0</td><td>0.003 3</td><td>4.694 9</td><td>0.141 0</td><td>0.304 3</td><td>0.007 1</td><td>1 831</td><td>52</td><td>1 767</td><td>25</td><td>1 712</td><td>35</td></tr><tr><td>16</td><td>34.60</td><td>39.26</td><td>17.10</td><td>0.88</td><td>0.110 0</td><td>0.002 9</td><td>4.697 9</td><td>0.128 7</td><td>0.309 9</td><td>0.007 1</td><td>1 799</td><td>47</td><td>1 767</td><td>23</td><td>1 740</td><td>35</td></tr><tr><td>17</td><td>42.05</td><td>45.15</td><td>20.08</td><td>0.93</td><td>0.106 6</td><td>0.002 7</td><td>4.609 7</td><td>0.123 6</td><td>0.313 8</td><td>0.007 1</td><td>1 742</td><td>46</td><td>1 751</td><td>22</td><td>1 759</td><td>35</td></tr><tr><td>18</td><td>39.74</td><td>45.34</td><td>20.15</td><td>0.88</td><td>0.106 9</td><td>0.002 8</td><td>4.712 5</td><td>0.128 8</td><td>0.319 8</td><td>0.007 3</td><td>1 748</td><td>47</td><td>1 770</td><td>23</td><td>1 789</td><td>36</td></tr><tr><td>19</td><td>15.19</td><td>23.71</td><td>10.25</td><td>0.64</td><td>0.111 6</td><td>0.003 3</td><td>4.942 3</td><td>0.149 0</td><td>0.321 3</td><td>0.007 5</td><td>1 826</td><td>52</td><td>1 810</td><td>26</td><td>1 796</td><td>37</td></tr><tr><td>20</td><td>34.47</td><td>37.57</td><td>16.63</td><td>0.92</td><td>0.110 7</td><td>0.002 9</td><td>4.749 3</td><td>0.131 4</td><td>0.311 2</td><td>0.007 1</td><td>1 811</td><td>47</td><td>1 776</td><td>23</td><td>1 747</td><td>35</td></tr><tr><td>21</td><td>30.40</td><td>35.62</td><td>15.75</td><td>0.85</td><td>0.113 6</td><td>0.003 1</td><td>4.940 0</td><td>0.138 7</td><td>0.315 4</td><td>0.007 3</td><td>1 858</td><td>48</td><td>18 090</td><td>24</td><td>1 767</td><td>36</td></tr><tr><td>22</td><td>38.86</td><td>41.67</td><td>18.56</td><td>0.93</td><td>0.109 6</td><td>0.002 9</td><td>4.765 2</td><td>0.131 1</td><td>0.315 3</td><td>0.007 2</td><td>1 793</td><td>47</td><td>1 779</td><td>23</td><td>1 767</td><td>35</td></tr><tr><td>23</td><td>34.76</td><td>40.15</td><td>17.72</td><td>0.87</td><td>0.109 3</td><td>0.002 9</td><td>4.732 2</td><td>0.130 8</td><td>0.314 2</td><td>0.007 2</td><td>1 787</td><td>47</td><td>1 773</td><td>23</td><td>1 762</td><td>35</td></tr><tr><td>24</td><td>20.40</td><td>30.52</td><td>13.07</td><td>0.67</td><td>0.108 6</td><td>0.003 1</td><td>4.725 5</td><td>0.138 6</td><td>0.315 7</td><td>0.007 3</td><td>1 776</td><td>51</td><td>1 772</td><td>25</td><td>1 769</td><td>36</td></tr><tr><td>25</td><td>17.33</td><td>27.52</td><td>11.45</td><td>0.63</td><td>0.111 8</td><td>0.003 3</td><td>4.778 8</td><td>0.143 4</td><td>0.310 0</td><td>0.007 2</td><td>1 829</td><td>52</td><td>1 781</td><td>25</td><td>1 741</td><td>36</td></tr><tr><td>26</td><td>41.53</td><td>46.16</td><td>20.14</td><td>0.90</td><td>0.110 5</td><td>0.002 9</td><td>4.687 6</td><td>0.126 8</td><td>0.307 8</td><td>0.007 0</td><td>1 807</td><td>46.</td><td>1 765</td><td>23</td><td>1 730</td><td>35</td></tr><tr><td>27</td><td>49.24</td><td>78.79</td><td>32.33</td><td>0.62</td><td>0.108 9</td><td>0.002 6</td><td>4.630 2</td><td>0.115 6</td><td>0.308 5</td><td>0.006 9</td><td>1 781</td><td>42</td><td>1 755</td><td>21</td><td>1 733</td><td>34</td></tr><tr><td>28</td><td>18.30</td><td>27.00</td><td>11.46</td><td>0.68</td><td>0.111 5</td><td>0.003 2</td><td>4.849 1</td><td>0.144 8</td><td>0.315 5</td><td>0.007 3</td><td>1 824</td><td>52</td><td>1 794</td><td>25</td><td>1 768</td><td>36</td></tr><tr><td>29</td><td>29.28</td><td>38.99</td><td>16.66</td><td>0.75</td><td>0.106 3</td><td>0.002 8</td><td>4.562 3</td><td>0.125 9</td><td>0.311 4</td><td>0.007 1</td><td>1 737</td><td>48</td><td>1 742</td><td>23</td><td>1 748</td><td>35</td></tr><tr><td colspan=\"17\">LTX-2</td></tr><tr><td>01</td><td>30.62</td><td>23.70</td><td>13.47</td><td>0.77</td><td>0.108 6</td><td>0.003 3</td><td>4.787 3</td><td>0.150 5</td><td>0.319 9</td><td>0.007 5</td><td>1 775</td><td>55</td><td>1 783</td><td>26</td><td>1 789</td><td>37</td></tr><tr><td>02</td><td>49.45</td><td>48.21</td><td>22.50</td><td>0.97</td><td>0.107 7</td><td>0.002 8</td><td>4.717 0</td><td>0.126 9</td><td>0.317 8</td><td>0.007 2</td><td>1 760</td><td>46</td><td>1 770</td><td>23</td><td>1 779</td><td>35</td></tr><tr><td>03</td><td>28.13</td><td>19.90</td><td>12.07</td><td>0.71</td><td>0.108 7</td><td>0.003 1</td><td>4.722 5</td><td>0.139 1</td><td>0.315 1</td><td>0.007 3</td><td>1 778</td><td>51</td><td>1 771</td><td>25</td><td>1 766</td><td>36</td></tr><tr><td>04</td><td>41.28</td><td>35.09</td><td>18.06</td><td>0.85</td><td>0.108 8</td><td>0.002 8</td><td>4.690 3</td><td>0.127 3</td><td>0.312 7</td><td>0.007 1</td><td>1 780</td><td>47</td><td>1 766</td><td>23</td><td>1 754</td><td>35</td></tr><tr><td>05</td><td>31.12</td><td>21.51</td><td>13.28</td><td>0.69</td><td>0.109 2</td><td>0.003 0</td><td>4.733 5</td><td>0.134 4</td><td>0.314 6</td><td>0.007 2</td><td>1 785</td><td>49</td><td>1 773</td><td>24</td><td>1 763</td><td>35</td></tr><tr><td>06</td><td>26.73</td><td>16.65</td><td>11.25</td><td>0.62</td><td>0.109 9</td><td>0.003 1</td><td>4.823 8</td><td>0.141 0</td><td>0.318 3</td><td>0.007 4</td><td>1 798</td><td>51</td><td>1 789</td><td>25</td><td>1 781</td><td>36</td></tr><tr><td>07</td><td>30.74</td><td>23.05</td><td>13.23</td><td>0.75</td><td>0.110 0</td><td>0.003 1</td><td>4.769 5</td><td>0.138 8</td><td>0.314 6</td><td>0.007 3</td><td>1 799</td><td>50</td><td>1 780</td><td>24</td><td>1 763</td><td>36</td></tr><tr><td>08</td><td>34.35</td><td>28.72</td><td>14.75</td><td>0.84</td><td>0.111 2</td><td>0.003 0</td><td>4.694 9</td><td>0.133 4</td><td>0.306 4</td><td>0.007 0</td><td>1 819</td><td>49</td><td>1 766</td><td>24</td><td>1 723</td><td>35</td></tr><tr><td>09</td><td>40.78</td><td>34.82</td><td>17.96</td><td>0.85</td><td>0.110 0</td><td>0.002 9</td><td>4.732 3</td><td>0.131 5</td><td>0.312 0</td><td>0.007 1</td><td>1 800</td><td>48</td><td>1 773</td><td>23</td><td>1 751</td><td>35</td></tr><tr><td rowspan=\"2\">点号</td><td colspan=\"3\"> $w_B/10^{-6}$ </td><td rowspan=\"2\">Th/U</td><td colspan=\"6\">同位素比值</td><td colspan=\"6\">年龄/Ma</td></tr><tr><td>U</td><td>Th</td><td>Pb</td><td> $^{207}\\text{Pb}/^{206}\\text{Pb}$ </td><td>1σ</td><td> $^{207}\\text{Pb}/^{235}\\text{U}$ </td><td>1σ</td><td> $^{206}\\text{Pb}/^{238}\\text{U}$ </td><td>1σ</td><td> $^{207}\\text{Pb}/^{206}\\text{Pb}$ </td><td>1σ</td><td> $^{207}\\text{Pb}/^{235}\\text{U}$ </td><td>1σ</td><td> $^{206}\\text{Pb}/^{238}\\text{U}$ </td><td>1σ</td></tr><tr><td>10</td><td>40.58</td><td>39.23</td><td>18.34</td><td>0.97</td><td>0.108 2</td><td>0.002 9</td><td>4.717 6</td><td>0.130 3</td><td>0.316 2</td><td>0.007 2</td><td>1 770</td><td>48</td><td>1 770</td><td>23</td><td>1 771</td><td>35</td></tr><tr><td>11</td><td>26.94</td><td>18.80</td><td>11.27</td><td>0.70</td><td>0.108 8</td><td>0.003 2</td><td>4.654 7</td><td>0.142 4</td><td>0.310 3</td><td>0.007 2</td><td>1 780</td><td>53</td><td>1 759</td><td>26</td><td>1 741</td><td>36</td></tr><tr><td>12</td><td>39.67</td><td>27.32</td><td>16.93</td><td>0.69</td><td>0.107 9</td><td>0.002 9</td><td>4.688 8</td><td>0.129 9</td><td>0.315 1</td><td>0.007 2</td><td>1 765</td><td>48</td><td>1 765</td><td>23</td><td>1 766</td><td>35</td></tr><tr><td>13</td><td>34.46</td><td>28.23</td><td>15.34</td><td>0.82</td><td>0.112 9</td><td>0.003 3</td><td>4.948 8</td><td>0.148 8</td><td>0.318 0</td><td>0.007 4</td><td>1 847</td><td>52</td><td>1 811</td><td>25</td><td>1 780</td><td>36</td></tr><tr><td>14</td><td>43.63</td><td>41.65</td><td>19.87</td><td>0.95</td><td>0.109 6</td><td>0.002 9</td><td>4.789 4</td><td>0.131 5</td><td>0.316 9</td><td>0.007 2</td><td>1 793</td><td>47</td><td>1 783</td><td>23</td><td>1 775</td><td>35</td></tr><tr><td>15</td><td>38.97</td><td>34.58</td><td>17.08</td><td>0.89</td><td>0.109 9</td><td>0.002 9</td><td>4.698 2</td><td>0.129 9</td><td>0.310 2</td><td>0.007 1</td><td>1 798</td><td>48</td><td>1 767</td><td>23</td><td>1 741</td><td>35</td></tr><tr><td>16</td><td>27.04</td><td>16.48</td><td>11.27</td><td>0.61</td><td>0.110 9</td><td>0.003 2</td><td>4.750 1</td><td>0.141 0</td><td>0.310 8</td><td>0.007 2</td><td>1 814</td><td>51</td><td>1 776</td><td>25</td><td>1 745</td><td>35</td></tr><tr><td>17</td><td>35.63</td><td>27.72</td><td>15.56</td><td>0.78</td><td>0.108 6</td><td>0.002 9</td><td>4.710 2</td><td>0.131 8</td><td>0.314 7</td><td>0.007 2</td><td>1 776</td><td>48</td><td>1 769</td><td>23</td><td>1 764</td><td>35</td></tr><tr><td>18</td><td>29.16</td><td>20.51</td><td>12.22</td><td>0.70</td><td>0.110 5</td><td>0.003 1</td><td>4.709 6</td><td>0.136 7</td><td>0.309 3</td><td>0.007 1</td><td>1 807</td><td>50</td><td>1 769</td><td>24</td><td>1 737</td><td>35</td></tr><tr><td>19</td><td>35.90</td><td>28.67</td><td>15.45</td><td>0.80</td><td>0.110 5</td><td>0.003 0</td><td>4.729 8</td><td>0.131 5</td><td>0.310 5</td><td>0.007 1</td><td>1 808</td><td>48</td><td>1 773</td><td>23</td><td>1 743</td><td>35</td></tr><tr><td>20</td><td>24.82</td><td>14.94</td><td>10.17</td><td>0.60</td><td>0.106 9</td><td>0.003 1</td><td>4.537 4</td><td>0.136 7</td><td>0.307 9</td><td>0.007 1</td><td>1 747</td><td>53</td><td>1 738</td><td>25</td><td>1 730</td><td>35</td></tr><tr><td>21</td><td>36.64</td><td>29.82</td><td>15.83</td><td>0.81</td><td>0.108 1</td><td>0.002 9</td><td>4.651 9</td><td>0.128 2</td><td>0.312 1</td><td>0.007 1</td><td>1 768</td><td>48</td><td>1 759</td><td>23</td><td>1 751</td><td>35</td></tr><tr><td>22</td><td>41.56</td><td>40.77</td><td>18.72</td><td>0.98</td><td>0.108 2</td><td>0.002 8</td><td>4.661 9</td><td>0.125 7</td><td>0.312 7</td><td>0.007 1</td><td>1 767</td><td>46</td><td>1 760</td><td>23</td><td>1 754</td><td>35</td></tr><tr><td>23</td><td>39.66</td><td>36.09</td><td>17.41</td><td>0.91</td><td>0.110 6</td><td>0.002 9</td><td>4.679 9</td><td>0.127 2</td><td>0.307 1</td><td>0.007 0</td><td>1 808</td><td>47</td><td>1 764</td><td>23</td><td>1 727</td><td>34</td></tr><tr><td>24</td><td>30.57</td><td>22.62</td><td>13.13</td><td>0.74</td><td>0.108 8</td><td>0.003 0</td><td>4.700 5</td><td>0.135 4</td><td>0.313 4</td><td>0.007 2</td><td>1 779</td><td>50</td><td>1 767</td><td>24</td><td>1 758</td><td>35</td></tr><tr><td>25</td><td>33.29</td><td>21.74</td><td>14.19</td><td>0.65</td><td>0.114 3</td><td>0.003 1</td><td>4.927 5</td><td>0.137 9</td><td>0.312 8</td><td>0.007 2</td><td>1 869</td><td>48</td><td>1 807</td><td>24</td><td>1 754</td><td>35</td></tr><tr><td>26</td><td>45.95</td><td>30.27</td><td>19.34</td><td>0.66</td><td>0.110 5</td><td>0.002 9</td><td>4.757 6</td><td>0.128 4</td><td>0.312 3</td><td>0.007 1</td><td>1 808</td><td>46</td><td>1 777</td><td>23</td><td>1 752</td><td>35</td></tr><tr><td>27</td><td>20.95</td><td>11.69</td><td>8.84</td><td>0.56</td><td>0.110 9</td><td>0.003 6</td><td>4.851 5</td><td>0.158 9</td><td>0.317 5</td><td>0.007 5</td><td>1 813</td><td>57</td><td>1 794</td><td>28</td><td>1 778</td><td>37</td></tr><tr><td>28</td><td>58.28</td><td>50.66</td><td>25.97</td><td>0.87</td><td>0.111 3</td><td>0.002 8</td><td>4.838 3</td><td>0.128 3</td><td>0.315 3</td><td>0.007 1</td><td>1 821</td><td>45</td><td>1 792</td><td>22</td><td>1 767</td><td>35</td></tr><tr><td colspan=\"17\">LTX-3</td></tr><tr><td>01</td><td>15.54</td><td>10.68</td><td>6.92</td><td>0.69</td><td>0.108 5</td><td>0.003 9</td><td>4.900 1</td><td>0.178 1</td><td>0.327 6</td><td>0.008 0</td><td>1 775</td><td>64</td><td>1 802</td><td>31</td><td>1 827</td><td>39</td></tr><tr><td>02</td><td>36.82</td><td>36.15</td><td>15.72</td><td>0.98</td><td>0.113 5</td><td>0.003 1</td><td>4.772 8</td><td>0.136 4</td><td>0.305 0</td><td>0.007 0</td><td>1 856</td><td>49</td><td>1 780</td><td>24</td><td>1 716</td><td>35</td></tr><tr><td>03</td><td>41.20</td><td>31.19</td><td>18.08</td><td>0.76</td><td>0.110 7</td><td>0.002 9</td><td>4.827 9</td><td>0.133 0</td><td>0.316 5</td><td>0.007 2</td><td>1 810</td><td>47</td><td>1 790</td><td>23</td><td>1 773</td><td>35</td></tr><tr><td>04</td><td>21.34</td><td>12.06</td><td>9.11</td><td>0.57</td><td>0.109 2</td><td>0.003 3</td><td>4.866 2</td><td>0.152 2</td><td>0.323 4</td><td>0.007 6</td><td>1 785</td><td>55</td><td>1 796</td><td>26</td><td>1 806</td><td>37</td></tr><tr><td>05</td><td>28.52</td><td>19.69</td><td>12.20</td><td>0.69</td><td>0.113 9</td><td>0.003 2</td><td>4.910 8</td><td>0.143 5</td><td>0.312 8</td><td>0.007 2</td><td>1 862</td><td>50</td><td>1 804</td><td>25</td><td>1 755</td><td>35</td></tr><tr><td>06</td><td>29.66</td><td>19.68</td><td>12.52</td><td>0.66</td><td>0.113 9</td><td>0.003 2</td><td>4.864 8</td><td>0.139 3</td><td>0.309 9</td><td>0.007 1</td><td>1 862</td><td>49</td><td>1 796</td><td>24</td><td>1 740</td><td>35</td></tr><tr><td>07</td><td>37.07</td><td>24.83</td><td>15.54</td><td>0.67</td><td>0.112 6</td><td>0.003 1</td><td>4.785 3</td><td>0.136 5</td><td>0.308 2</td><td>0.007 1</td><td>1 842</td><td>49</td><td>1 782</td><td>24</td><td>1 732</td><td>35</td></tr><tr><td>08</td><td>39.61</td><td>34.25</td><td>17.38</td><td>0.86</td><td>0.110 2</td><td>0.003 1</td><td>4.713 3</td><td>0.137 3</td><td>0.310 2</td><td>0.007 1</td><td>1 803</td><td>50</td><td>1 770</td><td>24</td><td>1 742</td><td>35</td></tr><tr><td>09</td><td>49.44</td><td>35.22</td><td>20.80</td><td>0.71</td><td>0.110 1</td><td>0.002 9</td><td>4.637 9</td><td>0.126 3</td><td>0.305 6</td><td>0.006 9</td><td>1 800</td><td>47</td><td>1 756</td><td>23</td><td>1 719</td><td>34</td></tr><tr><td>10</td><td>49.73</td><td>34.93</td><td>20.37</td><td>0.70</td><td>0.112 6</td><td>0.002 6</td><td>4.667 4</td><td>0.115 1</td><td>0.300 6</td><td>0.006 7</td><td>1 842</td><td>41</td><td>1 761</td><td>21</td><td>1 694</td><td>33</td></tr><tr><td>11</td><td>30.98</td><td>18.51</td><td>12.49</td><td>0.60</td><td>0.111 1</td><td>0.004 0</td><td>4.578 6</td><td>0.165 9</td><td>0.299 0</td><td>0.007 3</td><td>1 817</td><td>64</td><td>1 745</td><td>30</td><td>1 686</td><td>36</td></tr><tr><td>12</td><td>92.40</td><td>74.64</td><td>39.88</td><td>0.81</td><td>0.110 9</td><td>0.002 6</td><td>4.696 9</td><td>0.115 4</td><td>0.307 1</td><td>0.006 8</td><td>1 815</td><td>41</td><td>1 767</td><td>21</td><td>1 727</td><td>34</td></tr><tr><td>13</td><td>43.58</td><td>34.26</td><td>17.59</td><td>0.79</td><td>0.108 6</td><td>0.002 8</td><td>4.447 5</td><td>0.118 8</td><td>0.297 0</td><td>0.006 7</td><td>1 776</td><td>46</td><td>1 721</td><td>22</td><td>1 676</td><td>33</td></tr><tr><td>14</td><td>49.70</td><td>46.37</td><td>21.80</td><td>0.93</td><td>0.111 8</td><td>0.002 8</td><td>4.669 0</td><td>0.124 1</td><td>0.302 8</td><td>0.006 8</td><td>1 830</td><td>45</td><td>1 762</td><td>22</td><td>1 705</td><td>34</td></tr><tr><td>15</td><td>38.48</td><td>29.23</td><td>15.78</td><td>0.76</td><td>0.107 3</td><td>0.003 4</td><td>4.399 8</td><td>0.141 8</td><td>0.297 5</td><td>0.007 0</td><td>1 754</td><td>57</td><td>1 712</td><td>27</td><td>1 679</td><td>35</td></tr><tr><td>16</td><td>51.92</td><td>48.04</td><td>22.91</td><td>0.93</td><td>0.110 4</td><td>0.002 7</td><td>4.663 4</td><td>0.121 4</td><td>0.306 3</td><td>0.006 9</td><td>1 807</td><td>44</td><td>1 761</td><td>22</td><td>1 722</td><td>34</td></tr><tr><td>17</td><td>88.14</td><td>87.19</td><td>39.84</td><td>0.99</td><td>0.108 7</td><td>0.002 5</td><td>4.649 0</td><td>0.113 9</td><td>0.310 2</td><td>0.006 9</td><td>1 778</td><td>42</td><td>1 758</td><td>20</td><td>1 742</td><td>34</td></tr><tr><td>18</td><td>42.66</td><td>34.01</td><td>21.40</td><td>0.79</td><td>0.109 9</td><td>0.002 4</td><td>4.733 3</td><td>0.111 4</td><td>0.312 4</td><td>0.006 9</td><td>1 798</td><td>39</td><td>1 773</td><td>20</td><td>1 752</td><td>34</td></tr><tr><td>19</td><td>44.79</td><td>39.05</td><td>19.79</td><td>0.87</td><td>0.113 9</td><td>0.002 9</td><td>4.856 8</td><td>0.129 3</td><td>0.309 2</td><td>0.007 0</td><td>1 863</td><td>45</td><td>1 795</td><td>22</td><td>1 737</td><td>34</td></tr><tr><td>20</td><td>29.46</td><td>20.74</td><td>13.01</td><td>0.70</td><td>0.108 8</td><td>0.003 2</td><td>4.798 9</td><td>0.144 3</td><td>0.319 9</td><td>0.007 4</td><td>1 780</td><td>53</td><td>1 785</td><td>25</td><td>1 789</td><td>36</td></tr><tr><td>21</td><td>41.23</td><td>35.46</td><td>17.16</td><td>0.86</td><td>0.109 1</td><td>0.003 1</td><td>4.380 0</td><td>0.127 4</td><td>0.291 1</td><td>0.006 7</td><td>1 785</td><td>51</td><td>1 709</td><td>24</td><td>1 647</td><td>33</td></tr><tr><td>22</td><td>49.60</td><td>32.44</td><td>20.61</td><td>0.65</td><td>0.112 9</td><td>0.002 9</td><td>4.741 9</td><td>0.125 2</td><td>0.304 7</td><td>0.006 9</td><td>1 846</td><td>45</td><td>1 775</td><td>22</td><td>1 715</td><td>34</td></tr><tr><td>23</td><td>38.81</td><td>25.05</td><td>13.79</td><td>0.65</td><td>0.108 3</td><td>0.003 8</td><td>4.132 5</td><td>0.147 1</td><td>0.276 7</td><td>0.006 7</td><td>1 772</td><td>63</td><td>1 661</td><td>29</td><td>1 575</td><td>34</td></tr></table>",
-                    "caption": "Table 1 L\nA⁃IC\nP⁃MS zircon\nU⁃Pb dating results of igneous rocks表 1 火\n成岩样品的LA⁃IC\nP⁃MS 锆\n石U⁃Pb 定\n年分析结果",
-                    "references": null
-                  },
-                  {
-                    "id": "4.1.1:table:1",
-                    "order": 13,
-                    "modality": "table",
-                    "markdown": "<table><tr><td></td><td> $SiO_{2}$ </td><td> $TiO_{2}$ </td><td> $Al_{2}O_{3}$ </td><td> $TFe_{2}O_{3}$ </td><td>MnO</td><td>MgO</td><td>CaO</td><td> $Na_{2}O$ </td><td> $K_{2}O$ </td><td> $P_{2}O_{5}$ </td><td>LOI</td><td>Total</td></tr><tr><td>24LXT-1</td><td>70.96</td><td>0.51</td><td>12.63</td><td>4.23</td><td>0.04</td><td>0.89</td><td>0.30</td><td>1.87</td><td>6.52</td><td>0.09</td><td>1.73</td><td>99.77</td></tr><tr><td>24LXT-2</td><td>70.48</td><td>0.51</td><td>12.36</td><td>4.35</td><td>0.05</td><td>0.91</td><td>0.60</td><td>2.74</td><td>5.83</td><td>0.09</td><td>1.85</td><td>99.76</td></tr><tr><td>24LXT-3</td><td>54.22</td><td>1.22</td><td>14.31</td><td>12.21</td><td>0.14</td><td>4.51</td><td>2.57</td><td>4.37</td><td>1.20</td><td>0.43</td><td>4.62</td><td>99.80</td></tr><tr><td>24LXT-4</td><td>54.34</td><td>1.22</td><td>14.38</td><td>12.14</td><td>0.14</td><td>4.40</td><td>2.97</td><td>4.35</td><td>1.11</td><td>0.42</td><td>4.30</td><td>99.77</td></tr></table>",
-                    "caption": "表 2 骑安沟花岗斑岩( LXT-1、2) 和玄武安山岩( LTX-3、4) 的主量元素分析结果\nTable 2 Analysis results of major elements for the Qi'angou granite porphyry $\\mathbf { \\left( \\mathbf { L X T 1 , 2 } \\right) }$ and basaltic andesite $\\mathbf { ( L T X - 3 , 4 ) }$",
-                    "references": null
-                  },
-                  {
-                    "id": "4.1.1:table:2",
-                    "order": 14,
-                    "modality": "table",
-                    "markdown": "<table><tr><td>编号</td><td>Li</td><td>Be</td><td>Sc</td><td>V</td><td>Co</td><td>Ni</td><td>Cu</td><td>Zn</td><td>Ga</td><td>Rb</td><td>Sr</td><td>Zr</td><td>Nb</td></tr><tr><td>24LXT-1</td><td>10.25</td><td>2.92</td><td>8.31</td><td>5.28</td><td>2.29</td><td>5.15</td><td>16.39</td><td>73.42</td><td>24.17</td><td>144.20</td><td>40.58</td><td>845.10</td><td>36.09</td></tr><tr><td>24LXT-2</td><td>11.59</td><td>3.03</td><td>8.46</td><td>4.59</td><td>2.23</td><td>4.65</td><td>13.47</td><td>75.01</td><td>25.23</td><td>125.10</td><td>42.35</td><td>875.40</td><td>35.88</td></tr><tr><td>24LXT-3</td><td>43.92</td><td>1.57</td><td>28.36</td><td>170.30</td><td>37.33</td><td>45.96</td><td>56.76</td><td>70.38</td><td>19.77</td><td>19.38</td><td>334.80</td><td>198.10</td><td>9.27</td></tr><tr><td>24LXT-4</td><td>37.33</td><td>1.83</td><td>29.98</td><td>165.80</td><td>35.28</td><td>43.62</td><td>52.73</td><td>72.92</td><td>20.10</td><td>19.85</td><td>450.50</td><td>196.70</td><td>9.18</td></tr><tr><td></td><td>Cs</td><td>Ba</td><td>Hf</td><td>Ta</td><td>W</td><td>Tl</td><td>Pb</td><td>Bi</td><td>Th</td><td>U</td><td>Cr</td><td>Mo</td><td>In</td></tr><tr><td>24LXT-1</td><td>0.71</td><td>1 253.00</td><td>19.13</td><td>1.92</td><td>0.93</td><td>0.70</td><td>2.94</td><td>0.01</td><td>12.70</td><td>2.68</td><td>12.23</td><td>0.58</td><td>0.11</td></tr><tr><td>24LXT-2</td><td>0.65</td><td>1 311.00</td><td>19.50</td><td>1.58</td><td>0.68</td><td>0.57</td><td>2.85</td><td>0.02</td><td>12.28</td><td>2.09</td><td>12.02</td><td>0.43</td><td>0.10</td></tr><tr><td>24LXT-3</td><td>1.19</td><td>1 328.00</td><td>5.23</td><td>0.50</td><td>0.27</td><td>0.40</td><td>9.83</td><td>0.24</td><td>1.54</td><td>1.41</td><td>109.00</td><td>0.63</td><td>0.09</td></tr><tr><td>24LXT-4</td><td>1.54</td><td>1 447.00</td><td>5.14</td><td>0.51</td><td>0.24</td><td>0.42</td><td>9.46</td><td>0.19</td><td>1.50</td><td>0.86</td><td>99.19</td><td>0.53</td><td>0.09</td></tr><tr><td></td><td>Y</td><td>La</td><td>Ce</td><td>Pr</td><td>Nd</td><td>Sm</td><td>Eu</td><td>Gd</td><td>Tb</td><td>Dy</td><td>Ho</td><td>Er</td><td>Tm</td></tr><tr><td>24LXT-1</td><td>99.73</td><td>177.90</td><td>391.50</td><td>41.28</td><td>152.60</td><td>27.49</td><td>4.26</td><td>22.02</td><td>3.47</td><td>18.89</td><td>3.59</td><td>10.02</td><td>1.57</td></tr><tr><td>24LXT-2</td><td>87.11</td><td>176.10</td><td>335.70</td><td>38.20</td><td>142.10</td><td>24.96</td><td>3.94</td><td>20.41</td><td>3.16</td><td>16.62</td><td>3.11</td><td>8.86</td><td>1.40</td></tr><tr><td>24LXT-3</td><td>39.42</td><td>35.53</td><td>71.70</td><td>9.54</td><td>38.60</td><td>7.86</td><td>2.24</td><td>6.08</td><td>1.14</td><td>7.02</td><td>1.42</td><td>4.20</td><td>0.64</td></tr><tr><td>24LXT-4</td><td>38.52</td><td>36.81</td><td>74.78</td><td>9.80</td><td>39.10</td><td>7.89</td><td>2.30</td><td>6.29</td><td>1.13</td><td>6.90</td><td>1.38</td><td>4.01</td><td>0.63</td></tr></table>",
-                    "caption": "表 3 骑安沟花岗斑岩( LXT-1、2) 、玄武安山岩( LTX-3、4) 微量元素分析结果\nTable 3 Analysis results of trace elements for the Qi'angou granite porphyry $| \\mathbf { L X T - 1 } , 2 \\rangle$ and basaltic andesite $\\mathbf { ( L T X - 3 , 4 ) }$",
-                    "references": null
-                  },
-                  {
-                    "id": "4.1.1:formula:0",
-                    "order": 15,
-                    "modality": "formula",
-                    "latex": "w _ {\\mathrm{B}} / 1 0 ^ {- 6}",
-                    "caption": null
                   }
                 ]
               }
@@ -215,33 +278,247 @@
             "chunks": []
           }
         ],
+        "chunks": [
+          {
+            "id": "2:text:0",
+            "order": 0,
+            "modality": "text",
+            "text": "通过对 62 口钻井的 423 块薄片和接近 500 m岩芯的观察，对马家沟组白云岩主要的储集空间类型进行了总结，其主要发育两大类共4 种孔隙类型（图 3）。并进一步运用三维 CT 扫描和孔渗结构分析，对其储集特征进行了详细表征。"
+          }
+        ]
+      },
+      {
+        "id": "3",
+        "title": "白云岩储层成因机制",
+        "level": 2,
+        "order": 3,
+        "parent_id": null,
+        "children": [
+          {
+            "id": "3.1",
+            "title": "白云岩化机理",
+            "level": 3,
+            "order": 0,
+            "parent_id": "3",
+            "children": [],
+            "chunks": [
+              {
+                "id": "3.1:text:0",
+                "order": 0,
+                "modality": "text",
+                "text": "奥陶系马家沟组白云岩主要有两大类，一类是含有硬石膏结核、柱状晶等矿物的泥晶、泥粉晶白云岩。沉积相上，主要呈层状分布于台内洼地的周缘潮间带和潮上带。另一类则是含有大量颗粒组分（鲕粒、砂屑、藻砂屑等）的细晶、颗粒云岩。沉积相上，一般位于潮下带的颗粒滩相，主要呈块状分布。前者主要分布于相对海退期的马一段、马三段以及马 $\\overline { { \\mathcal { \\pm } } } _ { \\mathrm { ~ 1 0 } } \\mathrm { ~ , ~ }$ 、马五 、马五 和马五 亚段，而后者主要分布于相对海侵的马二段、马四段以及马五 、马五 、和马五 亚段。此外，在储层的孔隙中还分布一定量的细晶到粗晶白云石胶结物。"
+              },
+              {
+                "id": "3.1:text:1",
+                "order": 1,
+                "modality": "text",
+                "text": "通过对包括泥粉晶白云岩、细晶白云岩、孔隙充填白云岩、方解石以及泥晶灰岩在内的 56 块次样品的稳定碳氧同位素分析（图6），我们发现：泥粉晶白云岩和细晶白云岩其碳氧同位素分布特征类似，没有明显差别，说明其白云化流体应该是相同的（Wang et al., 2002）。对比同时期的泥晶灰岩，白云岩的 $\\delta ^ { 1 8 } 0$ 明显偏正，说明当时的白云化流体应该是海水蒸发浓缩形成的（Swart et al., 2015）。再结合白云岩有序度分析（表 1）可知，从泥晶到粉晶再到细晶，其有序度不断升高。说明泥、粉晶白云岩的白云化速度较快，而细晶白云岩的有序度相对较高，说明其白云化的速度相对较慢，晶体生长也相对较完整。\n通过对白云岩的稀土元素分析，其均一化后的 REE 分布特征与近海平面海水的分布特征相类似，具有明显的 Eu 的负异常和 Ce 的略微负异常（Elderfield and Greaves，1982），说明白云石化流体应该是海平面附近的蒸发海水（图7）。"
+              },
+              {
+                "id": "3.1:text:2",
+                "order": 2,
+                "modality": "text",
+                "text": "由此可以合理推断，海退期的泥、粉晶白云石形成于萨布哈蒸发环境，在潮汐的作用下，海水不断被补充到潮上带，蒸发作用使潮上灰岩地层孔隙内水体的 $\\mathrm { M g } ^ { 2 + }$ 浓度不断增大（Mü ller et al., 1990），导致早期的泥晶灰岩发生白云石化（图8）。且形成速率较快，有序度较低。在萨布哈白云化完成以后，剩余的高度浓缩的海水向下回流渗透，使下伏的海侵期沉积的颗粒滩灰岩发生白云石化（图 9）。由于向下渗透的速率较慢，所以其白云石化速率要慢于萨布哈白云石化作用。但回流渗透的速率一般较为稳定，所以其白云石化的有序度要高于潮上带泥晶白云岩。海退期，不同层位石膏结核和石膏晶体的发育程度和范围有明显区别，反映了蒸发作用受到气候的影响强烈。而下伏的颗粒和晶粒白云岩，其回流渗透白云石化过程较为缓慢，对气候的响应则相对较弱，所以形成了块状结构。\nFig. 8 Diagram of the Sabkha dolomitization model"
+              },
+              {
+                "id": "3.1:image:0",
+                "order": 3,
+                "modality": "image",
+                "image_path": [
+                  "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制_吴东旭\\images\\05ec536a8b4315159b910c33912826048fbe86a83ae40c550e45bb2703b29b82.jpg"
+                ],
+                "caption": "图6 白云岩和灰岩、方解石碳氧同位素对比（N=56）\nFig. 6 Comparison of carbon and oxygen isotopes of the dolomite, limestone, and calcite (N=56)",
+                "references": [
+                  "通过对包括泥粉晶白云岩、细晶白云岩、孔隙充填白云岩、方解石以及泥晶灰岩在内的 56 块次样品的稳定碳氧同位素分析（图6），我们发现：泥粉晶白云岩和细晶白云岩其碳氧同位素分布特征类似，没有明显差别，说明其白云化流体应该是相同的（Wang et al., 2002）。对比同时期的泥晶灰岩，白云岩的 $\\delta ^ { 1 8 } 0$ 明显偏正，说明当时的白云化流体应该是海水蒸发浓缩形成的（Swart et al., 2015）。再结合白云岩有序度分析（表 1）可知，从泥晶到粉晶再到细晶，其有序度不断升高。说明泥、粉晶白云岩的白云化速度较快，而细晶白云岩的有序度相对较高，说明其白云化的速度相对较慢，晶体生长也相对较完整。"
+                ]
+              },
+              {
+                "id": "3.1:image:1",
+                "order": 4,
+                "modality": "image",
+                "image_path": [
+                  "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制_吴东旭\\images\\2a4d07419ff7b3dba84d05c84936e2d3a5b880e004b3dfd3b1ed3a603ecae8cf.jpg"
+                ],
+                "caption": "A: 盟6井，马五 ，粉晶白云岩；B: 莲70井，马五 ，粗粉晶白云岩；C: 莲55， $\\stackrel { \\overline { { { U } } } } { } \\overline { { { \\mathrm { \\large D } } } } _ { 5 } ,$ 粗粉晶白云岩\n图7 白云岩稀土元素分布特征\nFig. 7 Distribution characteristics of the rare earth elements in the dolomite",
+                "references": [
+                  "通过对白云岩的稀土元素分析，其均一化后的 REE 分布特征与近海平面海水的分布特征相类似，具有明显的 Eu 的负异常和 Ce 的略微负异常（Elderfield and Greaves，1982），说明白云石化流体应该是海平面附近的蒸发海水（图7）。"
+                ]
+              },
+              {
+                "id": "3.1:image:2",
+                "order": 5,
+                "modality": "image",
+                "image_path": [
+                  "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制_吴东旭\\images\\c05e5f21288b34d21112005f87dc0a9547e2df64064ad7002b0b41abc27d6d0b.jpg"
+                ],
+                "caption": "图8 萨布哈白云石化模式图",
+                "references": [
+                  "由此可以合理推断，海退期的泥、粉晶白云石形成于萨布哈蒸发环境，在潮汐的作用下，海水不断被补充到潮上带，蒸发作用使潮上灰岩地层孔隙内水体的 $\\mathrm { M g } ^ { 2 + }$ 浓度不断增大（Mü ller et al., 1990），导致早期的泥晶灰岩发生白云石化（图8）。且形成速率较快，有序度较低。在萨布哈白云化完成以后，剩余的高度浓缩的海水向下回流渗透，使下伏的海侵期沉积的颗粒滩灰岩发生白云石化（图 9）。由于向下渗透的速率较慢，所以其白云石化速率要慢于萨布哈白云石化作用。但回流渗透的速率一般较为稳定，所以其白云石化的有序度要高于潮上带泥晶白云岩。海退期，不同层位石膏结核和石膏晶体的发育程度和范围有明显区别，反映了蒸发作用受到气候的影响强烈。而下伏的颗粒和晶粒白云岩，其回流渗透白云石化过程较为缓慢，对气候的响应则相对较弱，所以形成了块状结构。"
+                ]
+              },
+              {
+                "id": "3.1:image:3",
+                "order": 6,
+                "modality": "image",
+                "image_path": [
+                  "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制_吴东旭\\images\\46e7f59b5f41d22b1828a146e4dd96f9be91ec908bf633a29582d45233a65813.jpg"
+                ],
+                "caption": "图9 回流渗透白云石化模式图\nFig. 9 Diagram of the seepage reflux dolomitization model",
+                "references": [
+                  "由此可以合理推断，海退期的泥、粉晶白云石形成于萨布哈蒸发环境，在潮汐的作用下，海水不断被补充到潮上带，蒸发作用使潮上灰岩地层孔隙内水体的 $\\mathrm { M g } ^ { 2 + }$ 浓度不断增大（Mü ller et al., 1990），导致早期的泥晶灰岩发生白云石化（图8）。且形成速率较快，有序度较低。在萨布哈白云化完成以后，剩余的高度浓缩的海水向下回流渗透，使下伏的海侵期沉积的颗粒滩灰岩发生白云石化（图 9）。由于向下渗透的速率较慢，所以其白云石化速率要慢于萨布哈白云石化作用。但回流渗透的速率一般较为稳定，所以其白云石化的有序度要高于潮上带泥晶白云岩。海退期，不同层位石膏结核和石膏晶体的发育程度和范围有明显区别，反映了蒸发作用受到气候的影响强烈。而下伏的颗粒和晶粒白云岩，其回流渗透白云石化过程较为缓慢，对气候的响应则相对较弱，所以形成了块状结构。"
+                ]
+              },
+              {
+                "id": "3.1:table:0",
+                "order": 7,
+                "modality": "table",
+                "markdown": "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制_吴东旭\\images\\db09536bce840abd28f73a43bd16a0aaa07e60c4ac238b93d664a45e26366731.jpg",
+                "caption": "表1  白云岩有序度数据和薄片对比\nTable 1 Comparison of the dolomite degree of order and core slices",
+                "table_path": [],
+                "references": null
+              }
+            ]
+          },
+          {
+            "id": "3.2",
+            "title": "储层成因机制",
+            "level": 3,
+            "order": 1,
+            "parent_id": "3",
+            "children": [],
+            "chunks": [
+              {
+                "id": "3.2:text:0",
+                "order": 0,
+                "modality": "text",
+                "text": "上文提到的两种典型的孔隙类型，其形成的物质基础不同，过程也有明显差别。"
+              },
+              {
+                "id": "3.2:text:1",
+                "order": 1,
+                "modality": "text",
+                "text": "首先是白云石粒间孔，它在颗粒灰岩沉积的初期就已经存在。同沉积期，颗粒灰岩粒间孔隙充填的是原始海水。在流体密度差异导致的回流渗透作用下，被高盐度浓缩海水所替代，进而发生回流渗透白云石化作用。颗粒灰岩中的 $\\mathrm { C a } ^ { 2 + }$ 被高盐度海水中的 $\\mathrm { M g } ^ { 2 + }$ 替代，发生渗透回流白云石化。同时， $\\mathrm { C a } ^ { 2 + }$ 进入白云石化以后的孔隙间流体。当流体的温度或 PH 条件发生变化时，流体中的 $\\mathrm { C a } ^ { 2 + }$ 与 $\\mathrm { S O } _ { 4 } ^ { 2 - }$ 结合，沉淀石膏晶体（Jones etal., 2005）。通过脱水作用或水化作用，石膏可以与硬石膏相互转换（Amadi et al., 2012）。同沉积期海平面十分动荡，硬石膏胶结的颗粒滩白云岩有可能会受到短期的大气淡水和正常海水的交替影响。此时，对石膏或硬石膏不饱和的溶液进入孔隙，导致石膏或硬石膏被溶解，白云石粒间孔隙被富含 $\\mathrm { C a } ^ { 2 + }$ 与 $\\mathrm { C l ^ { - } }$ 的地层水所占据。当然，后期由于其他流体成分的进入，孔隙中可能会沉淀其他矿物（图 10a）。"
+              },
+              {
+                "id": "3.2:text:2",
+                "order": 2,
+                "modality": "text",
+                "text": "如孔隙中充填的白云石胶结物，其 $\\delta ^ { 1 8 } 0$ 明显偏负，说明其受到了高温流体的影响，可能是形成于埋藏环境的地下流体或热液（Hartig et al.,2011）。而孔隙充填的方解石，大部分 $\\delta ^ { 1 3 } \\mathrm { C }$ 明显偏负，且 $\\delta ^ { 1 8 } \\mathrm { C }$ 也明显偏负，说明其形成于高温环境，并且存在有机碳的混入（Cantrell et al., 2004）。原因可能是，地层埋藏进入生油窗后，烃源岩中的有机质发生脱羧基作用并释放 $\\mathrm { C O } _ { 2 } , \\mathrm { C O } _ { 2 }$ 中的 C 与孔隙流体中的C发生交换，然后在后期碱性高温环境下，方解石得以沉淀。同一时期，少量的地层硅酸盐在碱性溶液的作用下会发生溶解形成 $\\mathrm { S i O } _ { 2 }$ ，在后期酸性条件下沉淀石英晶体。通过包裹体分析，孔隙充填的白云石、方解石、石英等，均一温度在 118℃左右（表2）。"
+              },
+              {
+                "id": "3.2:text:3",
+                "order": 3,
+                "modality": "text",
+                "text": "再来看硬石膏溶模孔，其原岩，即未固结的泥晶灰岩含有大量粒间微孔隙，孔隙中充填的同样为原始海水。由于处于潮上带，其蒸发作用强烈，原始海水被蒸发浓缩导致 $\\mathrm { M g } ^ { 2 + }$ 浓度增大，使泥晶灰岩中的 $\\mathrm { C a } ^ { 2 + }$ 被 $\\mathrm { M g } ^ { 2 + }$ 替换发生萨布哈白云化。需要强调的是，泥晶白云岩中沉淀石膏的形态与颗粒白云岩完全不同。由于气候和温度的不稳定性导致蒸发作用的不均匀性，再加上潮上带的海水是通过潮汐作用间断性得到补充，所以泥晶白云岩孔隙间的流体供应也是不规律的（Adams et al., 1960）。所以石膏的沉淀是呈结核状或柱状，由核部向外慢速生长的。而颗粒岩中的流体不受气候或温度的影响，并且颗粒间的喉道较大，导致粒间的流体分布相对较为均匀，所以就形成了连片他形的石膏胶结物形态。硬石膏 / 石膏结核和柱状晶同样也会被非饱和流体所溶解。但与连片他形胶结物不同，膏模孔的溶解更为艰难。因为，当含有石膏结核或柱状晶的泥晶白云岩形成以后，由于其抗压实能力与颗粒白云岩比明显更差，所以粒间微孔隙大部分被压实。只能依靠存在的少量裂缝或窄喉道作为流体运移的通道。所以，石膏溶模孔的发育，所需时间更长。这也解释了为什么马一、马三、马 $\\overline { { \\mathcal { \\pm } } } _ { \\mathrm { ~ 1 0 ~ } }$ 、马五 、 $^ { 8 \\cdot }$ 马五 、马五 都发育硬石膏结核或柱状晶，但只 $_ { 1 - 4 }$ 有马五 $_ { 1 - 4 }$ 发育了大量的膏模孔。因为马 $\\overline { { \\mathcal { \\pm } } } _ { \\mathrm { ~ l - 4 ~ } }$ 距离上部风化壳最近，其承受了长达 1.3 亿年的风化剥蚀和大气淡水的溶虑，有充足的时间将其喉道溶蚀、拓宽形成立体的膏模孔网络（Vahrenkamp, 1995）。同样，再埋藏以后，膏模孔也会经历不同矿物组分"
+              },
+              {
+                "id": "3.2:text:4",
+                "order": 4,
+                "modality": "text",
+                "text": "的充填作用（图10b）。\n白云岩膏模孔主要发育于长时不整合面之下，如马家沟组晚期的风化壳岩溶储层，主要受（含）硬石膏结核云坪微相和岩溶古地貌的影响（图11a，b）。而颗粒滩白云岩储层主要发育于高频层序短时暴露面之下，以颗粒滩为溶蚀的基础，具有多旋回多期次成储的特征（吴东旭等，2017；图11c，d）。"
+              },
+              {
+                "id": "3.2:image:0",
+                "order": 5,
+                "modality": "image",
+                "image_path": [
+                  "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制_吴东旭\\images\\587faacaf5a2da8c4e924f0738205cc968e4bd38ee26d8f6d0190a0e3d48bdef.jpg",
+                  "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制_吴东旭\\images\\10b9228215a7816571e12f2a88f19c12c7d8109de9d2b969e05ef7a30ca23c1d.jpg"
+                ],
+                "caption": "图10 （a）渗透回流白云石化 和（b）萨布哈白云石化的孔隙发育过程\nFig. 10 The developing process of the pores during (a) the seepage reflux dolomitization and (b) the sabkha dolomitization",
+                "references": [
+                  "首先是白云石粒间孔，它在颗粒灰岩沉积的初期就已经存在。同沉积期，颗粒灰岩粒间孔隙充填的是原始海水。在流体密度差异导致的回流渗透作用下，被高盐度浓缩海水所替代，进而发生回流渗透白云石化作用。颗粒灰岩中的 $\\mathrm { C a } ^ { 2 + }$ 被高盐度海水中的 $\\mathrm { M g } ^ { 2 + }$ 替代，发生渗透回流白云石化。同时， $\\mathrm { C a } ^ { 2 + }$ 进入白云石化以后的孔隙间流体。当流体的温度或 PH 条件发生变化时，流体中的 $\\mathrm { C a } ^ { 2 + }$ 与 $\\mathrm { S O } _ { 4 } ^ { 2 - }$ 结合，沉淀石膏晶体（Jones etal., 2005）。通过脱水作用或水化作用，石膏可以与硬石膏相互转换（Amadi et al., 2012）。同沉积期海平面十分动荡，硬石膏胶结的颗粒滩白云岩有可能会受到短期的大气淡水和正常海水的交替影响。此时，对石膏或硬石膏不饱和的溶液进入孔隙，导致石膏或硬石膏被溶解，白云石粒间孔隙被富含 $\\mathrm { C a } ^ { 2 + }$ 与 $\\mathrm { C l ^ { - } }$ 的地层水所占据。当然，后期由于其他流体成分的进入，孔隙中可能会沉淀其他矿物（图 10a）。",
+                  "的充填作用（图10b）。"
+                ]
+              },
+              {
+                "id": "3.2:image:1",
+                "order": 6,
+                "modality": "image",
+                "image_path": [
+                  "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制_吴东旭\\images\\5e1e84b842c25f962c2769dd3ccc72ef2a05322eb5e4f12721fc5dd65e1c54a2.jpg"
+                ],
+                "caption": "",
+                "references": null
+              },
+              {
+                "id": "3.2:table:0",
+                "order": 7,
+                "modality": "table",
+                "markdown": "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制_吴东旭\\images\\d93e53f495babec78781235a7d4bb0122d078fa801defba6b346b28447add3f2.jpg",
+                "caption": "表2  孔隙充填白云石、方解石和石英的包裹体均一温度 Table 2 The inclusion homogenization temperature of the pore filled with dolomite, calcite, and quartz",
+                "table_path": [],
+                "references": null
+              }
+            ]
+          }
+        ],
         "chunks": []
+      },
+      {
+        "id": "4",
+        "title": "结论",
+        "level": 2,
+        "order": 4,
+        "parent_id": null,
+        "children": [],
+        "chunks": [
+          {
+            "id": "4:text:0",
+            "order": 0,
+            "modality": "text",
+            "text": "（1）鄂尔多斯盆地奥陶系白云岩的形成与其海\n图11 鄂尔多斯盆地两种典型白云岩储层的平面分布特征\nFig. 11 Plane view of the distribution characteristics of two type dolomite reservoirs in the Ordos Basin\n白云岩储层特征及主控因素[J]. 海相油气地质，22(2): 40-50\n平面变化密切相关。海退期含石膏 / 硬石膏结核和柱状晶的白云岩主要为蒸发潮坪萨布哈成因，而海侵期颗粒滩白云岩则主要为回流渗透成因。导致二者白云石化的流体基本一致，但白云石化的时间和速度有明显差别。所以两种白云岩既有相似之处，却又特征分明。说明同一种流体在不同的机制下，会形成不同类型的白云岩。"
+          },
+          {
+            "id": "4:text:1",
+            "order": 1,
+            "modality": "text",
+            "text": "（2）不同类型的白云岩为不同类型孔隙的发育提供了物质基础。颗粒云岩由于具有良好的粒间立体网状孔隙结构，所以孔隙流体的运移更加通畅。在海平面高频旋回的影响下，粒间的石膏 / 硬石膏被溶解，会形成跟层序界面相关的粒间孔隙。而在泥晶白云岩中，其石膏结核或柱状晶的溶蚀通道普遍较窄，在间歇暴露的短时间内难以形成规模储层，只有在长时间的沉积间断后才能形成规模的以不整合面为基础的膏模孔储层。\n（3） 随着天然气勘探日益向深层发展，白云岩膏模孔领域勘探应主要集中在长时不整合面，以风化岩溶时期的高地和斜坡为勘探重点。而颗粒滩白云岩储层的勘探应集中于高频层序相关的短时暴露面之下，其具有多旋回多期次成储的特征。"
+          },
+          {
+            "id": "4:image:0",
+            "order": 2,
+            "modality": "image",
+            "image_path": [
+              "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制_吴东旭\\images\\665e81edd6a6d88eac67fdc9dd2e334dfc22d60bb30c667039a7cb53e75eb1e6.jpg",
+              "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制_吴东旭\\images\\74b9d42829162905c633e309a147ffc6502cbeebc070c5191a32a79981ffc83d.jpg",
+              "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制_吴东旭\\images\\981cf39a69fa30cc52fc149802ba18ec60a6a0831ffbb901e7a113d506e20221.jpg"
+            ],
+            "caption": "（a）靖边地区马五小层沉积微相分布图，以（含）硬石膏结核云坪为主：（b）靖边地区马五小层孔隙度平面分布图，高孔隙度区主要分布于（含）硬石膏结核云坪中，受到加里东期风化壳岩溶切割：（c）鄂尔多斯盆地中东部马五。亚段沉积微相分布图，颗粒滩呈条带状沿台内凸起分布：（d）鄂尔多斯盆地中东部马五.亚段储层分布图，储层主要受控于颗粒滩的分布和准同生溶蚀作用的影响",
+            "references": null
+          }
+        ]
       }
     ],
     "metadata": {
-      "abstract": "鄂尔多斯盆地西南缘广泛出露中元古代岩浆岩，相关研究对揭示 Columbia 超大陆裂解过程具有重要意义为厘清岩浆成因及该时代构造演化特征，本文对鄂尔多斯盆地西南缘骑安沟地区的双峰式火成岩开展了系统的岩石学 锆石 U-Pb 年代学与地球化学研究 锆石 U-Pb 定年结果显示，花岗斑岩和玄武安山岩的年龄分别为 1 79410 Ma 和1 803±21 Ma，指示其形成于中元古代 地球化学特征表明，花岗斑岩为过铝质 $\\mathbf { A } _ { 2 }$ 型花岗岩，富集大离子亲石元素( LILE) 且亏损高场强元素( HFSE) ，具有较高的 Rb/Sr 值( 2． 95～3． 55) ，反映其源于地壳熔融 玄武安山岩属钙碱性系列，具有 LILE 选择性富集 HFSE 显著亏损的岛弧型配分特征，稀土元素配分曲线右倾，较大陆地壳具高La /Nb( 3． 83～ 4． 01) La /Ta( 342 ～ 355) 值，指示其来源于富集岩石圈地幔，且受地壳物质混染影响，Nb /Ta = 17． 8 ～18． 6，Rb、Th 明显富集，Eu 异常不明显( ${ \\delta \\mathrm { E u } } = 0 . 9 6 \\sim 0 . 9 7 )$ 表明岩浆演化过程中未经历明显的斜长石分离结晶作用。根据构造判别图解及区域构造背景综合分析，认为该套双峰式火成岩形成于中元古代造山后大陆板内伸展环境，反映了华北克拉通约1.80Ga期间的裂解事件。",
+      "abstract": "鄂尔多斯盆地奥陶系白云岩是重要的天然气储集层，对其白云岩成因和储层发育规律的研究对于碳酸盐岩深层勘探理论的发展具有重要意义。文章基于大量岩心、薄片的观察，并结合稳定碳氧同位素、稀土元素、白云岩有序度、地层水、包裹体特征等地球化学分析，对盆地奥陶系存在的两种典型白云岩储层的发育特征和形成机理进行了详细研究。分析表明，含硬石膏结核或柱状晶的泥粉晶白云岩主要为潮坪蒸发环境的萨布哈成因，其规模储层的发育主要受到长时不整合面的控制，不整合面以下发育大量硬石膏结核和柱状晶溶模孔；颗粒滩白云岩主要为回流渗透成因，其储层孔隙的发育主要受到海平面高频升降的影响，发育多旋回的粒（晶）间孔隙型储层，虽然两种白云岩的白云石化流体都为浓缩海水但由于白云石化的机制和速率不同，二者的原始孔隙类型和特征迥异。两种白云岩孔隙在后期的成岩改造和演变过程中，既有相同之处，又有明显的区别。这一认识也将对深层的白云岩储层勘探提供指导作用。",
       "authors": [
-        "郭 伟",
-        "任军峰",
-        "崔军平",
-        "任战利",
-        "王红伟",
-        "宋昊昱",
-        "刘国庆"
+        "吴东旭",
+        "李  昌",
+        "\\*",
+        "周进高",
+        "胡  琮",
+        "黄正良",
+        "于  洲",
+        "李维岭",
+        "郭  玮"
       ],
       "keywords": [
-        "鄂尔多斯盆地西南缘",
-        "骑安沟双峰式火成岩",
-        "中元古代",
-        "造山后伸展"
+        "鄂尔多斯盆地",
+        "奥陶系",
+        "白云岩",
+        "储层成因",
+        "硬石膏",
+        "铸模孔",
+        "颗粒滩"
       ],
-      "publish_organization": "1． 西北大学地质学系，陕西 西安 710069; 2． 中国石油长庆油田分公司勘探开发研究院，陕西 西安 710018;3． 西北大学大陆演化与早期生命全国重点实验室，陕西 西安 710069 1． Department of Geology， Northwest University， Xi'an 710069， China; 2． Exploration and Development Research Institute of PetroChina Changqing Oilfield Company，Xi'an 710018，China; 3． State Key Laboratory of Continental Evolution and Early Life， Northwest University， Xi'an 710069， China",
-      "references": "## References\n\nAnderson J L． 1983． Proterozoic Anorogenic Granite Pluto-nism of North America［J］． Geological Society of AmericaMemoirs，161: 133 ～ 154．\n\nBlack L P，Kamo，S L，Allen，C M，et al． 2003． Temora 1: A new zircon standard for phanerozoic U-Pb geochronology［J］． Chemical Geology，200( 1) : 155 ～ 170\n\nBonin B． 2007． A-type granites and related rocks: Evolution of a con-cept，problems and prospects［J］． Lithos，97( 1 /2) : 1 ～ 29\n\nChen Jie，Yang Minghui，Jia Huichong，et al． 2024． Genesis and tectonic significance of Mesoproterozoic A-type granites in North China Craton［J］． Chinese Journal of Geology ( Scientia Geologica Sinica) ， 59( 1) : 1 ～ 20 ( in Chinese with English abstract) ．\n\nCui Minli，Zhang Baolin，Peng Peng，et al． 2010． Zircon /baddeleyite U-Pb dating for the Paleo-Proterozoic intermediate-acid intrusive rocks\n\nin Xiaoshan Mountains，west of Henan Province and their constraints on the age of the Xiong'er Volcanic Province［J］． Acta Petrologica Sinica，26( 5) : 1 541 ～ 1 549 ( in Chinese with English abstract) ．\n\nDeng X Q，Peng T P and Zhao T P． 2016． Geochronology and geochemistry of the Late Paleoproterozoic aluminous A-type granite in the Xiaoqinling area along the southern margin of the North China Craton: Petrogenesis and tectonic implications［J］． Precambrian Research， 285: 127～ 146．\n\nDePaolo D J． 1981． Trace element and isotopic effects of combined wallrock assimilation and fractional crystallization［J］． Earth and Planetary Science Letters，53( 2) : 189 ～ 202．\n\nEby N G． 1992． Chemical Subdivision of the A-Type Gran-itoids: Petrogenetic and Tectonic Implications［J］． Geology，20( 7) : 641 ～ 644．\n\nFrost B R，Barnes C G，Collins W J，et al． 2001． A geochemical classifi-cation for granitic rocks［J］． Journal of P etrology，42( 11) : 2 033 ～2 048．\n\nGao Shanlin，Lin Jinyan and Lu Yanjun． 2013． Formation epoch and its geological implications of Paleoprotozoic A-type granite in Shizuizi of Jingyuan County，Ningxia［J］． Acta Petrologica Sinica，29 ( 8) : 2 676 ～ 2 684 ( in Chinese with English abstract) ．\n\nGao Shanlin，Liu Shilin and Zhang Zhongpei． 2023． Geochemical characteristics of Mesoproterozoic basaltic andesite in southwestern margin of Ordos Block and its tectonic implication［J］． Geological Review， 69( 1) : 164～ 178 ( in Chinese) ．\n\nGeng Yuansheng，Kuang Hongwei，Du Lilin，et al． 2019． On the Paleo-Mesoproterozoic boundary from the breakup event of the Columbia supercontinent［J］． Acta Petrologica Sinica，35 ( 8) : 2 299 ～ 2 324 ( in Chinese with English abstract)\n\nHe Dengfa． 2022． Multi-cycle superimposed sedimentary basins in China: Formation，evolution，geologic framework and hydro-carbon occurrence［J］． Earth Science Frontiers，29( 6) : 24 ～ 59 ( in Chinese)\n\nHu Junliang，Zhao Taiping，Chen Wei，et al． 2007． Characteristics and research progress of the 1． 75 ga mafic dyke swarms in the North China Craton: A review［J］． Geotectonica et Metallogenia，31( 4) : 457 ～470 ( in Chinese) ．\n\nHuang B，Kusky T M，Johnson T E，et al． 2020． Paired metamorphism in the neoarchean: A record of accretionary-to-collisional orogenesis in the North China Craton［J］． Earth and Planetary Science Letters， 543: 116355．\n\nJiang Shenghong． 2015． Zircon U-Pb Dating，the Petrological and Geochemical Constraints on the Proterozoic Igneous Rocks along the Southern Margin of North China Craton［D］． Beijing: China University of Geosciences ( in Chinese with English abstract) ．\n\nKay R W ＆ Kay S M． 1993． Delamination and delamination magmatism［J］． Tectonophysics，219( 1 ～ 3) : 177 ～ 189\n\nKerr A and Fryer B J． 1993． Nd isotope evidence for crust-mantle interaction in the generation of A-type granitoid suites in Labrador，Canada ［J］． Chemical Geology，38( 13) : 371 ～ 391．\n\nKing P，White A J R，Chappell B W，et al． 1997． Characterization and origin of aluminous A-type granites from the lachlan fold belt，south eastern Australia［J］． Journal of Petrology，80: 189 ～ 200\n\nKinzler R J． 1997． Melting of mantle peridotite at pressures approaching the spinel to garnet transition: Application to mid-ocean ridge basalt petrogenesis［J］． Journal of Geophysical Research: Solid Earth，102 ( B1) : 853 ～ 874．\n\nLassiter J C and DePaolo D J． 2013． Plume /lithosphere Interaction in the eneration of continental and oceanic flood basalts: Chemical and isotopic constraints［C］/ /Large Igneous Provinces: Continental，Oceanic，and Planetary Flood Volcanism． Washington，D． C． : American Geophysical Union，335 ～ 355．\n\nLe Maitre R W． 1989． A Classification of Igneous Rocks and Glossaryof Terms［M］． Oxford: Blackwell Science Publications\n\nLi Jianghai，Hou Guiting，Qian Xianglin，et al． 2001． Single zircon U-Pb ages of early Mesoproterozoic mafic dyke swarms in Hengshan and their implications for cratonic tectonic evolution［J］． Geological Review，47( 3) : 234 ～ 238 ( in Chinese with English abstract) ．\n\nLi Qiugen，Huang Xiao，Chu Hang，et al． 2024． Zircon geochronology and geological implications of the Wutai greenstone belt，North China Craton［J］． Acta Petrologica Sinica，40 ( 11) : 3 426 ～ 3 447 ( in Chinese with English abstract) ．\n\nLi Xiaolong，Shen Shuoguo，Huang Danfeng，et al． 2019． Geochemical characteristics of andesites from the Majiahe Formation in the Beiling gold deposit and their geological significance［J］． Acta Petrologica et Mineralogica，38 ( 3 ) : 287 ～ 302 ( in Chinese with English abstract) ．\n\nLi Xiaoqi，Zhao Yan，Zhang Ruiying，et al． 2025． Granitoids from Houhe Complex in northern margin of the Yangtze Block and their response to Paleoproterozoic orogeny［J］． Acta Petrologica et Mineralogica，44( 1) : 24 ～ 50 ( in Chinese with English abstract)\n\nLiao Chaolin，Wang Yuejun and Peng Touping． 2003． 40 Ar-39 Ar geochronology of Paleoproterozoic mafic dykes from southern Taihang mountains and its geological significance［J］． Geotectonica et Metallogenia，27( 4) : 354 ～ 361 ( in Chinese) ．\n\nLin J，Zhen Q，Wu Q C，et al． 2016． Joint development and tectonic stress field evolution in the southeastern Mesozoic Ordos Basin，west part of North China ［J］． Asian Earth Sci． ，127: 47 ～ 62．\n\nLiu Guoqing，Su Zhongtang，Hao Zhilei，et al． 2024． Microfacies and depositional model of a carbonate-evaporite symbiotic system of the Majiagou Formation in Ordos Basin［J］． Journal of Palaeogeography， 26( 2) : 279 ～ 295 ( in Chinese with English abstract)\n\nLiu Jianhui，Li Yuanshuo，Xu Weinan，et al． 2025． The formation and geodynamic evolution of the Paleoproterozoic Jiao-Liao-Ji tectonic belt，North China Craton［J］． Acta Geologica Sinica，99( 1) : 23 ～ 43 ( in Chinese with English abstract) ．\n\nLiu Wei，Zhang Hongrui，Luo Dike，et al． 2024． Petrogenesis of Paleoproterozoic granites in the Dondo area，northern Angola block: Geological response to the assembly of Columbia Supercontinent［J］． Earth Science Frontiers，31( 4) : 237 ～ 257 ( in Chinese with English abstract) ．\n\nLoiselle M C and Wones D R． 1979． Characteristics and origin of anorogenic granites［J］． Geological Society of America Abstracts with Programs，11( 7) : 468\n\nLu Songnian，Yang Chunliang，Li Huaikun，et al． 2002． North China continent and Columbia supercontinent［J］． Earth Science Frontiers， 9( 4) : 225 ～ 233 ( in Chinese) ．\n\nManiar P D and Piccoli P M． 1989． Tectonic discrimination of granitoids ［J］． GSA Bulletin，101( 5) : 635～ 643．\n\nMarschall H R and Schumacher J C． 2012． Arc magmas sourced from mélange diapirs in subduction zones［J］． Nature Geoscience，5 ( 12) : 862 ～ 867．\n\nMiddlemost E A K． 1994． Naming materials in the magma /igneous rock system［J］． Earth-Science Reviews，37( 3 /4) : 215 ～ 224．\n\nNeal C R，Mahoney J J and Chazey W J． 2002． Mantle sources and the highly variable role of continental lithosphere in basalt petrogenesis of the Kerguelen Plateau and Broken Ridge LIP: Results from ODP Leg 183［J］． Journal of Petrology，43( 7) : 1 177 ～ 1 205．\n\nPan Shaojun，Zhang Jianfang，Chen Xiaoyou，et al． 2025． The formation age and origin of syenite granite in Shengsi，Zhejiang Province: Constraints from zircon U-Pb ages，rock geochemistry and Hf isotopes ［J］． Earth Science Frontiers，32( 2) : 430 ～ 444 ( in Chinese with English abstract) ．\n\nPearce J A． 1984． Trace element characteristics of lavas from destructive plate boundaries［C］/ /Thorpe R S． Orogenic Andesites and Related Rocks［J］． Chichester，England: John Wiley and Sons，525～ 548．\n\nPeng Peng，Zhai Mingguo，Zhang Huafeng，et al． 2004． Geochemistr and geological significance of the 1． 8 Ga mafic dyke swarms in the North China Craton: An example from the juncture of Shanxi，Hebei and Inner Mongolia［J］． Acta Petrologica Sinica，20( 3) : 439 ～ 456 ( in Chinese with English abstract) ．\n\nRapp R P and Watson E B． 1995． Dehydration melting of metabasalt at 8 ～ 32 kbar: Implications for continental growth andcrust-mantle recycling ［J］． Journal of Petrology，36( 4) : 891 ～ 931．\n\nRegelous M，Hofmann A W，Abouchami W，et al． 2003． Geochemistry of lavas from the emperor seamounts，and the geochemical evolution of Hawaiian magmatism from 85 to 42 Ma［J］． Journal of Petrology， 44( 1) : 113 ～ 140．\n\nSantosh M，Liu D，Shi Y，et al． 2011． Paleoproterozoic accretionary orogenesis in the North China Craton: A SHRIMP zircon study［J］ Precambrian Research，227: 29 ～ 54．\n\nSantosh M． 2010． Assembling North China Craton within the Columbia supercontinent: The role of double-sided subduction［J］． Precambrian Research，178: 149 ～ 167\n\nShand S J． 1943． The Eruptive Rocks，2nd edition［M］． John Wiley: New York，444．\n\nShi Jiangpeng，Yang Debin，Huo Tengfei，et al． 2017． The geochronology and Nd-Hf isotope compositions of A-type granites on the southern margin of North China Craton: Constraints on the Late Paleoproterozoic extensional events［J］． Acta Petrologica Sinica，33( 10) : 3 042 ～ 3 056( in Chinese with English abstract) ．\n\nSmithies R H． 2000． The Archaean tonalite-trondhjemite-granodiorite ( TTG) series is not an analogue of Cenozonic adakite［J］． Earthand Planetary Science Letters，182( 1) : 115 ～ 125．\n\nStolz A J，Jochum K P，Spettel B，et al． 1996． Fluid- and melt-related enrichment in the subarc mantle: Evidence from Nb /Ta variations in island-arc basalts ［J］． Geology，24( 7) : 587 ～ 590．\n\nStreck M J，Leeman W P and Chesley J． 2007． High-magnesian andesite from Mount Shasta: A product of magma mixing and contamination， not a primitive mantle melt［J］． Geology，35( 4) : 351 ～ 354\n\nSun S S and McDonough W F． 1989． Chemical and isotopic systematics of oceanic basalts: Implications for mantle composition and processes ［J］． Geological Society of London Special Publications，42 ( 1) : 313 ～ 345．\n\nTaylor S R and McLennan S M． 1985． The Continental Crust: Its Composition and Evolution［D］． Oxford: Blackwell Scientific Publications， 1 ～ 312．\n\nVavra G，Gebauer D，Schmid R，et al． 1996． Multiple zircon growth and recrystallization during polyphase Late Carboniferous to Triassic metamorphism in granulites of the Ivrea Zone ( Southern Alps) : An ion microprobe ( SHRIMP) study［J］． Contrib． Mineral． Petrol． ，122: 337 ～ 358．\n\nWan Jun，Wu Bo，Guo Pan，et al． 2017． Zircon U-Pb dating and geochemical characteristics of the Xiadian magmatic rock body in West-\n\nern Dabie orogenic belt and its redefinition as the A-type granite［J］ Acta Petrologica et Mineralogica，36 ( 5) : 633 ～ 645 ( in Chinese with English abstract) ．\n\nWang C M，He X Y，Carranza E J M，et al． 2019b． Paleoproterozoic volcanic rocks in the southern margin of the North China Craton，central China: Implications for the Columbia supercontinent［J］． Geoscience Frontiers，10( 4) : 1 543 ～ 1 560\n\nWang Gang，Zhang Han，Wang Zongqi，et al． 2019． Identification of the Permian E-MORB Type basalts and their tectonic significance from Shiyan area，Wudang Mountain［J］． Geological Review，65 ( 1) : 65 ～ 84( in Chinese with English abstract)\n\nWhalen J B，Currie K L and Chappell B W． 1987． A-type granites: Geochemical characteristics，discrimination andpetrogenesis［J］． Contributions to Mineralogy and Petrology，95( 4) : 407 ～ 419．\n\nWood B J and Turner S P． 2009． Origin of primitive high-Mg andesite: Constraints from natural examples and experiments［J］． Earth ＆ Planetary Science Letters，283( 1 ～ 4) : 59 ～ 66．\n\nWood D A． 1980． The application of a Th-Hf-Ta diagram to problems of tectonomagmatic classification and to establishing the nature of crustal contamination of basaltic lavas of the British Tertiary Volcanic Province［J］． Earth and Planetary Science Letters，50( 1) : 11 ～ 30\n\nWu C H and Zhong C T． 1998． The Paleoproterozoic SW-NE collision model for the central North China Craton［J］． Progress in Precambrian Research，21: 28～ 50\n\nWu Yufeng，Yang Fuquan and Liu Feng． 2016． Geochemical characteristics of basaltic andesite subvolcanic rocks in the Ashele CuZn deposit and their geological significance［J］． Acta Petrologica et Mineralogica，35( 1) : 65 ～ 80 ( in Chinese with English abstract)\n\nXi Zhen，Liu Qingquan，Wu Dehua，et al． 2024． Geochronology，geochemistry and tectonic implications of Triassic A-type granites in pingtian area，northern Guangdong［J］． Earth Science，49 ( 7 ) : 2 508 ～ 2 525 ( in Chinese with English abstract) ．\n\nXia Linqi，Xia Zuchun，Xu Xueyi，et al． 2007． The discrimination between continental basalt and island arc basalt based on geochemical method［J］． Acta Petrologica et Mineralogica，26( 1) : 77 ～ 89 ( in Chinese with English abstract) ．\n\nXiang Zhenqun． 2014． Mesoproterozoic Magmatic Events and Metallogenesis of the North China Craton［D］． Beijing: China University of Geosciences ( in Chinese with English abstract) ．\n\nXiang Zhenqun，Lu Songnian，Li Huaikun，et al． 2020． Mesoproterozoic magmatic event groups in the North China Craton［J］． Geological Survey and Research，43( 2) : 137 ～ 152 ( in Chinese with English abstract) ．\n\nXu Huan． 2019． Tectonic Magmatic Activity in the Middle to Late Archean of the Southwestern Ordos Block［D］． Xi'an: Northwest University ( in Chinese with English abstract) ．\n\nXu H，Luo J H，Chen G X，et al． 2019． Geochronology，geochemistry and tectonic significance of a Paleoproterozoic diabase at southwestern margin of the NCC［J］． Terrestrial Atmospheric and Oceanic Sciences，30( 6) : 771～ 791\n\nXu H，Luo J H，Li Y F，et al． 2017． Coeval granitic magmatism in the southern segment of the liupanshan at the sw margin of the NCC: Implications for paleoproterozoic extension［J］． Terrestrial Atmospheric and Oceanic Sciences，28: 877～ 890\n\nXu Huan，Luo Jinhai，Ren Zhanli，et al． 2020． Geochronology，geochemistry and tectonic significance of Paleoproterozoic diabase at the southwestern margin of the Ordos Block［J］． Acta Petrologica Sinica， 36( 4) : 1 186 ～ 1 198 ( in Chinese with English abstract)\n\nXu Huan，Zhao Hui，Luo Jinhai，et al． 2014． Paleoproterozoic granite and its tectonic significances in southwestern margin of North China plate，Baojiashan section in Longxian County［J］． Geological Review，60( 6) : 1 284 ～ 1 296 ( in Chinese with English abstract) ．\n\nYang Changjiang and Wang Yachun． 2010． LAICPMS zircon U-Pb age and the geological significance for Yichun Mesozoic granites in Southeast Lesser Khingan Range［J］． Jilin Geology，29( 4) : 1 ～ 5，31 ( in Chinese with English abstract) ．\n\nYang Hua，Zhang Jun，Wang Feiyan，et al． 2000． Characteristics of the Paleozoic gas-bearing system in the Ordos Basin［J］． Natural Gas Industry，( 6) : 7 ～ 11 ( in Chinese with English abstract) ．\n\nYang J H，Wu F Y，Chung S L，et al． 2006． A hybrid origin for the Qianshan A-type granite，Northeast China: geochemical and Sr-Nd-Hf isotopic evidence［J］． Lithos，89( 1 /2) : 89 ～ 106．\n\nYou Jia，Luo Jinhai，Cheng Jiaxiao，et al． 2014． Paleoproterozoic granite porphyry in southwestern margin of North China Craton and its geological significance［J］． Geological Journal of China Universities， 20( 3) : 368 ～ 377 ( in Chinese with English abstract) ．\n\nYu Reng'an，Hu Peng，Zeng Wei，et al． 2016． Geochronology，geochemistry and geological significance of Dongsu A-type granites in Sonid Left Banner，Inner Mongolia［J］． Acta Petrologica et Mineralogica，35( 2) : 229 ～ 241 ( in Chinese with English abstract) ．\n\nYuan Honglin，Wu Fuyuan，Gao Shan，et al． 2003． Zircon laser probe U-Pb dating and rare earth element composition analysis of Cenozoic intrusions in Northeast China ［J］． Chinese Science Bulletin， 48( 14) : 1 511 ～ 1 520 ( in Chinese with English abstract)\n\nZhai Mingguo． 2004． 2． 1 ～ 1． 7 Ga geological event group and its geotectonic significance［J］． Acta Petrologica Sinica，20 ( 6 ) : 1 343 ～\n\n1 354 ( in Chinese with English abstract) ．\n\nZhai M G，Guo J H and Liu W J． 2005． Neoarchean to Paleoproterozoic continental evolution and tectonic history of the North China craton ［J］． Journal of Asian Earth Sciences，24: 547 ～ 561．\n\nZhai Mingguo，Hu Bo，Peng Peng，et al． 2014． Meso-Neoproterozoic magmatic events and multi-stage rifting in the NCC［J］． Earth Science Frontiers，21 ( 1 ) : 100 ～ 119 ( in Chinese with English abstract) ．\n\nZhai M G and Peng P． 2007． Paleoproterozoic events in North China Craton［J］． Acta Petrologica Sinica，23: 2 665 ～ 2 682．\n\nZhai M G and Santosh M． 2011． The early Precambrian odyssey of North China Craton: Asynoptic overview［J］． Gondwana Research，20: 6～ 25\n\nZhai Mingguo，Zhang Yanbin，Li Qiuli，et al． 2021． Cratonization，lower crust and continental lithosphere ［J］． Acta Petrologica Sinica， 37( 1) : 1 ～ 23 ( in Chinese with English abstract) ．\n\nZhang S H，Liu S W，Zhao Y，et al． 2007． The 1． 75-1． 68 Ga anorthosite-mangerite-alkali granitoid-rapakivi granite suite from the northern North China Craton: Magmatism related to a Paleoproterozoic orogen ［J］． Precambrian Research，155( 3 ～ 4) : 287 ～ 312\n\nZhao Fanfan，Cui Junping，Ren Zhanli，et al． 2025． Analysis of oil and gas accumulation periods in the Permian system in the central Ordos Basin: A case study of Shanxi-Shihezi Formation in Wuqi area［J］． Geological Bulletin of China，44 ( 5) : 778 ～ 791 ( in Chinese with English abstract) ．\n\nZhao G C，Cawood P A，Li S Z，et al． 2012． Amalgamation of the North China Craton: Key issues and discussion ［J］． Precambrian Research，222～ 223: 55～ 76．\n\nZhao G C，He Y H and Sun M． 2009． The Xiong'er volcanic belt at thesouthern margin of the North China Craton: Petrographic andgeochemical evidence for its outboard position in the Paleo-Mesoproterozoic Columbia Supercontinent［J］． Gondwana Research，16( 2) : 170 ～181．\n\nZhao G C and Zhai M G． 2013． Lithotectonic elements of Precambrian basement in the North China Craton: Review and tectonic implications ［J］． Gondwana Research，23( 4) : 1 207～ 1 240\n\nZhao J，Zhang C L，Guo X J，et al． 2018． The late-Paleoproterozoic I-type and A-type granites in Lüliang Complex，North China Craton: New evidence on post-collisional extension of Trans-North China Orogen ( Article) ［J］． Precambrian Research，318: 70 ～ 88\n\nZhao Taiping，Chen Fukun，Zhai Mingguo，et al． 2004a． Single zircon U-Pb ages and their geological significance of the Damiao anorthosite complex，Hebei Province，China［J］． Acta Petrologica Sinica，20\n\n( 3) : 685 ～ 690 ( in Chinese with English abstract) ．\n\nZhao Taiping，Zhai Mingguo，Xia Bin，et al． 2004b． SHRIMP geochronology of zircon from volcanic rocks of Xiong'er Group: Constraints on the initial development time of North China Craton caprock［J］ Chinese Science Bulletin，49( 22) : 2 342～ 2 349 ( in Chinese) ．\n\nZhao Taiping，Zhou Meifu，Jin Chengwei，et al． 2001． Discussion on age of the Xiong'er group in southern margin of North China Craton［J］． Scientia Geologica Sinica，36( 3) : 326 ～ 334 ( in Chinese with English abstract) ．\n\nZhong R C，Deng Y and Yu C． 2021． Multi-layer perceptron-based tectonic discrimination of basaltic rocks and an application on the Paleoproterozoic Xiong'er volcanic province in the North China Craton［J］ Computers ＆ Geosciences，149: 104717．\n\nZhou Fushun，Lin Xin，Wang Zhirui，et al． 2024． Petrogenesis and sig nificance of basaltic andesite in the Shaowu area，northern Fujian: Constraints from geochronology，geochemistry and Nd-Hf isotopes ［J］． Journal of Jilin University ( Earth Science Edition) ，54( 3) : 840 ～ 861 ( in Chinese with English abstract) ．\n\n## 附中文参考文献\n\n陈 杰，杨明慧，贾会冲，等． 2024． 华北克拉通中元古代 A 型花岗 岩的成因及其构造意义［J］． 地质科学，59( 1) : 1～20．\n\n崔敏利，张宝林，彭 澎，等． 2010． 豫西崤山早元古代中酸性侵入岩锆石/斜锆石 U-Pb 测年及其对熊耳火山岩系时限的约束［J］岩石学报，26( 5) : 1 541～ 1 549．\n\n高山林，林晋炎，陆彦俊． 2013． 宁夏泾源石咀子古元古代 A 型花岗 岩的形成时代及其地质意义［J］． 岩石学报，29( 8) : 2 676～ 2 684．\n\n高山林，刘士林，张仲培． 2023． 鄂尔多斯地块西南缘中元古代玄武 安山岩地球化学特征及其构造意义［J］． 地质论评，69( 1) : 164 ～ 178．\n\n耿元生，旷红伟，杜利林，等． 2019． 从哥伦比亚超大陆裂解事件论/ ［J］． ，35( 8) : 2 299～ 2 324\n\n何登发，2022.中国多旋回叠合沉积盆地的形成演化、地质结构与油气分布规律［J］． 地学前缘，29( 6) : 24～ 59．\n\n胡俊良，赵太平，陈 伟，等． 2007． 华北克拉通 1． 75 Ga 基性岩墙 群特征及其研究进展［J］． 大地构造与成矿学，31( 4) : 457～ 470．\n\n姜盛洪、2015.华北克拉通南缘嵩县早元古代火成岩年代学、岩石学 地球化学约束［D］． 北京: 中国地质大学( 北京) ．\n\n李江海，侯贵廷，钱祥麟，等． 2001． 恒山中元古代早期基性岩墙群\n\n的单颗粒锆石 U-Pb 年龄及其克拉通构造演化意义［J］． 地质论评，47( 3) : 234 ～ 238．\n\n李秋根，黄 萧，初 航，等． 2024． 华北克拉通五台绿岩带锆石年 代学及地质意义［J］． 岩石学报，40( 11) : 3 426～ 3 447\n\n李肖龙，申硕果，黄丹峰，等． 2019． 豫西熊耳山北岭金矿区马家河组安山岩地球化学特征及其地质意义［J］． 岩石矿物学杂志，38( 3) : 287～ 302\n\n李霄琦，赵 燕，张瑞英，等． 2025． 扬子北缘后河杂岩花岗岩类及 其对古元古代造山作用的响应［J］． 岩石矿物学杂志，44( 1) : 24～ 50．\n\n廖超林，王岳军，彭头平． 2003． 太行山南段早元古代基性脉岩的40Ar-39Ar 年代学及其构造意义［J］． 大地构造与成矿学，27( 4) : 354～ 361．\n\n刘国庆，苏中堂，郝志磊，等． 2024． 鄂尔多斯盆地马家沟组碳酸盐岩－膏盐岩共生体系沉积微相与沉积模式［J］． 古地理学报，26( 2) : 279～ 295\n\n刘建辉，李圆硕，徐玮男，等． 2025． 华北克拉通胶－辽－吉古元古代 构造带的形成及动力学演化［J］． 地质学报，99( 1) : 23～43\n\n刘 伟，张洪瑞，罗迪柯，等． 2024． 安哥拉地块北部 Dondo 地区古元古代花岗岩岩石成因: Columbia 超大陆聚合的响应［J］． 地学前缘，31( 4) : 237～ 257．\n\n陆松年，杨春亮，李怀坤，等． 2002． 华北古大陆与哥伦比亚超大陆［J］． 地学前缘，9( 4) : 225～ 233．\n\n潘少军，张建芳，陈小友，等． 2025． 浙江嵊泗正长花岗岩的形成时代与成因: 来自锆石U-Pb 年代学、岩石地球化学和Hf 同位素的证据［J］． 地学前缘，32( 2) : 430 ～ 444\n\n彭 澎，翟明国，张华锋，等． 2004． 华北克拉通1．8 Ga 镁铁质岩墙群的地球化学特征及其地质意义: 以晋冀蒙交界地区为例［J］岩石学报，20( 3) : 439～ 456\n\n陕西省地质局区测队． 1967． 1∶20 万陇县幅 ( I-48-Ⅺ) 地质矿产图 说明［R］． 陕西省地质局．\n\n师江朋，杨德彬，霍腾飞，等． 2017． 华北克拉通南缘 A 型花岗岩的年代学和 Nd-Hf 同位素组成: 对古元古代晚期伸展事件的制约［J］． 岩石学报，33( 10) : 3 042～ 3 056\n\n万 俊，吴 波，郭 盼，等． 2017． 西大别造山带夏店岩体锆石U-Pb 年代学 地球化学特征及其A 型花岗岩的厘定［J］． 岩石矿，36( 5) : 633～ 645．\n\n王 刚，张 晗，王宗起，等． 2019． 武当山十堰地区二叠纪 E-MORB 型玄武岩识别及构造意义［J］． 地质论评，65( 1) : 65～ 84．\n\n， ， ． 2016．的岩石地球化学特征及其地质意义［J］． 岩石矿物学杂志，35( 1) : 65 ～ 80．\n\n席 振，刘清泉，吴德华，等． 2024． 粤北坪田地区三叠纪 A 型花岗 岩年代学、地球化学及其构造意义［J］． 地球科学，49( 7) : 2 508 ～2 525．\n\n， ， ， ． 2007． 武岩和岛弧玄武岩［J］． 岩石矿物学杂志，26( 1) : 77～89\n\n相振群． 2014． 华北克拉通中元古代岩浆事件群与成矿作用［D］． 北京: 中国地质大学( 北京)\n\n相振群，陆松年，李怀坤，等． 2020． 华北克拉通中元古代岩浆事件群［J］． 地质调查与研究，( 2) : 137～ 152．\n\n徐 欢，2019.鄂尔多斯地块西南部古元古代中-晚期构造岩浆作用D］． 西安: 西北大学\n\n徐 欢，罗金海，任战利，等． 2020． 鄂尔多斯地块西南缘古元古代辉绿岩年代学 地球化学及构造意义［J］． 岩石学报，36( 4) :1 186～ 1 198．\n\n徐 欢，赵 慧，罗金海，等． 2014． 华北地块西南缘陇县保家山古 元古代花岗岩及其构造意义研究［J］． 地质论评，60( 6) : 1 284 ～ 1 296．\n\n杨长江，王亚春． 2010． 小兴安岭东南部伊春中生代花岗岩的锆石 U-Pb 测年及其地质意义［J］． 吉林地质，29( 4) : 1～5，31．\n\n杨 华，张 军，王飞雁，等． 2000． 鄂尔多斯盆地古生界含气系统 特征［J］． 天然气工业，20( 6) : 7～ 11\n\n尤 佳，罗金海，程佳孝，等． 2014． 华北地块西南缘古元古代花岗 斑岩及其构造意义［J］． 高校地质学报，20( 3) : 368～377\n\n俞礽安，胡 鹏，曾 威，等． 2016． 内蒙古苏尼特左旗东苏 A 型花\n\n岗岩的锆石 U-Pb 年龄、地球化学特征及地质意义［J］． 岩石矿物学杂志，35( 2) : 229～ 241．\n\n袁洪林，吴福元，高 山，等． 2003． 东北地区新生代侵入体的锆石激光探针 U-Pb 年龄测定与稀土元素成分分析［J］． 科学通报，48( 14) : 1 511 ～ 1 520\n\n翟明国． 2004． 华北克拉通2．1～1．7 Ga 地质事件群的分解和构造意义探讨［J］． 岩石学报，20( 6) : 1 343～ 1 354\n\n翟明国，胡 波，彭 澎，等． 2014． 华北中—新元古代的岩浆作用 与多期裂谷事件［J］． 地学前缘，21( 1) : 100～ 119\n\n， ， ， ． 2021．圈———庆贺沈其韩先生百年华诞［J］． 岩石学报，37( 1) : 1～23\n\n赵凡凡，崔军平，任战利，等． 2025． 鄂尔多斯盆地中部二叠系油气充注期次分析———以陕西吴起地区山西组－石盒子组为例［J］地质通报，44( 5) : 778～ 791．\n\n赵太平，陈福坤，翟明国，等． 2004a． 河北大庙斜长岩杂岩体锆石 U-Pb 年龄及其地质意义［J］． 岩石学报，20( 3) : 685～ 690．\n\n赵太平，翟明国，夏 斌，等． 2004b． 熊耳群火山岩锆石SHRIMP 年代学研究: 对华北克拉通盖层发育初始时间的制约［J］． 科学通报，49( 22) : 2 342～ 2 349\n\n赵太平，周美夫，金成伟，等． 2001． 华北陆块南缘熊耳群形成时代讨论［J］． 地质科学，36( 3) : 326 ～ 334\n\n周伏顺，林 鑫，王郅睿，等． 2024． 闽北邵武地区玄武安山岩的成因和意义———来自年代学、 地球化学及 Nd-Hf 同位素的约束［J］． 吉林大学学报( 地球科学版) ，54( 3) : 840～ 861．"
+      "publish_organization": "",
+      "references": "## 参考文献 (References):\n\n白国平. 2006. 世界碳酸盐岩大油气田分布特征[J]. 古地理学报，8(2): 241-250.\n\n黄正良，陈调胜，任军峰，等. 2012. 鄂尔多斯盆地奥陶系中组合白云岩储层及圈闭成藏特征[J]. 石油学报，33(增刊2): 118-124.\n\n黄正良，包洪平，任军峰，等. 2011. 鄂尔多斯盆地南部奥陶系马家沟组白云岩特征及成因机理分析[J]. 现代地质，25(5): 925-930.\n\n刘新社，漆亚玲，李树同，等. 2017. 鄂尔多斯盆地古隆起东北侧马五\\_4\\~1储层膏模孔类型及充填过程分析[J]. 沉积学报，35(6):1217-1224.\n\n苏中堂，陈洪德，徐粉燕，等. 2011. 鄂尔多斯盆地马家沟组白云岩地球化学特征及白云岩化机制分析[J]. 岩石学报，27(8):2230-2238.\n\n王保全，强子同，张帆，等. 2009. 鄂尔多斯盆地奥陶系马家沟组马五段白云岩的同位素地球化学特征[J]. 地球化学，38(5):472-479.\n\n王大鹏，白国平，徐艳，等. 2016. 全球古生界海相碳酸盐岩大油气田特征及油气分布[J]. 古地理学报，18(1): 80-92.\n\n王琪，许勇，刘新社，等. 2016. 岩溶背景下的优质天然气储层形成机理及主控因素——以鄂尔多斯盆地奥陶系马家沟组马五\\_4\\~1储层为例[J]. 天然气地球科学，27(12): 2103-2114.\n\n吴东旭，吴兴宁，王少依，等. 2017. 鄂尔多斯盆地奥陶系颗粒滩\n\n杨华，包洪平. 2011. 鄂尔多斯盆地奥陶系中组合成藏特征及勘探启示[J]. 天然气工业，31(12): 11-20.\n\n杨华，王宝清，孙六一，等. 2012. 鄂尔多斯盆地中奥陶统马家沟组碳酸盐岩碳、氧稳定同位素特征[J]. 天然气地球科学，23(4):616-625.\n\n姚泾利，王保全，王一，等. 2009. 鄂尔多斯盆地下奥陶统马家沟组马五段白云岩的地球化学特征[J]. 沉积学报，27(3): 381-389.\n\n张宁宁，何登发，孙衍鹏，等. 2014. 全球碳酸盐岩大油气田分布特征及其控制因素[J]. 中国石油勘探，19(6): 54-65.\n\n赵俊兴，陈洪德，张锦泉，等. 2005. 鄂尔多斯盆地中部马五段白云岩成因机理研究[J]. 石油学报，26(5): 38-41，47.\n\n赵卫卫，王宝清. 2011. 鄂尔多斯盆地苏里格地区奥陶系马家沟组马五段白云岩的地球化学特征[J]. 地球学报，32(6): 681-690.\n\nAdams J E and Rhodes M L. 1960. Dolomitization by seepage refluxion [J]. AAPG Bulletin, 44(12): 1912-1920.\n\nAmadi F O, Major R P and Baria L R. 2012. Origins of gypsum in deep carbonate reservoirs: Implications for hydrocarbon exploration and production [J]. AAPG Bulletin, 96(2): 375-390.\n\nCantrell D, Swart P and Hagerty R. 2004. Genesis and characterization of dolomite, Arab-D reservoir, Ghawar field, Saudi Arabia [J]. GeoArabia, 9(2): 11-36.\n\nElderfield H and Greaves M J. 1982. The rare earth elements in seawate [J]. Nature, 296(5854): 214.\n\nHartig K A, Soreghan G S, Goldstein R H, et al. 2011. Dolomite in permian paleosols of the Bravo Dome CO field, USA: Permian reflux followed by late recrystallization at elevated temperature [J]. Journal of Sedimentary Research, 81(4): 248-265.\n\nJones G D and Xiao Y. 2005. Dolomitization, anhydrite cementation, and porosity evolution in a reflux system: Insights from reactive transport models [J]. AAPG Bulletin, 89(5): 577-601.\n\nMüller D W, McKenzie J A and Mueller P A. 1990. Abu Dhabi sabkha, Persian Gulf, revisited: application of strontium isotopes to test an early dolomitization model [J]. Geology, 18(7): 618-621.\n\nStrohmenger C J, Al Mansoori A, Al Jeelani O, et al. 2010. The sabkha sequence at Mussafah Channel (Abu Dhabi, United Arab Emirates): facies stacking patterns, microbial-mediated dolomite and evaporite overprint [J]. GeoArabia, 15(1): 49-90.\n\nSwart Peter K. 2015. The geochemistry of carbonate diagenesis: The past, present and future [J]. Sedimentology, 62(5): 1233-1304.\n\nVahrenkamp V C. 1995. The post rotliegend reservoirs of Auk Field, British North Sea: subaerial exposure and reservoir creation [C] // Budd D A, Saller A H, Harris P M, Unconformities and Porosity in Carbonate Strata, 63: 197-211.\n\nWang B and Al-Aasm I S. 2002. Karst-controlled diagenesis and reservoir development: Example from the Ordovician main-reservoir carbonate rocks on the eastern margin of the Ordos basin, China [J]. AAPG Bulletin, 86(9): 1639-1658.\n\nYang Y, Li W and Ma L. 2005. Tectonic and stratigraphic controls of hydrocarbon systems in the Ordos basin: A multicycle cratonic basin in central China [J]. AAPG Bulletin, 89(2): 255-269."
     },
-    "source_file": "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地西南缘双峰式火成岩年代学、成因及构造意义_郭伟\\full.md"
+    "source_file": "C:\\Users\\nzx\\Desktop\\Python\\毕业论文项目\\MulTreeMMKG\\data\\mineru_output\\鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制_吴东旭\\full.md"
   },
   "statistics": {
-    "section_count": 19,
-    "chunk_count": 56
+    "section_count": 17,
+    "chunk_count": 38
   }
 }

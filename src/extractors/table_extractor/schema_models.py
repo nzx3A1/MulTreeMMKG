@@ -109,6 +109,9 @@ class TableSemanticPlan(MMKGBaseModel):
     subject_row: int | None = Field(default=None, ge=0)
     subject_type: str = "TableRow"
     subject_type_zh: str = "表格行"
+    headers: list[str] = Field(default_factory=list)
+    subject_header: str = ""
+    analysis_source: Literal["rule", "vlm", "llm_fallback"] = "rule"
     confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     reasons: list[str] = Field(default_factory=list)
 

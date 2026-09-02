@@ -97,7 +97,10 @@ class LLMClient:
     def _thinking_extra_body(self, model: str) -> dict[str, Any]:
         """从共享模型配置生成思考开关参数，默认对所有文本模型关闭思考。"""
 
-        _ = model
+        # 中文说明：内网 Qwen 3.6 通过 chat_template_kwargs 接收思考开关；若放在顶层，
+        # 服务端会忽略该参数，短输出上限可能被 reasoning 内容耗尽而返回空 content。
+        if "qwen-3.6" in str(model).lower():
+            return {"chat_template_kwargs": {"enable_thinking": self.config.enable_thinking}}
         return {"enable_thinking": self.config.enable_thinking}
 
     @staticmethod

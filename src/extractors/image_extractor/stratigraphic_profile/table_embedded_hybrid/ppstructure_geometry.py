@@ -14,6 +14,17 @@ from typing import Any, Mapping, Sequence
 from PIL import Image
 
 from src.utils.json_io import read_json, write_json
+from .submember_refinement import (
+    CellRecognizer,
+    recover_submember_intervals,
+    refine_small_cell_geometry,
+)
+from .visual_track_extraction import (
+    VISUAL_TRACK_EXTRACTION_VERSION,
+    VLM_TRACK_TYPES,
+    build_semantic_tracks,
+    enrich_visual_track_primitives,
+)
 
 PPSTRUCTURE_GEOMETRY_SCHEMA_VERSION = "ppstructurev3.table_geometry.v1"
 TABLE_EMBEDDED_HYBRID_SCHEMA_VERSION = "table_embedded_hybrid.v1"
@@ -26,6 +37,7 @@ INTERVAL_FIELDS = (
     "oil_layer_intervals",
     "geological_feature_intervals",
     "curve_observations",
+    "track_intervals",
 )
 _GEOMETRY_CACHE: dict[str, dict[str, Any]] = {}
 _PIPELINE_CACHE: dict[tuple[str, str, str, bool], Any] = {}
@@ -543,10 +555,18 @@ def _result_mapping(result: Any) -> Mapping[str, Any]:
 class PPStructureV3GeometryExtractor:
     """懒加载并缓存 PP-StructureV3，把每张图只转换一次。"""
 
-    def __init__(self, pipeline: Any | None = None, *, cache_dir: str | Path | None = None) -> None:
-        """中文说明：允许测试注入轻量预测器，生产环境默认使用官方 PP-StructureV3。"""
+    def __init__(
+        self,
+        pipeline: Any | None = None,
+        *,
+        cache_dir: str | Path | None = None,
+        cell_text_recognizer: CellRecognizer | None = None,
+    ) -> None:
+        """中文说明：允许测试注入 PP 预测器和局部单元格 OCR，生产环境默认使用官方模型。"""
 
         self._pipeline = pipeline
+        self._cell_text_recognizer = cell_text_recognizer
+        self._use_default_cell_text_recognizer = pipeline is None and cell_text_recognizer is None
         project_root = Path(__file__).resolve().parents[5]
         configured_cache = os.getenv("TABLE_PPSTRUCTURE_CACHE_DIR")
         self.cache_dir = Path(cache_dir or configured_cache or project_root / "data" / "cache" / "ppstructurev3")
@@ -555,6 +575,19 @@ class PPStructureV3GeometryExtractor:
         self.det_model = os.getenv("TABLE_PPSTRUCTURE_TEXT_DET_MODEL", "PP-OCRv5_mobile_det")
         self.rec_model = os.getenv("TABLE_PPSTRUCTURE_TEXT_REC_MODEL", "PP-OCRv5_mobile_rec")
         self.enable_mkldnn = _as_bool(os.getenv("TABLE_PPSTRUCTURE_ENABLE_MKLDNN"), False)
+
+    def _refine_small_cells(self, geometry: Mapping[str, Any], image_file: Path) -> dict[str, Any]:
+        """中文说明：对通用小文字单元格做裁剪放大 OCR，并附加可选的跨列语义校验。"""
+
+        recognizer = self._cell_text_recognizer
+        if recognizer is None and not self._use_default_cell_text_recognizer:
+            # 中文说明：测试注入 PP 预测器时默认使用空局部识别器，避免离线测试加载真实 Paddle 模型。
+            recognizer = lambda _image_path, _cells: {}
+        return refine_small_cell_geometry(
+            image_file,
+            geometry,
+            recognizer=recognizer,
+        )
 
     def _cache_key(self, image_file: Path) -> tuple[str, dict[str, Any]]:
         """中文说明：用图片状态和模型配置生成可失效的稳定缓存键。"""
@@ -621,6 +654,7 @@ class PPStructureV3GeometryExtractor:
         cache_key, fingerprint = self._cache_key(image_file)
         if cache_key in _GEOMETRY_CACHE:
             geometry, _ = _repair_cached_cell_geometry(_GEOMETRY_CACHE[cache_key], image_file)
+            geometry = self._refine_small_cells(geometry, image_file)
             _GEOMETRY_CACHE[cache_key] = deepcopy(geometry)
             geometry.setdefault("runtime", {})["cache_status"] = "memory_hit"
             return geometry
@@ -631,7 +665,14 @@ class PPStructureV3GeometryExtractor:
             cached = read_json(cache_path)
             if isinstance(cached, Mapping) and cached.get("fingerprint") == fingerprint and isinstance(cached.get("geometry"), Mapping):
                 geometry, repaired = _repair_cached_cell_geometry(cached["geometry"], image_file)
-                if repaired:
+                refinement_before = str(
+                    (geometry.get("quality") or {}).get("small_cell_refinement_version")
+                )
+                geometry = self._refine_small_cells(geometry, image_file)
+                refinement_after = str(
+                    (geometry.get("quality") or {}).get("small_cell_refinement_version")
+                )
+                if repaired or refinement_before != refinement_after:
                     write_json(cache_path, {"fingerprint": fingerprint, "geometry": geometry})
                 _GEOMETRY_CACHE[cache_key] = geometry
                 geometry = deepcopy(geometry)
@@ -676,6 +717,7 @@ class PPStructureV3GeometryExtractor:
             geometry.setdefault("uncertainties", []).append(
                 "ppstructure_table_fallback: 表格结构分支缺少 text_rec_model，已退化为布局检测和通用 OCR 几何"
             )
+        geometry = self._refine_small_cells(geometry, image_file)
         _GEOMETRY_CACHE[cache_key] = geometry
         if use_cache:
             write_json(cache_path, {"fingerprint": fingerprint, "geometry": geometry})
@@ -716,7 +758,9 @@ def geometry_prompt_catalog(geometry: Mapping[str, Any]) -> dict[str, Any]:
             {
                 "id": item.get("id"),
                 "track_ids": item.get("track_ids", []),
-                "text": item.get("text", ""),
+                "text": item.get("refined_text") or item.get("text", ""),
+                "raw_text": item.get("text", ""),
+                "submember_resolution": item.get("submember_resolution"),
             }
             for item in geometry.get("cells", [])
             if isinstance(item, Mapping)
@@ -730,6 +774,31 @@ def geometry_prompt_catalog(geometry: Mapping[str, Any]) -> dict[str, Any]:
             }
             for item in geometry.get("ocr_lines", [])
             if isinstance(item, Mapping)
+        ],
+        "submember_groups": [
+            {
+                "id": group.get("id"),
+                "base_name": group.get("base_name"),
+                "track_id": group.get("track_id"),
+                "code_track_id": group.get("code_track_id"),
+                "anchor_orders": group.get("anchor_orders", []),
+                "ordered_sequence_supported": group.get("ordered_sequence_supported", False),
+                "rows": [
+                    {
+                        "order": row.get("order"),
+                        "cell_id": row.get("cell_id"),
+                        "recognized_text": row.get("recognized_text"),
+                        "code_cell_id": row.get("code_cell_id"),
+                        "code_recognized_text": row.get("code_recognized_text"),
+                        "resolved_name": row.get("resolved_name"),
+                        "resolution_status": row.get("resolution_status"),
+                    }
+                    for row in group.get("rows", [])
+                    if isinstance(row, Mapping)
+                ],
+            }
+            for group in geometry.get("submember_groups", [])
+            if isinstance(group, Mapping)
         ],
     }
 
@@ -786,12 +855,27 @@ def _axis_points(raw_axis: Mapping[str, Any], tracks: Sequence[Mapping[str, Any]
         for item in raw_axis.get("calibration_ocr_ids", [])
         if str(item)
     } if isinstance(raw_axis.get("calibration_ocr_ids"), list) else set()
+    axis_track = next(
+        (track for track in tracks if str(track.get("id") or "") == track_id),
+        {},
+    )
+    axis_member_ids = {
+        str(value)
+        for value in axis_track.get("member_track_ids", [])
+        if str(value)
+    } if isinstance(axis_track, Mapping) else set()
+    if track_id:
+        axis_member_ids.add(track_id)
     candidates: list[tuple[float, float, str]] = []
     for line in ocr:
         line_id = str(line.get("id") or "")
         if selected_ids and line_id not in selected_ids:
             continue
-        if not selected_ids and track_id and str(line.get("track_id") or "") != track_id:
+        if (
+            not selected_ids
+            and track_id
+            and str(line.get("track_id") or "") not in axis_member_ids
+        ):
             continue
         value = _parse_numeric_text(line.get("text"))
         bbox = line.get("bbox")
@@ -868,6 +952,7 @@ def _match_tracks(raw_tracks: Any, geometry_tracks: Sequence[Mapping[str, Any]])
             existing = next(track for track in mapped if str(track.get("id") or "") == chosen_id)
             for source_key, target_key in (
                 ("role", "semantic_roles"),
+                ("track_type", "semantic_track_types"),
                 ("header", "semantic_headers"),
                 ("evidence", "semantic_evidence"),
             ):
@@ -884,6 +969,15 @@ def _match_tracks(raw_tracks: Any, geometry_tracks: Sequence[Mapping[str, Any]])
             {
                 **dict(raw),
                 "id": chosen_id,
+                "track_type": str(raw.get("track_type") or "unresolved"),
+                "track_type_source": str(
+                    raw.get("track_type_source")
+                    or (
+                        "VLM.layout_track_classification"
+                        if str(raw.get("track_type") or "") in VLM_TRACK_TYPES
+                        else "missing_vlm_track_classification"
+                    )
+                ),
                 "order": int(chosen.get("order", len(mapped))),
                 "bbox": list(chosen["bbox"]),
                 "ppstructure_header_text": str(chosen.get("header_text") or ""),
@@ -895,6 +989,8 @@ def _match_tracks(raw_tracks: Any, geometry_tracks: Sequence[Mapping[str, Any]])
             {
                 **dict(track),
                 "role": "unknown",
+                "track_type": "unresolved",
+                "track_type_source": "missing_vlm_track_classification",
                 "header": str(track.get("header_text") or ""),
                 "parser": "semantic_role_unresolved",
                 "evidence": "PP-StructureV3 检测到列，但 VLM 未返回语义角色",
@@ -1011,10 +1107,14 @@ def _preferred_geometry_refs(
 
 
 def _track_from_geometry_refs(
-    refs: Sequence[str], index: Mapping[str, Mapping[str, Any]], fallback: str
+    refs: Sequence[str],
+    index: Mapping[str, Mapping[str, Any]],
+    fallback: str,
+    physical_to_semantic: Mapping[str, str] | None = None,
 ) -> str:
-    """中文说明：当选中的完整单元格只属于一个轨道时，同步纠正旧语义响应里的错误轨道。"""
+    """中文说明：把引用单元格的物理列统一映射回合并后的语义轨道。"""
 
+    mapping = dict(physical_to_semantic or {})
     track_ids: list[str] = []
     for ref in refs:
         record = index.get(ref)
@@ -1024,13 +1124,19 @@ def _track_from_geometry_refs(
         if not isinstance(values, list):
             values = [record.get("track_id")]
         for value in values:
-            track_id = str(value or "")
+            physical_id = str(value or "")
+            track_id = mapping.get(physical_id, physical_id)
             if track_id and track_id not in track_ids:
                 track_ids.append(track_id)
     return track_ids[0] if len(track_ids) == 1 else fallback
 
 
-def _resolve_primitives(payload: dict[str, Any], geometry: Mapping[str, Any], id_map: Mapping[str, str]) -> list[str]:
+def _resolve_primitives(
+    payload: dict[str, Any],
+    geometry: Mapping[str, Any],
+    id_map: Mapping[str, str],
+    physical_to_semantic: Mapping[str, str] | None = None,
+) -> list[str]:
     """中文说明：用 VLM 选择的 PP 几何 ID 生成区间/点坐标，并删除无法定位的语义图元。"""
 
     uncertainties: list[str] = []
@@ -1061,7 +1167,12 @@ def _resolve_primitives(payload: dict[str, Any], geometry: Mapping[str, Any], id
                 continue
             item["top_y"] = float(bbox[1])
             item["bottom_y"] = float(bbox[3])
-            item["track_id"] = _track_from_geometry_refs(refs, index, track_id)
+            item["track_id"] = _track_from_geometry_refs(
+                refs,
+                index,
+                track_id,
+                physical_to_semantic,
+            )
             item["geometry_refs"] = refs
             item["geometry_bbox"] = bbox
             item["coordinate_source"] = "PP-StructureV3"
@@ -1088,7 +1199,12 @@ def _resolve_primitives(payload: dict[str, Any], geometry: Mapping[str, Any], id
             )
             continue
         item["pixel_y"] = round((bbox[1] + bbox[3]) / 2.0, 3)
-        item["track_id"] = _track_from_geometry_refs(refs, index, track_id)
+        item["track_id"] = _track_from_geometry_refs(
+            refs,
+            index,
+            track_id,
+            physical_to_semantic,
+        )
         item["geometry_refs"] = refs
         item["geometry_bbox"] = bbox
         item["coordinate_source"] = "PP-StructureV3"
@@ -1107,6 +1223,13 @@ def apply_ppstructure_geometry(payload: Mapping[str, Any], geometry: Mapping[str
     enriched = deepcopy(dict(payload))
     geometry_tracks = [dict(item) for item in geometry.get("tracks", []) if isinstance(item, Mapping)]
     tracks, id_map = _match_tracks(enriched.get("tracks"), geometry_tracks)
+    tracks, physical_to_semantic = build_semantic_tracks(
+        tracks,
+        geometry_tracks,
+        [item for item in geometry.get("cells", []) if isinstance(item, Mapping)],
+    )
+    # 中文说明：轨道内部网格列合并后，旧 VLM/PP 列 ID 都必须指向唯一语义轨道。
+    id_map = {**id_map, **physical_to_semantic}
     enriched["tracks"] = tracks
     coordinate_system = enriched.get("coordinate_system")
     coordinate_system = dict(coordinate_system) if isinstance(coordinate_system, Mapping) else {}
@@ -1130,7 +1253,17 @@ def apply_ppstructure_geometry(payload: Mapping[str, Any], geometry: Mapping[str
     )
     enriched["coordinate_system"] = coordinate_system
     enriched["image_size"] = dict(geometry.get("image_size") or {})
-    primitive_uncertainties = _resolve_primitives(enriched, geometry, id_map)
+    enriched = enrich_visual_track_primitives(
+        enriched,
+        geometry,
+        physical_to_semantic=physical_to_semantic,
+    )
+    primitive_uncertainties = _resolve_primitives(
+        enriched,
+        geometry,
+        id_map,
+        physical_to_semantic,
+    )
     raw_uncertainties = enriched.get("uncertainties")
     uncertainties = [str(item) for item in raw_uncertainties] if isinstance(raw_uncertainties, list) else []
     for item in [*axis_uncertainties, *primitive_uncertainties]:
@@ -1141,9 +1274,12 @@ def apply_ppstructure_geometry(payload: Mapping[str, Any], geometry: Mapping[str
     enriched["geometry_policy"] = {
         "coordinate_generator": "PaddleOCR.PPStructureV3",
         "vlm_pixel_coordinates_used": False,
-        "vlm_role": "semantic_labeling_and_geometry_id_selection",
+        "vlm_role": "semantic_labeling_track_type_classification_and_geometry_id_selection",
+        "semantic_track_generator": "PP-StructureV3.semantic_track_group",
+        "visual_track_extraction_version": VISUAL_TRACK_EXTRACTION_VERSION,
     }
-    return enriched
+    # 中文说明：几何和语义对齐后，才可把有局部 OCR/代号列证据的未消费亚段行补成独立实体。
+    return recover_submember_intervals(enriched)
 
 
 def ensure_ppstructure_geometry(payload: Mapping[str, Any], image_path: str | Path, provider: Any | None = None) -> dict[str, Any]:
@@ -1152,6 +1288,12 @@ def ensure_ppstructure_geometry(payload: Mapping[str, Any], image_path: str | Pa
     geometry = payload.get("ppstructure_geometry")
     if isinstance(geometry, Mapping) and str(geometry.get("schema_version") or "") == PPSTRUCTURE_GEOMETRY_SCHEMA_VERSION:
         policy = payload.get("geometry_policy")
-        if isinstance(policy, Mapping) and policy.get("vlm_pixel_coordinates_used") is False:
+        if (
+            isinstance(policy, Mapping)
+            and policy.get("vlm_pixel_coordinates_used") is False
+            and policy.get("visual_track_extraction_version") == VISUAL_TRACK_EXTRACTION_VERSION
+        ):
             return deepcopy(dict(payload))
+        # 中文说明：旧缓存只有 PP 几何时原地升级，无需重跑 Paddle 模型。
+        return apply_ppstructure_geometry(payload, geometry)
     return apply_ppstructure_geometry(payload, extract_ppstructure_geometry(image_path, provider))

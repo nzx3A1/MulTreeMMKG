@@ -41,10 +41,10 @@ PP-StructureV3 几何目录（其中的 ID 和像素框由程序生成；你只�
 执行边界：
 1. 只读取图片中可见的表头、刻度、表格线、合并单元格、岩性柱、曲线、色条和文字；不得凭花纹猜岩性，不凭常识补值。
 2. 禁止输出或估算 content_bbox、bbox、pixel_y、top_y、bottom_y；这些字段全部由 PP-StructureV3 程序生成。
-3. tracks 只能从目录 tracks 逐字选择 id，再补充 role、header 和 parser；不得另造轨道 ID。
+3. tracks 只能从目录 tracks 逐字选择 id，并覆盖全部可见轨道；轨道类型按三遍判断：先确认文字/数字表格列 table_text，再从剩余轨道确认颜色/纹理/符号/图像块列 legend，最后确认连续曲线列 curve。role 另行描述地层、代号、深度、岩性、相、储层等领域职责。
 4. 区间和点图元用 geometry_refs 选择目录中的 pp_cell_* 或 pp_ocr_*；只保留 track_id、evidence、confidence 和地质语义。
 5. 曲线只在刻度和单位清楚时填写数值；不清楚时保留 qualitative_response 并写入 uncertainties。
-6. 关系不由模型输出。后续程序会用统一深度轴做区间重叠、层序和图谱装配。
+6. 关系不由模型输出。后续程序只在左右紧邻轨道之间建立 aligned_with；视觉切片会先处理 legend、再处理 curve，并在左右两侧最近的 table_text 轨道中选择实体数较多的一侧作为纵向基准。
 
 只返回一个 JSON 对象，结构必须为：
 {{
@@ -62,14 +62,15 @@ PP-StructureV3 几何目录（其中的 ID 和像素框由程序生成；你只�
     }}
   }},
   "tracks": [
-    {{"id": "目录中的 pp_track_*", "role": "stratigraphy|depth|lithology|curve|text|facies|reservoir|well", "header": "表头", "parser": "专用解析器名", "evidence": "可见依据"}}
+    {{"id": "目录中的 pp_track_*", "track_type": "table_text|legend|curve", "role": "stratigraphy|code|depth|lithology|curve|porosity|permeability|text|facies|reservoir|well|other", "header": "表头", "parser": "专用解析器名", "evidence": "可见依据"}}
   ],
   "primitives": {{
     "stratigraphic_intervals": [{{"id":"", "name":"", "parent_id":"", "rank":"", "track_id":"pp_track_*", "geometry_refs":["pp_cell_*"], "evidence":"", "confidence":0.0}}],
     "reference_intervals": [{{"id":"", "name":"井段或相对层序段", "entity_type":"depth_interval", "track_id":"pp_track_*", "geometry_refs":["pp_cell_*"], "evidence":"", "confidence":0.0}}],
     "lithology_intervals": [{{"id":"", "name":"", "track_id":"pp_track_*", "geometry_refs":["pp_cell_*"], "evidence":"", "confidence":0.0}}],
+    "legend_entries": [{{"id":"", "name":"", "geometry_refs":["pp_ocr_*"], "evidence":"", "confidence":0.0}}],
     "facies_intervals": [{{"id":"", "name":"", "track_id":"pp_track_*", "geometry_refs":["pp_cell_*"], "evidence":"", "confidence":0.0}}],
-    "curve_tracks": [{{"id":"", "name":"", "track_id":"", "scale_min":null, "scale_max":null, "unit":"", "scale_direction":"", "evidence":""}}],
+    "curve_tracks": [{{"id":"", "name":"", "track_id":"pp_track_*", "left_value":null, "right_value":null, "scale_min":null, "scale_max":null, "unit":"", "color":"red|blue|green|cyan|black|unknown", "visual_form":"continuous_curve|filled_profile|sample_bars", "scale_transform":"linear|log10", "evidence":""}}],
     "curve_observations": [{{"id":"", "name":"", "curve_ids":[], "track_id":"pp_track_*", "geometry_refs":["pp_cell_*"], "qualitative_response":"", "evidence":"", "confidence":0.0}}],
     "reservoir_intervals": [{{"id":"", "name":"", "track_id":"pp_track_*", "geometry_refs":["pp_cell_*"], "evidence":"", "confidence":0.0}}],
     "oil_layer_intervals": [],

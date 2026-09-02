@@ -18,6 +18,7 @@ from src.extractors.table_extractor.table_parse import (
     canonicalize_html,
     parse_html_table,
 )
+from src.extractors.table_extractor.visual_semantics import analyze_table_visual_semantics
 
 
 class OfflineRepository:
@@ -262,8 +263,8 @@ def test_adapt_table_chunk_recovers_image_path_from_markdown(tmp_path: Path) -> 
     assert sources[0].image_path == str(image.resolve())
 
 
-def test_build_table_graph_keeps_structure_and_domain_semantics() -> None:
-    """横向岩性表应同时生成表格结构节点、岩性节点和矿物关系。"""
+def test_build_table_graph_only_emits_one_entity_per_data_row() -> None:
+    """横向表只应生成数据记录实体，不再创建表格、表头、单元格和参数节点。"""
 
     table = _recognized(
         """
@@ -278,16 +279,18 @@ def test_build_table_graph_keeps_structure_and_domain_semantics() -> None:
         table,
         schema_selector=TableSchemaSelector(repository=OfflineRepository()),
     )
-    types = {entity.type for entity in graph.entities}
-    relation_types = {relation.type for relation in graph.relations}
-    assert {"Table", "TableRow", "TableColumn", "TableCell", "Parameter", "Lithology", "Mineral"} <= types
-    assert {"HAS_ROW", "HAS_COLUMN", "HAS_CELL", "LOCATED_IN_ROW", "LOCATED_IN_COLUMN", "COMPOSED_OF"} <= relation_types
+    assert len(graph.entities) == 2
+    assert {entity.type for entity in graph.entities} == {"Lithology"}
+    assert [entity.name for entity in graph.entities] == ["砂岩", "泥岩"]
+    assert graph.relations == []
+    assert graph.metadata.extra["record_only"] is True
+    assert graph.metadata.extra["record_entity_count"] == 2
     assert graph.metadata.modality == "table"
     assert graph.metadata.extra["validation"]["ok"] is True
 
 
-def test_sample_table_prefers_sample_key_and_links_geological_context() -> None:
-    """样品分析表应以样品号为主实体，并关联井、地层组、岩性及矿物组成。"""
+def test_sample_table_keeps_context_values_as_attributes_only() -> None:
+    """井、层位、岩性和矿物含量只作为样品记录属性，不应再拆成额外实体。"""
 
     table = _recognized(
         """
@@ -307,12 +310,17 @@ def test_sample_table_prefers_sample_key_and_links_geological_context() -> None:
         table,
         schema_selector=TableSchemaSelector(repository=OfflineRepository()),
     )
-    type_counts = {entity_type: sum(entity.type == entity_type for entity in graph.entities) for entity_type in {
-        "Sample", "Well", "Formation", "Lithology", "Mineral"
-    }}
-    relation_types = {relation.type for relation in graph.relations}
-    assert type_counts == {"Sample": 2, "Well": 1, "Formation": 1, "Lithology": 1, "Mineral": 1}
-    assert {"REPORTS", "RECORDED_IN", "COLLECTED_FROM", "COMPOSED_OF"} <= relation_types
+    assert len(graph.entities) == 2
+    assert {entity.type for entity in graph.entities} == {"Sample"}
+    assert [entity.name for entity in graph.entities] == ["FY1-1", "FY1-2"]
+    assert graph.entities[0].attributes == {
+        "井名": "富页1井",
+        "样品号": "FY1-1",
+        "层位": "龙马溪组",
+        "岩性": "页岩",
+        "石英%": 42.1,
+    }
+    assert graph.relations == []
     assert graph.metadata.extra["validation"]["ok"] is True
 
 
@@ -343,7 +351,132 @@ def test_infer_vertical_table_uses_key_row() -> None:
         table,
         schema_selector=TableSchemaSelector(repository=OfflineRepository()),
     )
-    parameter_names = {entity.name for entity in graph.entities if entity.type == "Parameter"}
-    assert {"井号", "层位", "埋深/m", "孔隙度/%"} <= parameter_names
-    assert "YC101" not in parameter_names
+    assert len(graph.entities) == 2
+    assert {entity.type for entity in graph.entities} == {"Well"}
+    assert [entity.name for entity in graph.entities] == ["YC101", "YC102"]
+    assert graph.relations == []
     assert graph.metadata.extra["validation"]["ok"] is True
+
+
+def test_vlm_semantics_and_rowspan_create_one_record_node_per_row(tmp_path: Path) -> None:
+    """VLM 应确定横表和主题列，HTML 跨行值应填充到每一条独立记录节点。"""
+
+    table = _recognized(
+        """
+        <table>
+          <tr>
+            <th>井号</th><th>层位</th><th>基岩岩性</th><th>测试 序号</th>
+            <th>均一 温度 /℃</th><th>测试位置</th>
+          </tr>
+          <tr>
+            <td rowspan="2">米35</td><td rowspan="2">马五 ${}_{1}$</td>
+            <td rowspan="2">泥晶白云岩</td><td>1</td><td>108.8</td>
+            <td rowspan="2">硬石膏铸模孔内充 填的铁白云石</td>
+          </tr>
+          <tr><td>2</td><td>140.2</td></tr>
+        </table>
+        """,
+        caption="流体包裹体均一温度测试表",
+    )
+    image_path = tmp_path / "table.png"
+    image_path.write_bytes(b"fake image bytes")
+    table.source.image_path = str(image_path)
+
+    class FakeVLM:
+        """返回与原图一致的表格方向、表头和记录主题。"""
+
+        def describe_image(self, image_path: str, prompt: str, **kwargs: object) -> dict[str, object]:
+            assert image_path.endswith("table.png")
+            assert "rowspan/colspan 已展开" in prompt
+            assert kwargs["task_name"] == "表格方向、表头与主题字段识别"
+            return {
+                "orientation": "horizontal",
+                "headers": ["井号", "层位", "基岩岩性", "测试 序号", "均一 温度 /℃", "测试位置"],
+                "subject_header": "井号",
+                "subject_index": 0,
+                "data_start_index": 1,
+                "confidence": 0.99,
+                "reason": "顶部为列头，每行是一条测试记录",
+            }
+
+    visual = analyze_table_visual_semantics(table, FakeVLM())
+    table.details["visual_semantics"] = {**visual, "status": "success"}
+    plan = infer_semantic_plan(table)
+    assert plan.orientation == "horizontal"
+    assert plan.subject_column == 0
+    assert plan.subject_header == "井号"
+    assert plan.analysis_source == "vlm"
+
+    graph = build_table_graph(
+        table,
+        schema_selector=TableSchemaSelector(repository=OfflineRepository()),
+    )
+    records = [entity for entity in graph.entities if entity.type == "Well" and entity.metadata.get("table_record_axis")]
+    assert len(graph.entities) == 2
+    assert graph.relations == []
+    assert len(records) == 2
+    assert [entity.name for entity in records] == ["米35", "米35"]
+    assert [entity.attributes for entity in records] == [
+        {
+            "井号": "米35",
+            "层位": "马五₁",
+            "基岩岩性": "泥晶白云岩",
+            "测试序号": 1,
+            "均一温度℃": 108.8,
+            "测试位置": "硬石膏铸模孔内充填的铁白云石",
+        },
+        {
+            "井号": "米35",
+            "层位": "马五₁",
+            "基岩岩性": "泥晶白云岩",
+            "测试序号": 2,
+            "均一温度℃": 140.2,
+            "测试位置": "硬石膏铸模孔内充填的铁白云石",
+        },
+    ]
+    assert records[0].id != records[1].id
+
+
+def test_vlm_vertical_table_creates_one_record_node_per_column(tmp_path: Path) -> None:
+    """纵向表应按数据列建节点，并使用 VLM 识别的行表头作为属性名。"""
+
+    table = _recognized(
+        """
+        <table>
+          <tr><td>样品</td><td>样品A</td><td>样品B</td></tr>
+          <tr><td>井号</td><td>YC101</td><td>YC102</td></tr>
+          <tr><td>层位</td><td>马五 ${}_{1}$</td><td>马五 ${}_{2}$</td></tr>
+          <tr><td>孔隙度 /%</td><td>8.6</td><td>9.4</td></tr>
+        </table>
+        """
+    )
+    image_path = tmp_path / "vertical.png"
+    image_path.write_bytes(b"fake image bytes")
+    table.source.image_path = str(image_path)
+
+    class FakeVerticalVLM:
+        def describe_image(self, *_args: object, **_kwargs: object) -> dict[str, object]:
+            return {
+                "orientation": "vertical",
+                "headers": ["样品", "井号", "层位", "孔隙度 /%"],
+                "subject_header": "井号",
+                "subject_index": 1,
+                "data_start_index": 1,
+                "confidence": 0.98,
+                "reason": "左侧为行头，每列是一条井记录",
+            }
+
+    visual = analyze_table_visual_semantics(table, FakeVerticalVLM())
+    table.details["visual_semantics"] = {**visual, "status": "success"}
+    graph = build_table_graph(
+        table,
+        schema_selector=TableSchemaSelector(repository=OfflineRepository()),
+    )
+    records = [entity for entity in graph.entities if entity.type == "Well" and entity.metadata.get("table_record_axis")]
+    assert len(graph.entities) == 2
+    assert graph.relations == []
+    assert [entity.name for entity in records] == ["YC101", "YC102"]
+    assert [entity.attributes for entity in records] == [
+        {"样品": "样品A", "井号": "YC101", "层位": "马五₁", "孔隙度%": 8.6},
+        {"样品": "样品B", "井号": "YC102", "层位": "马五₂", "孔隙度%": 9.4},
+    ]

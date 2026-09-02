@@ -2,12 +2,14 @@
 from __future__ import annotations
 
 from pathlib import Path
+from time import perf_counter
 from typing import Any, Mapping, Sequence
 
 from model import Graph
 from model.base import SourceModality
 from model.graph import GraphMetadata
 from src.utils.json_io import write_json
+from src.utils.logger import get_logger
 
 from .classification import (
     ImageClassificationProvider,
@@ -25,6 +27,40 @@ from .schema_models import (
 )
 
 
+logger = get_logger("extractors.image_extractor.pipeline")
+
+
+def write_image_extraction_result(
+    path: str | Path,
+    graphs: Sequence[Graph],
+    *,
+    status: str,
+) -> None:
+    """按其他第四阶段模态的统一结构保存图片 Graph 与统计信息。"""
+
+    result = {
+        "_status": status,
+        "statistics": {
+            "graph_count": len(graphs),
+            "completed_image_chunk_count": len(graphs),
+            "entity_count": sum(len(graph.entities) for graph in graphs),
+            "relation_count": sum(len(graph.relations) for graph in graphs),
+            "event_count": sum(len(graph.events) for graph in graphs),
+        },
+        # 生产结果只保留结构化图谱；原始模型响应体积大且不参与后续阶段。
+        "graphs": [
+            graph.to_dict(exclude={"metadata": {"raw_response"}})
+            for graph in graphs
+        ],
+    }
+    write_json(path, result)
+    logger.info(
+        f"[图片抽取/保存] 结果文件已写入：Graph={len(graphs)}，"
+        f"实体={result['statistics']['entity_count']}，关系={result['statistics']['relation_count']}，"
+        f"事件={result['statistics']['event_count']}，path={Path(path).resolve()}"
+    )
+
+
 def build_image_tasks(
     chunk: Mapping[str, Any],
     classification_provider: ImageClassificationProvider | None = None,
@@ -37,7 +73,26 @@ def build_image_tasks(
     paths = as_string_tuple(chunk.get("image_path"))
     references = as_string_tuple(chunk.get("references"))
     provider = classification_provider or InlineImageClassificationProvider()
-    classifications = [provider.resolve(chunk, image_path, index) for index, image_path in enumerate(paths)]
+    classifications = []
+    for index, image_path in enumerate(paths):
+        logger.info(
+            f"[图片抽取/分类] 开始：chunk={chunk_id}，image={index + 1}/{len(paths)}，path={image_path}"
+        )
+        classification_started_at = perf_counter()
+        try:
+            classification = provider.resolve(chunk, image_path, index)
+        except Exception:
+            logger.exception(
+                f"[图片抽取/分类] 失败：chunk={chunk_id}，image_index={index}，path={image_path}，"
+                f"耗时={perf_counter() - classification_started_at:.2f}s"
+            )
+            raise
+        classifications.append(classification)
+        logger.info(
+            f"[图片抽取/分类] 完成：chunk={chunk_id}，image_index={index}，"
+            f"code={classification.code or '未分类'}，type={classification.type_name or '未知'}，"
+            f"耗时={perf_counter() - classification_started_at:.2f}s"
+        )
     return [
         ImageExtractionTask(
             document_id=str(chunk.get("document_id") or chunk_id.split(":section:", 1)[0]),
@@ -168,29 +223,84 @@ def extract_from_images(
         for value in context.options.get("allowed_extractor_kinds", [])
     }
     results: list[Graph] = []
+    total_chunks = len(image_chunks)
+    total_images = sum(len(as_string_tuple(chunk.get("image_path"))) for chunk in image_chunks)
+    pipeline_started_at = perf_counter()
+    logger.info(
+        f"[图片抽取/管线] 启动：Chunk={total_chunks}，图片={total_images}，"
+        f"限制抽取器={sorted(allowed_kinds) if allowed_kinds else '无'}"
+    )
 
     for chunk_index, chunk in enumerate(image_chunks, start=1):
+        chunk_started_at = perf_counter()
+        chunk_id = str(chunk.get("id") or chunk.get("chunk_id") or "<missing>")
+        section_title = str(chunk.get("section_title") or "未标注章节")
+        logger.info(
+            f"[图片抽取/Chunk] 开始 {chunk_index}/{total_chunks}：chunk={chunk_id}，section={section_title}"
+        )
         tasks = build_image_tasks(chunk, classification_provider=classification_provider)
+        if not tasks:
+            logger.warning(f"[图片抽取/Chunk] 未找到图片路径，将生成空 Graph：chunk={chunk_id}")
         task_graphs: list[Graph] = []
         for task in tasks:
             kind = active_router.route(task)
+            task_started_at = perf_counter()
+            logger.info(
+                f"[图片抽取/路由] chunk={task.chunk_id}，image_index={task.image_index}，"
+                f"classification={task.classification_code or '未分类'}({task.classification_type or '未知'})，"
+                f"extractor={kind.value}，path={task.image_path}"
+            )
             if allowed_kinds and kind.value not in allowed_kinds:
-                task_graphs.append(
-                    _skipped_task_graph(
-                        task,
-                        kind,
-                        reason="main_classification_not_stratigraphic_profile",
-                        model_called=bool(context.options.get("classification_model_called", False)),
-                    )
+                task_graph = _skipped_task_graph(
+                    task,
+                    kind,
+                    reason="main_classification_not_stratigraphic_profile",
+                    model_called=bool(context.options.get("classification_model_called", False)),
                 )
-                continue
-            task_graphs.append(active_registry.get(kind).extract(task, context))
-        results.append(_merge_task_graphs(chunk, task_graphs))
+            else:
+                try:
+                    task_graph = active_registry.get(kind).extract(task, context)
+                except Exception:
+                    logger.exception(
+                        f"[图片抽取/单图] 失败：chunk={task.chunk_id}，image_index={task.image_index}，"
+                        f"extractor={kind.value}，path={task.image_path}，"
+                        f"耗时={perf_counter() - task_started_at:.2f}s"
+                    )
+                    raise
+            task_graphs.append(task_graph)
+            task_status = str(task_graph.metadata.extra.get("status") or "unknown")
+            logger.info(
+                f"[图片抽取/单图] 完成：chunk={task.chunk_id}，image_index={task.image_index}，"
+                f"extractor={kind.value}，status={task_status}，"
+                f"实体={len(task_graph.entities)}，关系={len(task_graph.relations)}，事件={len(task_graph.events)}，"
+                f"耗时={perf_counter() - task_started_at:.2f}s"
+            )
+            model_errors = list(task_graph.metadata.extra.get("model_errors") or [])
+            if model_errors:
+                logger.warning(
+                    f"[图片抽取/单图] 模型调用存在错误：chunk={task.chunk_id}，"
+                    f"image_index={task.image_index}，status={task_status}，errors={model_errors}"
+                )
+        merged_graph = _merge_task_graphs(chunk, task_graphs)
+        results.append(merged_graph)
+        logger.info(
+            f"[图片抽取/Chunk] 完成 {chunk_index}/{total_chunks}：chunk={chunk_id}，"
+            f"status={merged_graph.metadata.extra.get('status', 'unknown')}，单图任务={len(tasks)}，"
+            f"实体={len(merged_graph.entities)}，关系={len(merged_graph.relations)}，事件={len(merged_graph.events)}，"
+            f"耗时={perf_counter() - chunk_started_at:.2f}s"
+        )
         if show_progress:
-            print(f"图片抽取架构路由：{chunk_index}/{len(image_chunks)}，单图任务={len(tasks)}")
+            print(f"图片抽取进度：{chunk_index}/{total_chunks}，chunk={chunk_id}，单图任务={len(tasks)}")
 
     if output_path is not None:
-        write_json(output_path, [graph.to_dict() for graph in results])
+        write_image_extraction_result(output_path, results, status="completed")
+    logger.info(
+        f"[图片抽取/管线] 完成：Graph={len(results)}，"
+        f"实体={sum(len(graph.entities) for graph in results)}，"
+        f"关系={sum(len(graph.relations) for graph in results)}，"
+        f"事件={sum(len(graph.events) for graph in results)}，"
+        f"耗时={perf_counter() - pipeline_started_at:.2f}s"
+    )
     return results
 
 

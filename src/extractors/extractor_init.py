@@ -139,9 +139,8 @@ class InitExtractor:
             results["table"] = extract_from_tables(
                 table_chunks,
                 self.llm_client,
+                vlm_client=self.vlm_client,
                 output_path=(Path(output_dir) / "stage_04_table_extraction.json") if output_dir else None,
-                recognition_output_path=(Path(output_dir) / "stage_04_table_recognition.json") if output_dir else None,
-                report_output_path=(Path(output_dir) / "stage_04_table_tasks.json") if output_dir else None,
                 work_dir=(Path(output_dir) / "table_extraction") if output_dir else None,
                 show_progress=self.show_progress,
             )

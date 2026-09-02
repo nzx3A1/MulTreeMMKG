@@ -51,9 +51,9 @@ _load_env_file(PROJECT_ROOT / ".env")
 class OpenAICompatibleConfig:
     """OpenAI 兼容聊天模型配置。"""
 
-    base_url: str = "https://api.siliconflow.cn/v1"
+    base_url: str = "http://10.18.19.66:8000/v1"
     api_key: str = "sk-lwctfhzpjhwclurfgdtpkwynqkawporxgvrhkjrtbuujayij"
-    model: str = "deepseek-ai/DeepSeek-V3.2"
+    model: str = "qwen-3.6-27B-FP8"
     temperature: float = 0.0
     max_tokens: int = 8192
     timeout_secs: float = 120.0
@@ -74,12 +74,13 @@ class OpenAIVLMCompatibleConfig:
 
 @dataclass(frozen=True)
 class EmbeddingConfig:
-    """Embedding 模型配置。"""
+    """Ollama Embedding 模型配置。"""
 
-    base_url: str = "https://api.siliconflow.cn/v1/embeddings"
-    api_key: str = "sk-lwctfhzpjhwclurfgdtpkwynqkawporxgvrhkjrtbuujayij"
-    model: str = "Pro/BAAI/bge-m3"
-    dimensions: int | None = None
+    base_url: str = "http://127.0.0.1:11434/api/embed"
+    # Ollama 本地 API 不需要鉴权；保留字段仅用于兼容既有环境变量和调用代码。
+    api_key: str = ""
+    model: str = "quentinz/bge-base-zh-v1.5"
+    dimensions: int | None = 768
     batch_size: int = 32
     timeout_secs: float = 60.0
 
@@ -97,8 +98,8 @@ class MinerUConfig:
 class SummaryConfig:
     """自底向上章节总结使用的模型与输出长度配置。"""
 
-    model: str = "deepseek-ai/DeepSeek-V4-Flash"
-    fallback_model: str = "deepseek-ai/DeepSeek-V4-Flash"
+    model: str = "qwen-3.6-27B-FP8"
+    fallback_model: str = "qwen-3.6-27B-FP8"
     max_tokens: int = 2000
     request_interval_secs: float = 1.0
     enable_thinking: bool = False

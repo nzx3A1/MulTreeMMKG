@@ -168,7 +168,7 @@ def rebuild_tracks(
     image_height: int,
     detected_lines: Mapping[str, Any],
 ) -> list[dict[str, Any]]:
-    """中文说明：排序并校验语义轨道，同时标记左右边界是否得到表格线检测支持。"""
+    """中文说明：校验轨道后按像素 x 从左到右排序，并标记相邻轨道和表格线证据。"""
 
     if not isinstance(raw_tracks, list) or not raw_tracks:
         raise ValueError("table_embedded_hybrid 响应缺少 tracks")
@@ -207,5 +207,16 @@ def rebuild_tracks(
                 "right_rule_supported": supported(x1),
             }
         )
-    rebuilt.sort(key=lambda item: (item["order"], item["bbox"][0]))
+    rebuilt.sort(key=lambda item: (item["bbox"][0], item["bbox"][2]))
+    for order, track in enumerate(rebuilt):
+        # 中文说明：不信任 VLM 或旧缓存中的 order，正式顺序只由 PP 像素横坐标决定。
+        track["order"] = order
+        track["previous_track_id"] = (
+            str(rebuilt[order - 1].get("id") or "") if order > 0 else ""
+        )
+        track["next_track_id"] = (
+            str(rebuilt[order + 1].get("id") or "")
+            if order + 1 < len(rebuilt)
+            else ""
+        )
     return rebuilt

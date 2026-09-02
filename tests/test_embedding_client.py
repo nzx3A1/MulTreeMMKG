@@ -24,7 +24,14 @@ def test_embedding_client_encode(mock_requests_post):
     embedding = EmbeddingClient()
     vectors = embedding.encode(["a", "b"])
     assert len(vectors) == 2
-    assert len(vectors[0]) == 1024
+    assert len(vectors[0]) == 768
+    mock_requests_post.assert_called_once()
+    request = mock_requests_post.call_args
+    assert request.kwargs["json"] == {
+        "model": embedding.config.model,
+        "input": ["a", "b"],
+    }
+    assert request.kwargs["headers"] == {"Content-Type": "application/json"}
 
 
 def test_embedding_client_encode_one(mock_requests_post):
@@ -33,7 +40,7 @@ def test_embedding_client_encode_one(mock_requests_post):
     embedding = EmbeddingClient()
     vector = embedding.encode_one("test")
     print(vector)
-    assert len(vector) == 1024
+    assert len(vector) == 768
 
 
 def test_embedding_client_cosine_similarity():
@@ -50,8 +57,11 @@ def mock_requests_post():
     with patch("src.utils.embedding_client.requests.post") as mock_post:
         mock_response = MagicMock()
         mock_response.raise_for_status.return_value = None
-        mock_response.json.return_value = {
-            "data": [{"embedding": [1.0] * 1024}]
+        mock_response.json.side_effect = lambda: {
+            "embeddings": [
+                [1.0] * 768
+                for _ in mock_post.call_args.kwargs["json"]["input"]
+            ]
         }
         mock_post.return_value = mock_response
         yield mock_post
@@ -75,7 +85,12 @@ def _run_with_mock_requests(func) -> None:
     with patch("src.utils.embedding_client.requests.post") as mock_post:
         mock_response = MagicMock()
         mock_response.raise_for_status.return_value = None
-        mock_response.json.return_value = {"data": [{"embedding": [1.0] * 1024}]}
+        mock_response.json.side_effect = lambda: {
+            "embeddings": [
+                [1.0] * 768
+                for _ in mock_post.call_args.kwargs["json"]["input"]
+            ]
+        }
         mock_post.return_value = mock_response
         func(mock_post)
 
@@ -87,9 +102,9 @@ def main() -> None:
     test_embedding_client_can_be_created()
     print("1. 初始化测试通过")
     _run_with_mock_requests(test_embedding_client_encode)
-    print("2. 模拟 encode 测试通过，返回 1024 维向量")
+    print("2. 模拟 encode 测试通过，返回 768 维向量")
     _run_with_mock_requests(test_embedding_client_encode_one)
-    print("3. 模拟 encode_one 测试通过，返回 1024 维向量")
+    print("3. 模拟 encode_one 测试通过，返回 768 维向量")
     test_embedding_client_cosine_similarity()
     print("4. 余弦相似度测试通过")
     print("5. 开始真实 Embedding API 调用测试...")
