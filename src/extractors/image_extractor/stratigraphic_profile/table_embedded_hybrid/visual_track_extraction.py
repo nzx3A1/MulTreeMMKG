@@ -1,4 +1,4 @@
-"""综合柱状图的语义轨道合并、曲线矢量化、图例匹配与轨道内容补全。"""
+"""综合柱状图的语义轨道合并、整轨曲线裁剪、图例切片识别与内容补全。"""
 from __future__ import annotations
 
 from copy import deepcopy
@@ -16,13 +16,12 @@ from src.utils.llm_client import safe_json_loads
 from .vlm_options import table_embedded_hybrid_vlm_timeout_secs
 
 
-VISUAL_TRACK_EXTRACTION_VERSION = "semantic-track-vlm-description-only.v8"
-VISUAL_TRACK_SLICE_SCHEMA_VERSION = "table_embedded_hybrid.track_slice_description.v2"
+VISUAL_TRACK_EXTRACTION_VERSION = "semantic-track-full-curve-crop.v9"
+VISUAL_TRACK_SLICE_SCHEMA_VERSION = "table_embedded_hybrid.legend_slice_description.v3"
 VLM_TRACK_TYPES = ("table_text", "legend", "curve")
 TRACK_RECOGNITION_ORDER = ("table_text", "legend", "curve")
 VLM_SLICE_TRACK_TYPES = ("legend",)
 _TEXT_CLEANER = re.compile(r"[^0-9A-Za-z\u4e00-\u9fff.%\-/]+")
-_NUMBER_PATTERN = re.compile(r"[-+]?\d+(?:\.\d+)?")
 _FALLBACK_TEXT_ENTITY_ROLES = frozenset(
     {"stratigraphy", "lithology", "facies", "reservoir", "well", "text"}
 )
@@ -39,25 +38,6 @@ _ROCK_KEYWORDS = (
     "盐",
     "白云",
 )
-_CURVE_STYLE_RULES = (
-    ("GR", "red", "continuous_curve", "linear"),
-    ("SP", "blue", "continuous_curve", "linear"),
-    ("CNL", "green", "continuous_curve", "linear"),
-    ("AC", "red", "continuous_curve", "linear"),
-    ("DEN", "blue", "continuous_curve", "linear"),
-    ("RS", "blue", "continuous_curve", "log10"),
-    ("RD", "red", "continuous_curve", "log10"),
-    ("测井孔隙度", "red", "filled_profile", "linear"),
-    ("岩心孔隙度", "black", "sample_bars", "linear"),
-    ("测井渗透率", "cyan", "filled_profile", "log10"),
-    ("岩心渗透率", "black", "sample_bars", "log10"),
-)
-_CURVE_NAME_ALIASES = {
-    "测井孔隙度": ("测井孔隙度", "logporosity", "welllogporosity", "loggingporosity"),
-    "岩心孔隙度": ("岩心孔隙度", "coreporosity"),
-    "测井渗透率": ("测井渗透率", "logpermeability", "welllogpermeability", "loggingpermeability"),
-    "岩心渗透率": ("岩心渗透率", "corepermeability"),
-}
 _LITHOLOGY_PROFILE_HEADERS = ("岩性剖面", "剖面图", "岩性柱", "岩性柱状", "剖面")
 _LITHOLOGY_TYPES = (
     "泥岩",
@@ -769,7 +749,7 @@ def build_adjacent_visual_track_slices(
     payload: Mapping[str, Any],
     geometry: Mapping[str, Any],
 ) -> list[dict[str, Any]]:
-    """中文说明：仅为 legend 轨道按相邻 table_text 实体投影切片，curve 轨道不再生成 VLM 切片。"""
+    """中文说明：仅为 legend 轨道按相邻 table_text 实体投影生成 VLM 识别切片。"""
 
     tracks = sort_tracks_left_to_right(
         [item for item in payload.get("tracks", []) if isinstance(item, Mapping)]
@@ -923,51 +903,23 @@ def build_adjacent_visual_track_slices(
 
 
 def build_visual_track_slice_prompt(slice_record: Mapping[str, Any]) -> str:
-    """中文说明：结合目标轨道表头和切片生成曲线数值或图例类型识别 Prompt，禁止 VLM 生成坐标。"""
+    """中文说明：结合目标轨道表头和切片生成图例类型识别 Prompt，禁止 VLM 生成坐标。"""
 
     track_type = str(slice_record.get("track_type") or "")
-    if track_type == "curve":
-        task_instruction = """
-输入图上半部分是同一曲线轨道的完整表头图，下半部分是当前纵向区间的曲线切片，中间灰线仅用于分隔两部分。
-先读取目标轨道表头中的每条曲线名、单位、左右刻度值和线性/对数刻度，再结合当前切片中曲线的水平位置，
-分别估读每条可见曲线在切片顶部、中部、底部的数值，以及切片内最小值、最大值和从上到下的变化。
-表头刻度不清、曲线重叠或某个值无法可靠估读时，对应数值必须为 null，并在 uncertainty 中说明；不得猜值。
-curve_readings 每条可见曲线一项；无法辨认曲线名时也返回一项，curve_name=unresolved。
-curve_change 必须从 rising、falling、stable、peak、trough、fluctuating、uncertain 中选择。
-""".strip()
-        type_specific_json = """
-  "curve_readings":[{
-    "curve_name":"GR或unresolved",
-    "unit":"",
-    "left_scale_value":null,
-    "right_scale_value":null,
-    "scale_transform":"linear|log10|unknown",
-    "top_value":null,
-    "middle_value":null,
-    "bottom_value":null,
-    "minimum_value":null,
-    "maximum_value":null,
-    "change":"rising|falling|stable|peak|trough|fluctuating|uncertain",
-    "value_basis":"表头刻度与切片曲线位置的可见依据",
-    "confidence":0.0,
-    "uncertainty":""
-  }],
-  "legend_interpretations":[],
-""".strip()
-    else:
-        profile_reference = (
-            _LITHOLOGY_PROFILE_REFERENCE_PROMPT
-            if bool(slice_record.get("is_lithology_profile"))
-            else "本轨道不是岩性剖面，不使用岩性纹理候选表；只按实际可见内容识别图例类型。"
-        )
-        task_instruction = f"""
+    if track_type != "legend":
+        raise ValueError("VLM 切片识别仅支持 legend 轨道")
+    profile_reference = (
+        _LITHOLOGY_PROFILE_REFERENCE_PROMPT
+        if bool(slice_record.get("is_lithology_profile"))
+        else "本轨道不是岩性剖面，不使用岩性纹理候选表；只按实际可见内容识别图例类型。"
+    )
+    task_instruction = f"""
 描述该图例或图像块实际可见的颜色、纹理、形状和标记，并输出对应的图例类型。
 legend_interpretations 至少返回一项；无法辨认时 legend_type=unresolved、category=unknown，并说明不确定性。
 若同一切片存在多种清晰图案，可分别返回多项，但不能把混合纹理强行拆成没有视觉证据的地质事实。
 {profile_reference}
 """.strip()
-        type_specific_json = """
-  "curve_readings":[],
+    type_specific_json = """
   "legend_interpretations":[{
     "legend_type":"可见图例类型或unresolved",
     "category":"lithology|reservoir|facies|symbol|color_band|pattern|other|unknown",
@@ -1004,7 +956,6 @@ description 必须是不超过 120 个汉字的总体摘要；visual_features �
   "track_type":"{track_type}",
   "source_cell_id":"{slice_record.get('source_cell_id')}",
   "description":"中文可见内容描述",
-  "curve_change":"rising|falling|stable|peak|trough|fluctuating|uncertain|not_applicable",
 {type_specific_json}
   "visual_features":["可见特征"],
   "confidence":0.0,
@@ -1017,14 +968,7 @@ def build_visual_track_slice_retry_prompt(
     slice_record: Mapping[str, Any],
     error: Exception,
 ) -> str:
-    """中文说明：按 curve 或 legend 的 v2 专用字段重试同一切片，保持几何和目标类型不变。"""
-
-    track_type = str(slice_record.get("track_type") or "")
-    type_fields = (
-        "curve_readings 必须为非空数组、legend_interpretations=[]；每条曲线的不可读数值写 null。"
-        if track_type == "curve"
-        else "curve_readings=[]、legend_interpretations 必须为非空数组；不可辨认时 legend_type=unresolved。"
-    )
+    """中文说明：按图例专用字段重试同一切片，保持几何和目标类型不变。"""
 
     return f"""
 上一条对同一裁剪图的响应无效：{str(error)[:160]}。
@@ -1036,8 +980,8 @@ track_id={slice_record.get('track_id')}
 track_type={slice_record.get('track_type')}
 source_cell_id={slice_record.get('source_cell_id')}
 
-字段必须包含 schema_version、slice_id、track_id、track_type、source_cell_id、description、curve_change、curve_readings、legend_interpretations、visual_features、confidence、uncertainty。
-{type_fields}
+字段必须包含 schema_version、slice_id、track_id、track_type、source_cell_id、description、legend_interpretations、visual_features、confidence、uncertainty。
+legend_interpretations 必须为非空数组；不可辨认时 legend_type=unresolved。
 description 不超过 60 个汉字；visual_features 最多 3 项；不得输出任何像素坐标。
 """.strip()
 
@@ -1046,7 +990,7 @@ def cache_visual_track_slices(
     image_path: str | Path,
     slices: Sequence[Mapping[str, Any]],
 ) -> list[dict[str, Any]]:
-    """中文说明：缓存正文切片；曲线轨道另把同轨表头与正文纵向拼接为 VLM 输入图。"""
+    """中文说明：缓存图例正文切片并返回原始裁剪图路径，不拼接或重绘图像。"""
 
     resolved_image = Path(image_path).expanduser().resolve()
     if not resolved_image.is_file():
@@ -1064,81 +1008,73 @@ def cache_visual_track_slices(
             if not existed:
                 crop_box = tuple(int(value) for value in record["bbox"])
                 source_rgb.crop(crop_box).save(crop_path, format="PNG")
-            header_path = crop_path.with_name(f"{crop_path.stem}_header.png")
-            vlm_input_path = crop_path
-            header_box = record.get("header_bbox")
-            header_available = (
-                str(record.get("track_type") or "") == "curve"
-                and isinstance(header_box, list)
-                and len(header_box) == 4
-                and int(header_box[2]) - int(header_box[0]) >= 2
-                and int(header_box[3]) - int(header_box[1]) >= 2
-            )
-            composite_existed = False
-            if header_available:
-                header_existed = header_path.is_file()
-                if not header_existed:
-                    source_rgb.crop(tuple(int(value) for value in header_box)).save(
-                        header_path,
-                        format="PNG",
-                    )
-                vlm_input_path = crop_path.with_name(f"{crop_path.stem}_header_slice.png")
-                composite_existed = vlm_input_path.is_file()
-                if not composite_existed:
-                    with Image.open(header_path) as header_image, Image.open(crop_path) as body_image:
-                        header_rgb = header_image.convert("RGB")
-                        body_rgb = body_image.convert("RGB")
-                        width = max(header_rgb.width, body_rgb.width)
-                        gap = 4
-                        composite = Image.new(
-                            "RGB",
-                            (width, header_rgb.height + gap + body_rgb.height),
-                            "white",
-                        )
-                        composite.paste(header_rgb, ((width - header_rgb.width) // 2, 0))
-                        separator_y = header_rgb.height
-                        for offset in range(gap):
-                            for x in range(width):
-                                composite.putpixel((x, separator_y + offset), (160, 160, 160))
-                        composite.paste(
-                            body_rgb,
-                            ((width - body_rgb.width) // 2, header_rgb.height + gap),
-                        )
-                        composite.save(vlm_input_path, format="PNG")
             cached.append(
                 {
                     **record,
                     "cropped_image_cache_path": str(crop_path.resolve()),
-                    "track_header_image_cache_path": (
-                        str(header_path.resolve()) if header_available else ""
-                    ),
-                    "vlm_input_image_cache_path": str(vlm_input_path.resolve()),
-                    "vlm_input_layout": (
-                        "track_header_above_slice" if header_available else "slice_only"
-                    ),
+                    "vlm_input_image_cache_path": str(crop_path.resolve()),
+                    "vlm_input_layout": "slice_only",
                     "crop_cache_status": "disk_hit" if existed else "written",
-                    "vlm_input_cache_status": (
-                        "disk_hit" if header_available and composite_existed else "written"
-                        if header_available
-                        else "same_as_slice"
-                    ),
                 }
             )
     return cached
 
 
-def _optional_finite_float(value: Any, *, field: str) -> float | None:
-    """中文说明：把 VLM 可选数值规范为有限浮点数，不可读值必须显式使用 null。"""
+def cache_curve_track_images(
+    image_path: str | Path,
+    tracks: Sequence[Mapping[str, Any]],
+    curves: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    """中文说明：按原图整轨边界裁剪曲线图，将共享图片路径和裁剪依据写入各测井曲线节点。"""
 
-    if value is None or str(value).strip().casefold() in {"", "null", "none", "unknown"}:
-        return None
-    try:
-        number = float(value)
-    except (TypeError, ValueError) as exc:
-        raise ValueError(f"{field} 必须为数值或 null：{value!r}") from exc
-    if not math.isfinite(number):
-        raise ValueError(f"{field} 必须为有限数值或 null：{value!r}")
-    return round(number, 6)
+    if not isinstance(curves, list):
+        raise ValueError("primitives.curve_tracks 必须是数组")
+    records = [deepcopy(dict(item)) for item in curves if isinstance(item, Mapping)]
+    if not records:
+        return []
+    track_by_id = {str(item.get("id") or ""): item for item in tracks}
+    crops: dict[str, dict[str, Any]] = {}
+    resolved_image = Path(image_path).expanduser().resolve(strict=True)
+    with Image.open(resolved_image) as source:
+        source_rgb = source.convert("RGB")
+        for record in records:
+            track_id = str(record.get("track_id") or "")
+            track = track_by_id.get(track_id)
+            if track is None:
+                raise ValueError(f"测井曲线 {record.get('id')} 缺少有效轨道：{track_id!r}")
+            if str(track.get("track_type") or "") != "curve":
+                raise ValueError(f"测井曲线 {record.get('id')} 所属轨道不是 curve：{track_id!r}")
+            if track_id not in crops:
+                box = _bbox(track)
+                if len(box) != 4 or not all(math.isfinite(value) for value in box):
+                    raise ValueError(f"曲线轨道 {track_id} 缺少有效原图边界")
+                # 中文说明：向外取整保留完整边缘，不允许越界产生伪造的填充像素。
+                left, top = math.floor(box[0]), math.floor(box[1])
+                right, bottom = math.ceil(box[2]), math.ceil(box[3])
+                if not (0 <= left < right <= source.width and 0 <= top < bottom <= source.height):
+                    raise ValueError(f"曲线轨道 {track_id} 边界为空或超出原图：{box}")
+                crop_box = [left, top, right, bottom]
+                # 中文说明：轨道 ID 摘要避免不同特殊字符 ID 规范化后发生缓存碰撞。
+                track_key = hashlib.sha256(track_id.encode("utf-8")).hexdigest()[:16]
+                path = _visual_track_slice_cache_path(
+                    resolved_image,
+                    {"slice_id": f"curve_track_{track_key}", "bbox": crop_box},
+                )
+                path.parent.mkdir(parents=True, exist_ok=True)
+                if not path.is_file():
+                    source_rgb.crop(tuple(crop_box)).save(path, format="PNG")
+                crops[track_id] = {
+                    "cropped_image_cache_path": str(path),
+                    "cropped_image_bbox": crop_box,
+                    "cropped_image_scope": "full_track_including_header",
+                    "cropped_image_coordinate_space": "original_pixels",
+                    "cropped_image_source_path": str(resolved_image),
+                }
+            record.update(deepcopy(crops[track_id]))
+            # 中文说明：旧节点的嵌套属性不能覆盖本次重新计算的裁剪范围和图片路径。
+            if isinstance(record.get("attributes"), Mapping):
+                record["attributes"] = {**record["attributes"], **deepcopy(crops[track_id])}
+    return records
 
 
 def _bounded_confidence(value: Any, *, field: str) -> float:
@@ -1151,116 +1087,6 @@ def _bounded_confidence(value: Any, *, field: str) -> float:
     if not math.isfinite(confidence):
         raise ValueError(f"{field} 的 confidence 必须为有限数值")
     return round(max(0.0, min(1.0, confidence)), 3)
-
-
-def _normalize_curve_change(value: Any, *, default: str = "uncertain") -> str:
-    """中文说明：把模型常见的同义变化词归一到受控枚举，不把未知状态伪装成确定趋势。"""
-
-    normalized = str(value or "").strip().casefold().replace("-", "_").replace(" ", "_")
-    aliases = {
-        "increase": "rising",
-        "increasing": "rising",
-        "up": "rising",
-        "decrease": "falling",
-        "decreasing": "falling",
-        "down": "falling",
-        "flat": "stable",
-        "unchanged": "stable",
-        "unknown": "uncertain",
-        "indeterminate": "uncertain",
-        "none": "not_applicable",
-        "n/a": "not_applicable",
-        "na": "not_applicable",
-    }
-    return aliases.get(normalized, normalized or default)
-
-
-def _unresolved_curve_reading(*, uncertainty: str) -> dict[str, Any]:
-    """中文说明：曲线无法估读时生成全 null 审计记录，明确表达缺失而不虚构数值。"""
-
-    return {
-        "curve_name": "unresolved",
-        "unit": "",
-        "scale_transform": "unknown",
-        "change": "uncertain",
-        "value_basis": "",
-        "confidence": 0.0,
-        "uncertainty": uncertainty,
-        "left_scale_value": None,
-        "right_scale_value": None,
-        "top_value": None,
-        "middle_value": None,
-        "bottom_value": None,
-        "minimum_value": None,
-        "maximum_value": None,
-    }
-
-
-def _parse_curve_readings(raw: Any, *, slice_id: str) -> list[dict[str, Any]]:
-    """中文说明：规范曲线估读值；空数组或 null 项降为全 null 的 unresolved 记录。"""
-
-    if isinstance(raw, Mapping):
-        raw = [raw]
-    if not isinstance(raw, list):
-        raw = []
-    allowed_changes = {
-        "rising",
-        "falling",
-        "stable",
-        "peak",
-        "trough",
-        "fluctuating",
-        "uncertain",
-    }
-    allowed_transforms = {"linear", "log10", "unknown"}
-    numeric_fields = (
-        "left_scale_value",
-        "right_scale_value",
-        "top_value",
-        "middle_value",
-        "bottom_value",
-        "minimum_value",
-        "maximum_value",
-    )
-    readings: list[dict[str, Any]] = []
-    for index, item in enumerate(raw):
-        if not isinstance(item, Mapping):
-            continue
-        curve_name = str(item.get("curve_name") or "unresolved").strip() or "unresolved"
-        change = _normalize_curve_change(item.get("change"))
-        if change == "not_applicable":
-            change = "uncertain"
-        if change not in allowed_changes:
-            raise ValueError(f"曲线切片 {slice_id} 的 {curve_name}.change 非法：{change!r}")
-        transform = str(item.get("scale_transform") or "unknown").strip().casefold()
-        transform = {"log": "log10", "logarithmic": "log10"}.get(transform, transform)
-        if transform not in allowed_transforms:
-            raise ValueError(f"曲线切片 {slice_id} 的 {curve_name}.scale_transform 非法：{transform!r}")
-        reading = {
-            "curve_name": curve_name,
-            "unit": str(item.get("unit") or "").strip(),
-            "scale_transform": transform,
-            "change": change,
-            "value_basis": str(item.get("value_basis") or "").strip(),
-            "confidence": _bounded_confidence(
-                item.get("confidence", 0.0),
-                field=f"曲线切片 {slice_id} 的 {curve_name}",
-            ),
-            "uncertainty": str(item.get("uncertainty") or "").strip(),
-        }
-        for field in numeric_fields:
-            reading[field] = _optional_finite_float(
-                item.get(field),
-                field=f"曲线切片 {slice_id} 的 {curve_name}.{field}",
-            )
-        if all(reading[field] is None for field in numeric_fields) and not reading["uncertainty"]:
-            reading["uncertainty"] = "表头刻度或切片曲线位置不足以可靠估读数值"
-        readings.append(reading)
-    return readings or [
-        _unresolved_curve_reading(
-            uncertainty="模型未返回可解析的曲线读数；该切片数值保持未知"
-        )
-    ]
 
 
 def _normalize_profile_lithology(value: Any) -> tuple[str, str]:
@@ -1364,44 +1190,14 @@ def _parse_visual_track_slice_response(
     description = str(payload.get("description") or "").strip()
     if not description:
         raise ValueError(f"轨道裁剪块 {expected.get('slice_id')} 缺少 description")
-    curve_change = _normalize_curve_change(payload.get("curve_change"))
-    allowed_changes = {
-        "rising",
-        "falling",
-        "stable",
-        "peak",
-        "trough",
-        "fluctuating",
-        "uncertain",
-        "not_applicable",
-    }
-    if curve_change not in allowed_changes:
-        raise ValueError(
-            f"轨道裁剪块 {expected.get('slice_id')} 的 curve_change 非法：{curve_change!r}"
-        )
-    track_type = str(expected.get("track_type") or "")
-    # 中文说明：极窄、空白或被网格遮挡的曲线切片允许明确标记不可读，避免把不确定内容强行伪造成数值变化。
-    if track_type == "legend" and curve_change != "not_applicable":
-        raise ValueError(f"图例切片 {expected.get('slice_id')} 的 curve_change 必须为 not_applicable")
-    if track_type == "curve":
-        payload["curve_readings"] = _parse_curve_readings(
-            payload.get("curve_readings"),
-            slice_id=str(expected.get("slice_id") or ""),
-        )
-        if payload.get("legend_interpretations") not in (None, []):
-            raise ValueError(f"曲线切片 {expected.get('slice_id')} 的 legend_interpretations 必须为空")
-        payload["legend_interpretations"] = []
-    else:
-        if payload.get("curve_readings") not in (None, []):
-            raise ValueError(f"图例切片 {expected.get('slice_id')} 的 curve_readings 必须为空")
-        payload["curve_readings"] = []
-        payload["legend_interpretations"] = _parse_legend_interpretations(
-            payload.get("legend_interpretations"),
-            slice_id=str(expected.get("slice_id") or ""),
-            is_lithology_profile=bool(expected.get("is_lithology_profile")),
-        )
+    if str(expected.get("track_type") or "") != "legend":
+        raise ValueError("VLM 切片识别仅支持 legend 轨道")
+    payload["legend_interpretations"] = _parse_legend_interpretations(
+        payload.get("legend_interpretations"),
+        slice_id=str(expected.get("slice_id") or ""),
+        is_lithology_profile=bool(expected.get("is_lithology_profile")),
+    )
     payload["description"] = description
-    payload["curve_change"] = curve_change
     payload["confidence"] = _bounded_confidence(
         payload.get("confidence"),
         field=f"轨道裁剪块 {expected.get('slice_id')}",
@@ -1463,21 +1259,13 @@ def apply_visual_track_slice_responses(
         raise ValueError("应用轨道裁剪块响应前缺少 primitives")
     primitives = deepcopy(dict(primitives))
     enriched["primitives"] = primitives
-    curve_tracks = [
-        item for item in primitives.get("curve_tracks", []) if isinstance(item, Mapping)
-    ]
-    curve_observations = [
-        dict(item)
-        for item in primitives.get("curve_observations", [])
-        if isinstance(item, Mapping)
-    ]
     track_intervals = [
         dict(item)
         for item in primitives.get("track_intervals", [])
         if isinstance(item, Mapping)
     ]
     existing_ids = {
-        str(item.get("id") or "") for item in [*curve_observations, *track_intervals]
+        str(item.get("id") or "") for item in track_intervals
     }
     audit_slices: list[dict[str, Any]] = []
     for slice_record in resolved_slices:
@@ -1491,8 +1279,6 @@ def apply_visual_track_slice_responses(
         audit.update(
             {
                 "description": response["description"],
-                "curve_change": response["curve_change"],
-                "curve_readings": response["curve_readings"],
                 "legend_interpretations": response["legend_interpretations"],
                 "visual_features": response["visual_features"],
                 "confidence": response["confidence"],
@@ -1518,9 +1304,6 @@ def apply_visual_track_slice_responses(
             "visual_features": response["visual_features"],
             "cropped_image_cache_path": str(
                 Path(str(slice_record["cropped_image_cache_path"])).resolve()
-            ),
-            "track_header_image_cache_path": str(
-                slice_record.get("track_header_image_cache_path") or ""
             ),
             "vlm_input_image_cache_path": str(
                 slice_record.get("vlm_input_image_cache_path")
@@ -1553,53 +1336,31 @@ def apply_visual_track_slice_responses(
             ),
             "confidence": response["confidence"],
         }
-        if str(slice_record.get("track_type")) == "curve":
-            curve_ids = [
-                str(item.get("id") or "")
-                for item in curve_tracks
-                if str(item.get("track_id") or "") == str(slice_record["track_id"])
-                and str(item.get("id") or "")
-            ]
-            curve_observations.append(
-                {
-                    **common,
-                    "name": f"{label}对应{header}变化",
-                    "curve_ids": curve_ids,
-                    "qualitative_response": response["description"],
-                    "curve_change": response["curve_change"],
-                    "curve_readings": response["curve_readings"],
-                    "curve_value_source": "VLM.track_header_and_cropped_slice",
-                }
-            )
-        else:
-            legend_types = [
-                str(item.get("legend_type") or "unresolved")
-                for item in response["legend_interpretations"]
-            ]
-            track_intervals.append(
-                {
-                    **common,
-                    "name": f"{label}对应{header}：{'、'.join(legend_types)}",
-                    "entity_type": "legend_slice_interval",
-                    "curve_change": "not_applicable",
-                    "legend_type": legend_types[0] if legend_types else "unresolved",
-                    "legend_interpretations": response["legend_interpretations"],
-                    "legend_type_source": "VLM.track_header_and_cropped_slice",
-                    "lithology_types": (
-                        legend_types if bool(slice_record.get("is_lithology_profile")) else []
-                    ),
-                }
-            )
-    primitives["curve_observations"] = curve_observations
+        legend_types = [
+            str(item.get("legend_type") or "unresolved")
+            for item in response["legend_interpretations"]
+        ]
+        track_intervals.append(
+            {
+                **common,
+                "name": f"{label}对应{header}：{'、'.join(legend_types)}",
+                "entity_type": "legend_slice_interval",
+                "legend_type": legend_types[0] if legend_types else "unresolved",
+                "legend_interpretations": response["legend_interpretations"],
+                "legend_type_source": "VLM.track_header_and_cropped_slice",
+                "lithology_types": (
+                    legend_types if bool(slice_record.get("is_lithology_profile")) else []
+                ),
+            }
+        )
     primitives["track_intervals"] = track_intervals
     visual = enriched.get("visual_track_extraction")
     visual = deepcopy(dict(visual)) if isinstance(visual, Mapping) else {}
     visual["adjacent_slice_description"] = {
         "schema_version": VISUAL_TRACK_SLICE_SCHEMA_VERSION,
-        "recognition_mode": "vlm_legend_slice_interpretation_curve_slice_disabled",
+        "recognition_mode": "vlm_legend_slices_and_full_curve_track_images",
         "track_recognition_order": list(TRACK_RECOGNITION_ORDER),
         "vlm_slice_track_types": list(VLM_SLICE_TRACK_TYPES),
-        "curve_slice_vlm_enabled": False,
         "vertical_baseline_policy": "nearest_table_text_track_with_more_entities_left_on_tie",
         "cache_directory": str(_visual_track_slice_cache_root()),
         "slice_count": len(resolved_slices),
@@ -1626,7 +1387,7 @@ def describe_adjacent_visual_track_slices(
     vlm_client: Any,
     payload: Mapping[str, Any],
 ) -> dict[str, Any]:
-    """中文说明：持久化并调用 VLM 描述 legend 切片，显式跳过所有 curve 轨道切片。"""
+    """中文说明：持久化并调用 VLM 描述 legend 切片。"""
 
     geometry = payload.get("ppstructure_geometry")
     if not isinstance(geometry, Mapping):
@@ -1655,7 +1416,7 @@ def describe_adjacent_visual_track_slices(
     ]
     max_tokens = int(os.getenv("STRATIGRAPHIC_TABLE_VISUAL_SLICE_MAX_TOKENS", "4096"))
     for cached_slice in cached_slices:
-        # 中文说明：双重校验切片类型，即使上游或旧缓存混入 curve 记录也不会发起 VLM 请求。
+        # 中文说明：双重校验切片类型，避免异常记录触发非图例请求。
         if str(cached_slice.get("track_type") or "") not in VLM_SLICE_TRACK_TYPES:
             continue
         crop_path = str(
@@ -1875,336 +1636,6 @@ def _unconsumed_track_intervals(
         "track_count": len(tracks),
         "tracks": audit,
         "uncovered_track_ids": [str(item["track_id"]) for item in audit if not item["covered"]],
-    }
-
-
-def _canonical_curve_name(value: Any) -> str:
-    """中文说明：统一中英文曲线别名，避免 VLM 定义与表头兜底生成重复曲线。"""
-
-    text = _clean_text(value).casefold()
-    compact = re.sub(r"[^0-9a-z\u4e00-\u9fff]+", "", text)
-    for canonical, aliases in _CURVE_NAME_ALIASES.items():
-        if any(alias.casefold() in compact for alias in aliases):
-            return canonical.casefold()
-    upper = _clean_text(value).upper()
-    components = [part for part in re.split(r"[^0-9A-Z\u4e00-\u9fff]+", upper) if part]
-    for token, *_ in _CURVE_STYLE_RULES[:7]:
-        if token in components or upper == token or upper.startswith(f"{token}曲线") or upper.endswith(token):
-            return token.casefold()
-    return compact
-
-
-def _style_for_curve(name: Any) -> tuple[str, str, str]:
-    """中文说明：按曲线规范名补全颜色、图元形态和横轴变换。"""
-
-    canonical = _canonical_curve_name(name)
-    for token, color, visual_form, transform in _CURVE_STYLE_RULES:
-        if canonical == token.casefold():
-            return color, visual_form, transform
-    return "unknown", "continuous_curve", "linear"
-
-
-def _parse_number(value: Any) -> float | None:
-    """中文说明：从单个 OCR 刻度文本中安全读取有限数值。"""
-
-    matched = _NUMBER_PATTERN.search(str(value or "").replace(",", ""))
-    if not matched:
-        return None
-    try:
-        number = float(matched.group(0))
-    except ValueError:
-        return None
-    return number if math.isfinite(number) else None
-
-
-def _curve_descriptors(
-    primitives: dict[str, Any],
-    tracks: Sequence[Mapping[str, Any]],
-    geometry: Mapping[str, Any],
-    physical_to_semantic: Mapping[str, str],
-) -> list[dict[str, Any]]:
-    """中文说明：规范 VLM 曲线定义，并从明确表头补充被漏掉的常见曲线。"""
-
-    raw_items = primitives.get("curve_tracks")
-    descriptors = [dict(item) for item in raw_items if isinstance(item, Mapping)] if isinstance(raw_items, list) else []
-    track_by_id = {str(item.get("id") or ""): item for item in tracks}
-    for item in descriptors:
-        raw_track_id = str(item.get("track_id") or "")
-        item["track_id"] = physical_to_semantic.get(raw_track_id, raw_track_id)
-        color, visual_form, transform = _style_for_curve(item.get("name"))
-        # 中文说明：VLM 明确返回 unknown/空值时仍采用名称规则，避免可见曲线因样式字段缺省被丢弃。
-        if str(item.get("color") or "unknown").casefold() == "unknown":
-            item["color"] = color
-        if not item.get("visual_form"):
-            item["visual_form"] = visual_form
-        if not item.get("scale_transform"):
-            item["scale_transform"] = transform
-        if item.get("left_value") is None and item.get("scale_min") is not None:
-            item["left_value"] = item.get("scale_min")
-        if item.get("right_value") is None and item.get("scale_max") is not None:
-            item["right_value"] = item.get("scale_max")
-    known = {_canonical_curve_name(item.get("name")) for item in descriptors}
-    for track in tracks:
-        role = str(track.get("role") or "")
-        if role not in {"curve", "porosity", "permeability"}:
-            continue
-        header = " / ".join(
-            str(value or "")
-            for value in (track.get("header"), track.get("semantic_header_text"))
-            if str(value or "")
-        )
-        for token, color, visual_form, transform in _CURVE_STYLE_RULES:
-            if token.casefold() not in _clean_text(header).casefold() or token.casefold() in known:
-                continue
-            curve_id = re.sub(r"[^0-9A-Za-z_]+", "_", f"curve_{track.get('id')}_{token}")
-            descriptors.append(
-                {
-                    "id": curve_id,
-                    "name": token,
-                    "track_id": str(track.get("id") or ""),
-                    "scale_min": None,
-                    "scale_max": None,
-                    "left_value": None,
-                    "right_value": None,
-                    "unit": "",
-                    "color": color,
-                    "visual_form": visual_form,
-                    "scale_transform": transform,
-                    "evidence": f"语义轨道表头可见曲线名：{token}",
-                    "confidence": 0.82,
-                    "recognition_source": "deterministic_track_header",
-                }
-            )
-            known.add(token.casefold())
-    for item in descriptors:
-        if item.get("left_value") is not None and item.get("right_value") is not None:
-            continue
-        name = _clean_text(item.get("name"))
-        track = track_by_id.get(str(item.get("track_id") or ""))
-        if not track:
-            continue
-        track_box = _bbox(track)
-        header_bottom = _body_top(track, geometry)
-        label_lines = [
-            line
-            for line in geometry.get("ocr_lines", [])
-            if isinstance(line, Mapping)
-            and name.casefold() in _clean_text(line.get("text")).casefold()
-            and _bbox(line)
-            and track_box[0] <= (_bbox(line)[0] + _bbox(line)[2]) / 2.0 <= track_box[2]
-            and _bbox(line)[3] <= header_bottom + 3
-        ]
-        if not label_lines:
-            continue
-        label_box = _bbox(label_lines[0])
-        label_y = (label_box[1] + label_box[3]) / 2.0
-        numeric = []
-        for line in geometry.get("ocr_lines", []):
-            if not isinstance(line, Mapping) or not _bbox(line):
-                continue
-            box = _bbox(line)
-            center_x, center_y = (box[0] + box[2]) / 2.0, (box[1] + box[3]) / 2.0
-            value = _parse_number(line.get("text"))
-            if value is None or not (track_box[0] - 5 <= center_x <= track_box[2] + 5):
-                continue
-            if abs(center_y - label_y) <= max(18.0, label_box[3] - label_box[1]):
-                numeric.append((center_x, value, str(line.get("id") or "")))
-        if len(numeric) >= 2:
-            numeric.sort()
-            item["left_value"] = numeric[0][1]
-            item["right_value"] = numeric[-1][1]
-            item["scale_ocr_ids"] = [numeric[0][2], numeric[-1][2]]
-    primitives["curve_tracks"] = descriptors
-    return descriptors
-
-
-def _color_mask(array: Any, color: str) -> Any:
-    """中文说明：用通道差分离红、蓝、绿和青色细曲线，避免灰色网格进入轨迹。"""
-
-    import numpy as np
-
-    red = array[:, :, 0].astype(np.int16)
-    green = array[:, :, 1].astype(np.int16)
-    blue = array[:, :, 2].astype(np.int16)
-    if color == "red":
-        return (red - green >= 35) & (red - blue >= 35) & (red >= 100)
-    if color == "green":
-        return (green - red >= 25) & (green - blue >= 8) & (green >= 80)
-    if color == "cyan":
-        return (blue - red >= 25) & (green - red >= 15) & (blue >= 90)
-    if color == "blue":
-        return (blue - red >= 30) & (blue - green >= 5) & (blue >= 90)
-    return (red <= 85) & (green <= 85) & (blue <= 85)
-
-
-def _trace_colored_curve(mask: Any, visual_form: str) -> list[tuple[int, int]]:
-    """中文说明：逐行跟踪颜色骨架，对断线优先选择与上一行连续的分量。"""
-
-    import numpy as np
-
-    points: list[tuple[int, int]] = []
-    previous_x: float | None = None
-    for y in range(mask.shape[0]):
-        xs = np.flatnonzero(mask[y])
-        if xs.size == 0:
-            continue
-        groups = np.split(xs, np.flatnonzero(np.diff(xs) > 1) + 1)
-        candidates = [((float(group[0]) + float(group[-1])) / 2.0, len(group)) for group in groups if len(group)]
-        if not candidates:
-            continue
-        if visual_form in {"filled_profile", "sample_bars"}:
-            chosen_x = max(float(group[-1]) for group in groups if len(group))
-        elif previous_x is None:
-            chosen_x = max(candidates, key=lambda item: item[1])[0]
-        else:
-            chosen_x = min(candidates, key=lambda item: (abs(item[0] - previous_x), -item[1]))[0]
-        previous_x = chosen_x
-        points.append((round(chosen_x), y))
-    return points
-
-
-def _trace_black_bars(mask: Any) -> list[tuple[int, int]]:
-    """中文说明：用水平形态学提取黑色岩心离散测量棒，不把它们误连成连续曲线。"""
-
-    import cv2
-    import numpy as np
-
-    source = (mask.astype(np.uint8) * 255)
-    kernel_width = max(4, round(mask.shape[1] * 0.045))
-    horizontal = cv2.morphologyEx(
-        source,
-        cv2.MORPH_OPEN,
-        cv2.getStructuringElement(cv2.MORPH_RECT, (kernel_width, 1)),
-    )
-    count, _, stats, centroids = cv2.connectedComponentsWithStats(horizontal, 8)
-    points = []
-    for index in range(1, count):
-        x, y, width, height, area = (int(value) for value in stats[index])
-        if width < kernel_width or height > max(7, round(mask.shape[0] * 0.03)) or area < kernel_width:
-            continue
-        points.append((x + width - 1, round(float(centroids[index][1]))))
-    return sorted(points, key=lambda item: item[1])
-
-
-def _axis_value(descriptor: Mapping[str, Any], normalized_x: float) -> float | None:
-    """中文说明：按线性或对数横轴把曲线像素 x 换算为测井值。"""
-
-    try:
-        left = float(descriptor.get("left_value"))
-        right = float(descriptor.get("right_value"))
-    except (TypeError, ValueError):
-        return None
-    position = max(0.0, min(1.0, float(normalized_x)))
-    if str(descriptor.get("scale_transform") or "linear") == "log10":
-        if left <= 0 or right <= 0:
-            return None
-        return 10 ** (math.log10(left) + position * (math.log10(right) - math.log10(left)))
-    return left + position * (right - left)
-
-
-def _curve_traces(
-    image_path: Path,
-    descriptors: Sequence[Mapping[str, Any]],
-    tracks: Sequence[Mapping[str, Any]],
-    geometry: Mapping[str, Any],
-) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    """中文说明：在各语义曲线 ROI 内输出可审计像素采样、刻度值和连续覆盖率。"""
-
-    try:
-        import cv2
-        import numpy as np
-    except ImportError:
-        return [], {"available": False, "reason": "opencv_or_numpy_unavailable"}
-    if not image_path.is_file():
-        return [], {"available": False, "reason": f"source_image_not_found:{image_path}"}
-    with Image.open(image_path) as source:
-        image = np.asarray(source.convert("RGB"))
-    track_by_id = {str(item.get("id") or ""): item for item in tracks}
-    horizontal_lines = [int(round(float(value))) for value in ((geometry.get("rule_lines") or {}).get("horizontal_lines") or [])]
-    traces: list[dict[str, Any]] = []
-    rejected = []
-    max_samples = max(32, int(os.getenv("TABLE_CURVE_TRACE_MAX_SAMPLES", "320")))
-    min_coverage = float(os.getenv("TABLE_CURVE_TRACE_MIN_COVERAGE", "0.025"))
-    for descriptor in descriptors:
-        track = track_by_id.get(str(descriptor.get("track_id") or ""))
-        color = str(descriptor.get("color") or "unknown").casefold()
-        if not track or color == "unknown":
-            rejected.append({"curve_id": descriptor.get("id"), "reason": "missing_track_or_color"})
-            continue
-        box = [int(round(value)) for value in _bbox(track)]
-        body_top = max(box[1], int(round(_body_top(track, geometry))))
-        left, right = max(0, box[0] + 1), min(image.shape[1], box[2] - 1)
-        top, bottom = max(0, body_top + 1), min(image.shape[0], box[3] - 1)
-        if right - left < 4 or bottom - top < 8:
-            rejected.append({"curve_id": descriptor.get("id"), "reason": "empty_curve_roi"})
-            continue
-        roi = image[top:bottom, left:right]
-        mask = _color_mask(roi, color)
-        if color == "black":
-            for line_y in horizontal_lines:
-                local_y = line_y - top
-                if 0 <= local_y < mask.shape[0]:
-                    mask[max(0, local_y - 1) : min(mask.shape[0], local_y + 2), :] = False
-            points = _trace_black_bars(mask)
-        else:
-            binary = (mask.astype(np.uint8) * 255)
-            binary = cv2.morphologyEx(
-                binary,
-                cv2.MORPH_CLOSE,
-                cv2.getStructuringElement(cv2.MORPH_RECT, (1, 3)),
-            )
-            points = _trace_colored_curve(binary > 0, str(descriptor.get("visual_form") or "continuous_curve"))
-        coverage = len({point[1] for point in points}) / max(1, bottom - top)
-        if not points or coverage < min_coverage:
-            rejected.append(
-                {
-                    "curve_id": descriptor.get("id"),
-                    "reason": "insufficient_colored_pixels",
-                    "coverage": round(coverage, 4),
-                }
-            )
-            continue
-        stride = max(1, math.ceil(len(points) / max_samples))
-        selected = points[::stride]
-        samples = []
-        for local_x, local_y in selected:
-            pixel_x, pixel_y = left + local_x, top + local_y
-            normalized_x = (pixel_x - left) / max(1.0, right - left - 1)
-            value = _axis_value(descriptor, normalized_x)
-            samples.append(
-                {
-                    "pixel_x": round(float(pixel_x), 3),
-                    "pixel_y": round(float(pixel_y), 3),
-                    "normalized_x": round(normalized_x, 6),
-                    "axis_value": round(value, 6) if value is not None else None,
-                }
-            )
-        traces.append(
-            {
-                "id": f"trace_{descriptor.get('id')}",
-                "curve_id": str(descriptor.get("id") or ""),
-                "name": str(descriptor.get("name") or descriptor.get("id") or "曲线"),
-                "track_id": str(descriptor.get("track_id") or ""),
-                "color": color,
-                "visual_form": str(descriptor.get("visual_form") or "continuous_curve"),
-                "scale_transform": str(descriptor.get("scale_transform") or "linear"),
-                "left_value": descriptor.get("left_value"),
-                "right_value": descriptor.get("right_value"),
-                "unit": str(descriptor.get("unit") or ""),
-                "roi_bbox": [left, top, right, bottom],
-                "samples": samples,
-                "raw_point_count": len(points),
-                "trace_coverage": round(coverage, 4),
-                "confidence": round(min(0.98, 0.58 + min(0.4, coverage)), 3),
-                "coordinate_source": "OpenCV.color_or_bar_trace",
-                "evidence": f"{descriptor.get('name') or descriptor.get('id')} 在轨道 ROI 中的{color}像素轨迹",
-            }
-        )
-    return traces, {
-        "available": True,
-        "curve_descriptor_count": len(descriptors),
-        "trace_count": len(traces),
-        "rejected": rejected,
     }
 
 
@@ -2503,21 +1934,14 @@ def enrich_visual_track_primitives(
             track_intervals.append(item)
             known_track_interval_ids.add(str(item.get("id") or ""))
     primitives["track_intervals"] = track_intervals
-    # 中文说明：曲线像素追踪和图例纹理匹配暂时关闭，视觉轨道只接受后续 VLM 切片描述。
-    primitives["curve_traces"] = []
     primitives["legend_entries"] = []
     enriched["visual_track_extraction"] = {
         "version": VISUAL_TRACK_EXTRACTION_VERSION,
-        "recognition_mode": "vlm_legend_slice_interpretation_curve_slice_disabled",
+        "recognition_mode": "vlm_legend_slices_and_full_curve_track_images",
         "track_recognition_order": list(TRACK_RECOGNITION_ORDER),
         "vlm_slice_track_types": list(VLM_SLICE_TRACK_TYPES),
-        "curve_slice_vlm_enabled": False,
         "vertical_baseline_policy": "nearest_table_text_track_with_more_entities_left_on_tie",
         "coordinate_source": "PP-StructureV3_crop_geometry",
-        "curve": {
-            "available": False,
-            "reason": "local_curve_vectorization_disabled",
-        },
         "legend": {
             "available": False,
             "reason": "local_legend_pattern_matching_disabled",

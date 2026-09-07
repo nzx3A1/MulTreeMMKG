@@ -1,20 +1,66 @@
 {
   "raw_type_aliases": {
-    "analyticalmethod": "AnalyticalMethod",
+    "accumulationprocess": "AccumulationProcess",
     "analysismethod": "AnalyticalMethod",
+    "analyticalmethod": "AnalyticalMethod",
+    "annotation": "VisualAnnotation",
+    "axis": "Axis",
     "basin": "Basin",
+    "bed": "Bed",
+    "biomarker": "Biomarker",
+    "biomarkers": "Biomarker",
+    "block": "Block",
+    "caption": "Caption",
+    "carriersystem": "CarrierSystem",
+    "cavity": "Cavity",
+    "chart": "Chart",
+    "conduitsystem": "CarrierSystem",
+    "constant": "Constant",
     "core": "Core",
+    "dataseries": "DataSeries",
     "depositionalenvironment": "DepositionalEnvironment",
+    "depositionalsystem": "DepositionalSystem",
+    "depression": "Depression",
+    "diagenesis": "Diagenesis",
+    "diageneticaction": "Diagenesis",
+    "diageneticfacies": "DiageneticFacies",
     "diageneticprocess": "Diagenesis",
+    "diageneticstage": "DiageneticStage",
+    "equation": "Formula",
+    "experiment": "Experiment",
     "fault": "Fault",
+    "faultzone": "FaultZone",
+    "figure": "Figure",
+    "figureelement": "FigureElement",
+    "figurepanel": "FigurePanel",
+    "fluidcontact": "FluidContact",
+    "formation": "Formation",
+    "formula": "Formula",
+    "fracture": "Fracture",
+    "geologicage": "GeologicAge",
     "geologicalmap": "GeologicalMap",
     "geologicalperiod": "GeologicAge",
     "highvaluezone": "SweetSpot",
+    "hydrocarbon": "Hydrocarbon",
+    "isotope": "Isotope",
+    "isotopicindicator": "Isotope",
+    "kerogen": "KerogenType",
+    "kerogentype": "KerogenType",
+    "legend": "Legend",
     "lithology": "Lithology",
     "lithologyinterval": "Lithology",
+    "microfacies": "Microfacies",
+    "migrationchannel": "MigrationPathway",
+    "migrationpathway": "MigrationPathway",
     "mineral": "Mineral",
+    "oilgas": "Hydrocarbon",
     "oilgasfield": "OilGasField",
+    "oilgasreservoir": "OilGasReservoir",
     "organicmatter": "OrganicMatter",
+    "outcrop": "Outcrop",
+    "outcropprofile": "Outcrop",
+    "parameter": "Parameter",
+    "petroleumaccumulationprocess": "AccumulationProcess",
     "petroleumsystem": "PetroleumSystem",
     "pore": "PoreStructure",
     "porestructure": "PoreStructure",
@@ -22,61 +68,614 @@
     "poretype": "PoreStructure",
     "porositystructure": "PoreStructure",
     "porositytype": "PoreStructure",
+    "productiontest": "ProductionTest",
     "reservoir": "Reservoir",
     "reservoirinterval": "ReservoirInterval",
     "reservoirtype": "Reservoir",
+    "rockfabric": "RockTexture",
+    "rocktexture": "RockTexture",
     "rocktype": "Lithology",
+    "sag": "Sag",
+    "sample": "Sample",
+    "seal": "Seal",
     "sedimentaryenvironment": "DepositionalEnvironment",
     "sedimentaryfacies": "SedimentaryFacies",
     "sedimentaryfaciesinterval": "SedimentaryFacies",
     "sedimentarymicrofacies": "Microfacies",
     "sedimentarystructure": "SedimentaryStructure",
+    "sedimentarysystem": "DepositionalSystem",
+    "seismicprofile": "SeismicProfile",
+    "seismicsection": "SeismicProfile",
+    "sequenceboundary": "SequenceBoundary",
+    "sequencestratigraphicunit": "SequenceStratigraphicUnit",
+    "sequenceunit": "SequenceStratigraphicUnit",
+    "slope": "Slope",
+    "sourcerock": "SourceRock",
+    "specimen": "Sample",
+    "stratigraphicbed": "Bed",
+    "stratigraphicboundary": "StratigraphicBoundary",
     "stratigraphicmember": "StratigraphicMember",
+    "structuralbelt": "StructuralBelt",
+    "structuralunit": "StructuralUnit",
     "studyarea": "StudyArea",
+    "subfacies": "Subfacies",
+    "subfigure": "FigurePanel",
     "submember": "SubMember",
+    "sweetspot": "SweetSpot",
+    "symbol": "Symbol",
+    "systemstract": "SystemTract",
+    "systemstractunit": "SystemTract",
+    "systemtract": "SystemTract",
+    "table": "Table",
+    "tablecell": "TableCell",
+    "tablecolumn": "TableColumn",
+    "tableheader": "TableHeader",
+    "tablerow": "TableRow",
+    "tectonicunit": "StructuralUnit",
+    "testexperiment": "Experiment",
     "thinsection": "ThinSection",
-    "well": "Well"
+    "trap": "Trap",
+    "unconformity": "Unconformity",
+    "unit": "Unit",
+    "uplift": "Uplift",
+    "variable": "Variable",
+    "visualannotation": "VisualAnnotation",
+    "well": "Well",
+    "welllog": "WellLog",
+    "welltest": "ProductionTest"
   },
+  "category_routes": [
+    {
+      "category": "地理与构造单元",
+      "hints": ["basin", "structural", "tectonic", "depression", "sag", "uplift", "slope", "fault", "block", "studyarea", "盆地", "构造", "坳陷", "凹陷", "洼陷", "隆起", "斜坡", "断层", "断裂", "区块", "研究区"]
+    },
+    {
+      "category": "地层与地质时代",
+      "hints": ["stratigraph", "formation", "member", "submember", "geologicage", "sequence", "systemtract", "地层", "地质时代", "地质年代", "组段", "亚段", "小层", "层序", "体系域", "地层界面", "不整合"]
+    },
+    {
+      "category": "岩石、矿物与沉积体系",
+      "hints": ["lithology", "mineral", "rock", "sediment", "facies", "diagen", "岩性", "岩石", "矿物", "沉积", "成岩", "岩相", "微相", "亚相", "砂岩", "泥岩", "灰岩", "白云岩"]
+    },
+    {
+      "category": "油气成藏要素",
+      "hints": ["petroleumsystem", "sourcerock", "reservoir", "seal", "trap", "migration", "carrier", "accumulation", "油气系统", "成藏", "烃源", "储层", "盖层", "圈闭", "运移", "输导"]
+    },
+    {
+      "category": "油气藏与流体",
+      "hints": ["oilgasfield", "oilgasreservoir", "hydrocarbon", "fluidcontact", "油气田", "油田", "气田", "油气藏", "油藏", "气藏", "油气", "原油", "天然气", "流体", "油水界面", "气水界面"]
+    },
+    {
+      "category": "储层结构与评价实体",
+      "hints": ["pore", "fracture", "cavity", "sweetspot", "孔隙", "孔洞", "裂缝", "缝洞", "甜点"]
+    },
+    {
+      "category": "地球化学与有机质实体",
+      "hints": ["organicmatter", "kerogen", "biomarker", "isotope", "有机质", "干酪根", "生物标志", "同位素", "地球化学"]
+    },
+    {
+      "category": "勘探开发与资料类型",
+      "hints": ["seismic", "well", "welllog", "core", "thinsection", "outcrop", "geologicalmap", "productiontest", "勘探", "开发", "井", "测井", "地震", "岩心", "薄片", "露头", "地质图", "试井", "生产测试"]
+    },
+    {
+      "category": "实验样品与测试",
+      "hints": ["sample", "specimen", "experiment", "analyticalmethod", "样品", "试样", "实验", "试验", "分析方法", "测试方法"]
+    },
+    {
+      "category": "通用表格图片与公式",
+      "hints": ["table", "figure", "chart", "axis", "legend", "annotation", "dataseries", "formula", "symbol", "variable", "constant", "parameter", "unit", "caption", "表格", "图片", "图件", "图表", "坐标轴", "图例", "公式", "方程", "参数", "单位", "标题"]
+    }
+  ],
   "name_rules": [
-    {"id": "source_rock", "pattern": "烃源岩$", "schema": "SourceRock", "confidence": 1.0},
-    {"id": "reservoir_interval", "pattern": "(?:储集层段|储层段|目的层)$", "schema": "ReservoirInterval", "confidence": 0.99},
-    {"id": "oil_gas_reservoir", "pattern": "(?:油气藏|油藏|气藏)$", "schema": "OilGasReservoir", "confidence": 0.99},
-    {"id": "oil_gas_field", "pattern": "(?:油气田|油田|气田)$", "schema": "OilGasField", "confidence": 0.99},
-    {"id": "reservoir", "pattern": "(?:储集层|储层)$", "schema": "Reservoir", "confidence": 0.99},
-    {"id": "sub_member", "pattern": "(?:亚段|小层)$", "schema": "SubMember", "confidence": 0.99},
-    {"id": "formation", "pattern": "组$", "schema": "Formation", "confidence": 0.98},
-    {"id": "member", "pattern": "(?<!阶)段$", "schema": "StratigraphicMember", "confidence": 0.97},
-    {"id": "basin", "pattern": "盆地$", "schema": "Basin", "confidence": 1.0},
-    {"id": "depression", "pattern": "(?:坳陷|凹陷)$", "schema": "Depression", "confidence": 0.99},
-    {"id": "sag", "pattern": "洼陷$", "schema": "Sag", "confidence": 0.99},
-    {"id": "uplift", "pattern": "隆起$", "schema": "Uplift", "confidence": 0.99},
-    {"id": "slope", "pattern": "斜坡$", "schema": "Slope", "confidence": 0.99},
-    {"id": "fault_zone", "pattern": "断裂带$", "schema": "FaultZone", "confidence": 0.99},
-    {"id": "fault", "pattern": "(?:断层|断裂)$", "schema": "Fault", "confidence": 0.98},
-    {"id": "structural_belt", "pattern": "构造带$", "schema": "StructuralBelt", "confidence": 0.99},
-    {"id": "block", "pattern": "区块$", "schema": "Block", "confidence": 0.98},
-    {"id": "study_area", "pattern": "研究区$", "schema": "StudyArea", "confidence": 0.98},
-    {"id": "unconformity", "pattern": "不整合面$", "schema": "Unconformity", "confidence": 0.99},
-    {"id": "sequence_boundary", "pattern": "层序界面$", "schema": "SequenceBoundary", "confidence": 0.99},
-    {"id": "stratigraphic_boundary", "pattern": "地层界面$", "schema": "StratigraphicBoundary", "confidence": 0.98},
-    {"id": "fluid_contact", "pattern": "(?:油水|气水|油气)界面$", "schema": "FluidContact", "confidence": 0.99},
-    {"id": "microfacies", "pattern": "微相$", "schema": "Microfacies", "confidence": 0.99},
-    {"id": "subfacies", "pattern": "亚相$", "schema": "Subfacies", "confidence": 0.99},
-    {"id": "sedimentary_facies", "pattern": "沉积相$", "schema": "SedimentaryFacies", "confidence": 0.98},
-    {"id": "depositional_environment", "pattern": "沉积环境$", "schema": "DepositionalEnvironment", "confidence": 0.99},
-    {"id": "diagenetic_facies", "pattern": "成岩相$", "schema": "DiageneticFacies", "confidence": 0.99},
-    {"id": "diagenetic_stage", "pattern": "(?:成岩阶段|成岩期)$", "schema": "DiageneticStage", "confidence": 0.98},
-    {"id": "seal", "pattern": "盖层$", "schema": "Seal", "confidence": 0.99},
-    {"id": "trap", "pattern": "圈闭$", "schema": "Trap", "confidence": 0.99},
-    {"id": "fracture", "pattern": "裂缝$", "schema": "Fracture", "confidence": 0.99},
-    {"id": "cavity", "pattern": "(?:溶洞|孔洞|洞穴)$", "schema": "Cavity", "confidence": 0.98},
-    {"id": "pore_structure", "pattern": "(?:孔隙结构|孔喉结构)$", "schema": "PoreStructure", "confidence": 0.99},
-    {"id": "well_log", "pattern": "(?:测井资料|测井曲线)$", "schema": "WellLog", "confidence": 0.98},
-    {"id": "well", "pattern": "(?:井|井组)$", "schema": "Well", "confidence": 0.97},
-    {"id": "core", "pattern": "岩芯$", "schema": "Core", "confidence": 0.99},
-    {"id": "thin_section", "pattern": "薄片$", "schema": "ThinSection", "confidence": 0.99},
-    {"id": "geological_map", "pattern": "(?:地质图|构造图|沉积相图|分布图)$", "schema": "GeologicalMap", "confidence": 0.96},
-    {"id": "geologic_age", "pattern": "(?:系|纪|世)$", "schema": "GeologicAge", "confidence": 0.96},
-    {"id": "lithology", "pattern": "(?:花岗岩|闪长岩|辉长岩|玄武岩|安山岩|流纹岩|砂岩|粉砂岩|泥岩|页岩|灰岩|石灰岩|白云岩|云岩|砾岩|蒸发岩|膏岩|盐岩|煤岩|火山岩|变质岩|碳酸盐岩)$", "schema": "Lithology", "confidence": 0.99}
+    {
+      "id": "source_rock",
+      "pattern": "烃源岩$",
+      "schema": "SourceRock",
+      "confidence": 1.0
+    },
+    {
+      "id": "reservoir_interval",
+      "pattern": "(?:储集层段|储层段|目的层)$",
+      "schema": "ReservoirInterval",
+      "confidence": 0.99
+    },
+    {
+      "id": "oil_gas_reservoir",
+      "pattern": "(?:油气藏|油藏|气藏)$",
+      "schema": "OilGasReservoir",
+      "confidence": 0.99
+    },
+    {
+      "id": "oil_gas_field",
+      "pattern": "(?:油气田|油田|气田)$",
+      "schema": "OilGasField",
+      "confidence": 0.99
+    },
+    {
+      "id": "reservoir",
+      "pattern": "(?:储集层|储层)$",
+      "schema": "Reservoir",
+      "confidence": 0.99
+    },
+    {
+      "id": "sub_member",
+      "pattern": "(?:亚段|小层)$",
+      "schema": "SubMember",
+      "confidence": 0.99
+    },
+    {
+      "id": "formation",
+      "pattern": "组$",
+      "schema": "Formation",
+      "confidence": 0.98
+    },
+    {
+      "id": "member",
+      "pattern": "(?<!阶)段$",
+      "schema": "StratigraphicMember",
+      "confidence": 0.97
+    },
+    {
+      "id": "basin",
+      "pattern": "盆地$",
+      "schema": "Basin",
+      "confidence": 1.0
+    },
+    {
+      "id": "depression",
+      "pattern": "(?:坳陷|凹陷)$",
+      "schema": "Depression",
+      "confidence": 0.99
+    },
+    {
+      "id": "sag",
+      "pattern": "洼陷$",
+      "schema": "Sag",
+      "confidence": 0.99
+    },
+    {
+      "id": "uplift",
+      "pattern": "隆起$",
+      "schema": "Uplift",
+      "confidence": 0.99
+    },
+    {
+      "id": "slope",
+      "pattern": "斜坡$",
+      "schema": "Slope",
+      "confidence": 0.99
+    },
+    {
+      "id": "fault_zone",
+      "pattern": "断裂带$",
+      "schema": "FaultZone",
+      "confidence": 0.99
+    },
+    {
+      "id": "fault",
+      "pattern": "(?:断层|断裂)$",
+      "schema": "Fault",
+      "confidence": 0.98
+    },
+    {
+      "id": "structural_belt",
+      "pattern": "构造带$",
+      "schema": "StructuralBelt",
+      "confidence": 0.99
+    },
+    {
+      "id": "block",
+      "pattern": "区块$",
+      "schema": "Block",
+      "confidence": 0.98
+    },
+    {
+      "id": "study_area",
+      "pattern": "研究区$",
+      "schema": "StudyArea",
+      "confidence": 0.98
+    },
+    {
+      "id": "unconformity",
+      "pattern": "不整合面$",
+      "schema": "Unconformity",
+      "confidence": 0.99
+    },
+    {
+      "id": "sequence_boundary",
+      "pattern": "层序界面$",
+      "schema": "SequenceBoundary",
+      "confidence": 0.99
+    },
+    {
+      "id": "stratigraphic_boundary",
+      "pattern": "地层界面$",
+      "schema": "StratigraphicBoundary",
+      "confidence": 0.98
+    },
+    {
+      "id": "fluid_contact",
+      "pattern": "(?:油水|气水|油气)界面$",
+      "schema": "FluidContact",
+      "confidence": 0.99
+    },
+    {
+      "id": "microfacies",
+      "pattern": "微相$",
+      "schema": "Microfacies",
+      "confidence": 0.99
+    },
+    {
+      "id": "subfacies",
+      "pattern": "亚相$",
+      "schema": "Subfacies",
+      "confidence": 0.99
+    },
+    {
+      "id": "sedimentary_facies",
+      "pattern": "沉积相$",
+      "schema": "SedimentaryFacies",
+      "confidence": 0.98
+    },
+    {
+      "id": "depositional_environment",
+      "pattern": "沉积环境$",
+      "schema": "DepositionalEnvironment",
+      "confidence": 0.99
+    },
+    {
+      "id": "diagenetic_facies",
+      "pattern": "成岩相$",
+      "schema": "DiageneticFacies",
+      "confidence": 0.99
+    },
+    {
+      "id": "diagenetic_stage",
+      "pattern": "(?:成岩阶段|成岩期)$",
+      "schema": "DiageneticStage",
+      "confidence": 0.98
+    },
+    {
+      "id": "seal",
+      "pattern": "盖层$",
+      "schema": "Seal",
+      "confidence": 0.99
+    },
+    {
+      "id": "trap",
+      "pattern": "圈闭$",
+      "schema": "Trap",
+      "confidence": 0.99
+    },
+    {
+      "id": "fracture",
+      "pattern": "裂缝$",
+      "schema": "Fracture",
+      "confidence": 0.99
+    },
+    {
+      "id": "cavity",
+      "pattern": "(?:溶洞|孔洞|洞穴)$",
+      "schema": "Cavity",
+      "confidence": 0.98
+    },
+    {
+      "id": "pore_structure",
+      "pattern": "(?:孔隙结构|孔喉结构)$",
+      "schema": "PoreStructure",
+      "confidence": 0.99
+    },
+    {
+      "id": "well_log",
+      "pattern": "(?:测井资料|测井曲线)$",
+      "schema": "WellLog",
+      "confidence": 0.98
+    },
+    {
+      "id": "well",
+      "pattern": "(?:井|井组)$",
+      "schema": "Well",
+      "confidence": 0.97
+    },
+    {
+      "id": "core",
+      "pattern": "岩芯$",
+      "schema": "Core",
+      "confidence": 0.99
+    },
+    {
+      "id": "thin_section",
+      "pattern": "薄片$",
+      "schema": "ThinSection",
+      "confidence": 0.99
+    },
+    {
+      "id": "geological_map",
+      "pattern": "(?:地质图|构造图|沉积相图|分布图)$",
+      "schema": "GeologicalMap",
+      "confidence": 0.96
+    },
+    {
+      "id": "geologic_age",
+      "pattern": "(?:系|纪|世)$",
+      "schema": "GeologicAge",
+      "confidence": 0.96
+    },
+    {
+      "id": "lithology",
+      "pattern": "(?:花岗岩|闪长岩|辉长岩|玄武岩|安山岩|流纹岩|砂岩|粉砂岩|泥岩|页岩|灰岩|石灰岩|白云岩|云岩|砾岩|蒸发岩|膏岩|盐岩|煤岩|火山岩|变质岩|碳酸盐岩)$",
+      "schema": "Lithology",
+      "confidence": 0.99
+    },
+    {
+      "id": "structural_unit",
+      "pattern": "(?:构造单元|构造分区|构造区)$",
+      "schema": "StructuralUnit",
+      "confidence": 0.98
+    },
+    {
+      "id": "sequence_stratigraphic_unit",
+      "pattern": "(?:层序单元|(?:一|二|三|四|五|六|七|八|九|十|\\d+)级层序|(?i:SQ)\\s*\\d+)$",
+      "schema": "SequenceStratigraphicUnit",
+      "confidence": 0.98
+    },
+    {
+      "id": "system_tract",
+      "pattern": "(?:体系域|低位域|湖侵域|海侵域|高位域)$",
+      "schema": "SystemTract",
+      "confidence": 0.99
+    },
+    {
+      "id": "bed",
+      "pattern": "(?:单砂层|砂层|粉砂岩层|泥岩层|页岩层|煤层|灰岩层|石灰岩层|白云岩层|云岩层|膏盐层|盐层|单层)$",
+      "schema": "Bed",
+      "confidence": 0.95
+    },
+    {
+      "id": "rock_texture",
+      "pattern": "(?:岩石结构|岩石组构|粒状结构|泥晶结构|晶粒结构|碎屑结构|交代结构|斑状结构)$",
+      "schema": "RockTexture",
+      "confidence": 0.96
+    },
+    {
+      "id": "depositional_system",
+      "pattern": "(?:沉积体系|沉积系统)$",
+      "schema": "DepositionalSystem",
+      "confidence": 0.99
+    },
+    {
+      "id": "diagenesis",
+      "pattern": "(?:成岩作用|压实作用|胶结作用|溶蚀作用|交代作用|白云石化作用|重结晶作用|压溶作用)$",
+      "schema": "Diagenesis",
+      "confidence": 0.98
+    },
+    {
+      "id": "mineral",
+      "pattern": "(?:石英|长石|方解石|白云石|黄铁矿|伊利石|高岭石|绿泥石|蒙脱石|黏土矿物)$",
+      "schema": "Mineral",
+      "confidence": 0.98
+    },
+    {
+      "id": "sedimentary_structure_detail",
+      "pattern": "(?:交错层理|平行层理|水平层理|波状层理|块状层理|递变层理|波痕|冲刷面|泥裂|槽模|沟模)$",
+      "schema": "SedimentaryStructure",
+      "confidence": 0.98
+    },
+    {
+      "id": "petroleum_system",
+      "pattern": "(?:含油气系统|成藏系统|含气系统|含油系统)$",
+      "schema": "PetroleumSystem",
+      "confidence": 0.99
+    },
+    {
+      "id": "migration_pathway",
+      "pattern": "(?:运移通道|输导通道|断层通道|裂缝通道|砂体输导层|不整合面通道)$",
+      "schema": "MigrationPathway",
+      "confidence": 0.98
+    },
+    {
+      "id": "carrier_system",
+      "pattern": "(?:输导体系|输导系统|输导网络)$",
+      "schema": "CarrierSystem",
+      "confidence": 0.98
+    },
+    {
+      "id": "accumulation_process",
+      "pattern": "(?:成藏过程|生烃过程|排烃过程|油气运移过程|油气聚集过程|油气保存过程)$",
+      "schema": "AccumulationProcess",
+      "confidence": 0.97
+    },
+    {
+      "id": "hydrocarbon",
+      "pattern": "(?:原油|天然气|凝析油|页岩气|致密气|煤层气|烃类|油气)$",
+      "schema": "Hydrocarbon",
+      "confidence": 0.96
+    },
+    {
+      "id": "sweet_spot",
+      "pattern": "(?:甜点|甜点区|甜点段|甜点层|甜点带|优质储层甜点区)$",
+      "schema": "SweetSpot",
+      "confidence": 0.98
+    },
+    {
+      "id": "organic_matter",
+      "pattern": "有机质$",
+      "schema": "OrganicMatter",
+      "confidence": 0.99
+    },
+    {
+      "id": "kerogen_type",
+      "pattern": "(?:干酪根类型|[ⅠⅡⅢⅣIVX0-9]+型干酪根|干酪根)$",
+      "schema": "KerogenType",
+      "confidence": 0.98
+    },
+    {
+      "id": "biomarker",
+      "pattern": "(?:生物标志化合物|生物标志物|甾烷|萜烷|藿烷|伽马蜡烷)$",
+      "schema": "Biomarker",
+      "confidence": 0.98
+    },
+    {
+      "id": "isotope",
+      "pattern": "(?:同位素|碳同位素|氧同位素|氢同位素|锶同位素|δ\\s*13C(?:\\d+)?|δ\\s*18O|δD|87Sr\\s*/\\s*86Sr)$",
+      "schema": "Isotope",
+      "confidence": 0.98
+    },
+    {
+      "id": "seismic_profile",
+      "pattern": "(?:地震剖面|二维地震剖面|三维地震剖面|过井地震剖面)$",
+      "schema": "SeismicProfile",
+      "confidence": 0.99
+    },
+    {
+      "id": "outcrop",
+      "pattern": "(?:露头|露头剖面|野外露头|剖面露头)$",
+      "schema": "Outcrop",
+      "confidence": 0.98
+    },
+    {
+      "id": "production_test",
+      "pattern": "(?:试油|试气|试采|产能测试|生产测试|DST测试|DST)$",
+      "schema": "ProductionTest",
+      "confidence": 0.98
+    },
+    {
+      "id": "sample",
+      "pattern": "(?:样品|样本|试样|岩心样品|烃源岩样品|原油样品|薄片样品)$",
+      "schema": "Sample",
+      "confidence": 0.96
+    },
+    {
+      "id": "experiment",
+      "pattern": "(?:实验|试验|压汞实验|热解实验|吸附实验|等温吸附实验|X射线衍射实验|扫描电镜实验)$",
+      "schema": "Experiment",
+      "confidence": 0.95
+    },
+    {
+      "id": "analytical_method",
+      "pattern": "(?:分析方法|测试方法|测定方法|解释方法|TOC分析|XRD分析|X射线衍射分析|SEM分析|扫描电镜分析|Rock-Eval热解|气相色谱分析)$",
+      "schema": "AnalyticalMethod",
+      "confidence": 0.97
+    },
+    {
+      "id": "table_header",
+      "pattern": "(?:表头|列头|表格表头)$",
+      "schema": "TableHeader",
+      "confidence": 0.99
+    },
+    {
+      "id": "table_row",
+      "pattern": "(?:表格行|数据行|记录行)$",
+      "schema": "TableRow",
+      "confidence": 0.97
+    },
+    {
+      "id": "table_column",
+      "pattern": "(?:表格列|数据列|参数列)$",
+      "schema": "TableColumn",
+      "confidence": 0.97
+    },
+    {
+      "id": "table_cell",
+      "pattern": "(?:表格单元格|单元格)$",
+      "schema": "TableCell",
+      "confidence": 0.99
+    },
+    {
+      "id": "table",
+      "pattern": "(?:数据表|参数表|统计表|对比表|结果表|汇总表)$",
+      "schema": "Table",
+      "confidence": 0.96
+    },
+    {
+      "id": "figure_panel",
+      "pattern": "(?:子图|分图|图\\s*\\d+\\s*[a-zA-Z])$",
+      "schema": "FigurePanel",
+      "confidence": 0.98
+    },
+    {
+      "id": "chart",
+      "pattern": "(?:交会图|散点图|柱状图|折线图|直方图|统计图|曲线图|等温吸附曲线)$",
+      "schema": "Chart",
+      "confidence": 0.97
+    },
+    {
+      "id": "axis",
+      "pattern": "(?:坐标轴|横轴|纵轴|X轴|Y轴|深度轴)$",
+      "schema": "Axis",
+      "confidence": 0.98
+    },
+    {
+      "id": "legend",
+      "pattern": "图例$",
+      "schema": "Legend",
+      "confidence": 0.99
+    },
+    {
+      "id": "visual_annotation",
+      "pattern": "(?:图中标注|图内标注|视觉标注|注记)$",
+      "schema": "VisualAnnotation",
+      "confidence": 0.96
+    },
+    {
+      "id": "figure_element",
+      "pattern": "(?:图片元素|图中元素|断层线|井位标记|井位|趋势曲线|方向箭头)$",
+      "schema": "FigureElement",
+      "confidence": 0.94
+    },
+    {
+      "id": "figure",
+      "pattern": "(?:图片|图件|照片|显微照片|岩心照片)$",
+      "schema": "Figure",
+      "confidence": 0.94
+    },
+    {
+      "id": "data_series",
+      "pattern": "(?:数据系列|数据序列|曲线序列|.+[-—–].+序列)$",
+      "schema": "DataSeries",
+      "confidence": 0.96
+    },
+    {
+      "id": "formula",
+      "pattern": "(?:公式|方程|方程式|计算式)$",
+      "schema": "Formula",
+      "confidence": 0.97
+    },
+    {
+      "id": "symbol",
+      "pattern": "(?:公式符号|数学符号|符号)$",
+      "schema": "Symbol",
+      "confidence": 0.95
+    },
+    {
+      "id": "variable",
+      "pattern": "(?:变量|自变量|因变量)$",
+      "schema": "Variable",
+      "confidence": 0.96
+    },
+    {
+      "id": "constant",
+      "pattern": "(?:常量|常数|气体常数R|圆周率π|经验常数C)$",
+      "schema": "Constant",
+      "confidence": 0.97
+    },
+    {
+      "id": "unit",
+      "pattern": "^(?:%|％|mD|D|MPa|kPa|Pa|℃|°C|K|m|cm|mm|μm|nm|g/cm3|g/cm³|kg/m3|kg/m³|mmol/g|cm3/g|cm³/g|m2/g|m²/g)$",
+      "schema": "Unit",
+      "confidence": 0.99
+    },
+    {
+      "id": "parameter_domain_terms",
+      "pattern": "^(?:孔隙度|渗透率|TOC|Ro|Tmax|温度|压力|埋深|深度|厚度|面积|倾角|走向|断距|含油饱和度|含水饱和度|含气量|吸附量|比表面积|孔径|孔容|密度|黏度|矿化度|产量|储量|资源量|采收率)$",
+      "schema": "Parameter",
+      "confidence": 0.94
+    },
+    {
+      "id": "caption",
+      "pattern": "(?:标题|图题|表题|图标题|表标题|公式标题)$",
+      "schema": "Caption",
+      "confidence": 0.97
+    }
   ]
 }

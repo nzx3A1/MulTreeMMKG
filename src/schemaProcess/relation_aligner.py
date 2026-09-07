@@ -1,12 +1,18 @@
 """在实体 Schema 已确定后，对开放关系执行端点约束映射。"""
 from __future__ import annotations
 
+import logging
 import re
+import time
+from collections import Counter
 from copy import deepcopy
 from typing import Any, Mapping, Sequence
 
 from .llm_selector import CandidateSelector
 from .models import SchemaRelation, SchemaSnapshot, SelectionDecision
+
+
+logger = logging.getLogger(__name__)
 
 
 GENERIC_RELATIONS = {"RELATED_TO"}
@@ -132,6 +138,10 @@ class RelationAligner:
             tuple[Mapping[str, Any], str | None, str | None]
         ],
     ) -> list[dict[str, Any]]:
+        """按端点候选对齐全部关系，并输出直接映射与 LLM 消歧进度。"""
+
+        started_at = time.perf_counter()
+        logger.info("[关系映射 1/2] 开始处理 %s 条关系", len(requests))
         aligned: list[dict[str, Any] | None] = [None] * len(requests)
         llm_indices: list[int] = []
         llm_requests: list[tuple[Mapping[str, Any], str, str, Sequence[SchemaRelation]]] = []
@@ -204,6 +214,10 @@ class RelationAligner:
             llm_requests.append((relation, source_schema, target_schema, candidates))
 
         if llm_requests:
+            logger.info(
+                "[关系映射 2/2] 端点候选存在歧义，开始批量 LLM 消歧：%s 条",
+                len(llm_requests),
+            )
             decisions = self.selector.select_relations(llm_requests)
             if len(decisions) != len(llm_requests):
                 raise RuntimeError("LLM 关系判定数量与请求数量不一致")
@@ -213,7 +227,17 @@ class RelationAligner:
                     relation, source_schema, target_schema, candidates, decision
                 )
 
-        return [item for item in aligned if item is not None]
+        results = [item for item in aligned if item is not None]
+        status_counts = Counter(
+            str((item.get("schema_alignment") or {}).get("status") or "UNKNOWN")
+            for item in results
+        )
+        logger.info(
+            "[关系映射] 全部完成：%s，总耗时 %.2f 秒",
+            dict(sorted(status_counts.items())),
+            time.perf_counter() - started_at,
+        )
+        return results
 
     def _apply_llm_decision(
         self,

@@ -238,7 +238,7 @@ def _find_node_enrichment(calls: list[Mapping[str, Any]]) -> dict[str, Any]:
 def _find_visual_track_slice_responses(
     calls: list[Mapping[str, Any]],
 ) -> list[dict[str, Any]]:
-    """中文说明：从真实调用审计中收集逐块图例/曲线描述，供结果文件确定性重建。"""
+    """中文说明：从真实调用审计中收集逐块图例描述，供结果文件确定性重建。"""
 
     responses: list[dict[str, Any]] = []
     for call in calls:
@@ -370,7 +370,7 @@ def run_live_pipeline(
         "source_chunk": dict(chunk),
         "target_subtype": "table_embedded_hybrid",
         "events_extracted": False,
-        "algorithm": "视觉大类分类 → 视觉子分类 → PP-StructureV3 像素几何 → table_text/legend/curve 顺序分类与文字实体识别 → legend 后 curve 的文字邻轨投影切片 → VLM 表头与切片数值/图例识别 → OCR 深度轴/相对层序 → 确定性知识图谱装配",
+        "algorithm": "视觉大类分类 → 视觉子分类 → PP-StructureV3 像素几何 → table_text/legend/curve 顺序分类与内容识别 → legend 文字邻轨投影切片与 VLM 图例识别 → 曲线整轨裁剪缓存 → OCR 深度轴/相对层序 → 确定性知识图谱装配",
         "api_execution": {
             "real_api_called": bool(recorder.calls),
             "configured_model": settings.vlm.model,

@@ -3,8 +3,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from pathlib import Path
-from statistics import mean, median
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 from PIL import Image
 
@@ -13,6 +12,7 @@ from ...schema_models import ImageExtractionTask
 from .layout import LinearDepthTransform, detect_rule_lines, fit_vertical_axis, rebuild_tracks
 from .ppstructure_geometry import ensure_ppstructure_geometry
 from .submember_refinement import build_submember_coverage
+from .visual_track_extraction import cache_curve_track_images
 
 
 TABLE_EMBEDDED_HYBRID_SCHEMA_VERSION = "table_embedded_hybrid.v1"
@@ -214,166 +214,6 @@ def _depth_align(parsed: Mapping[str, list[dict[str, Any]]]) -> list[dict[str, A
     return alignments
 
 
-def _normalize_curve_traces(
-    raw_traces: Any,
-    transform: LinearDepthTransform,
-) -> list[dict[str, Any]]:
-    """中文说明：把像素曲线采样点换算到公共纵轴，保留横轴值和原像素证据。"""
-
-    if not isinstance(raw_traces, list):
-        return []
-    normalized: list[dict[str, Any]] = []
-    for index, raw in enumerate(raw_traces):
-        if not isinstance(raw, Mapping):
-            continue
-        samples = []
-        for sample in raw.get("samples", []) if isinstance(raw.get("samples"), list) else []:
-            if not isinstance(sample, Mapping):
-                continue
-            try:
-                pixel_y = float(sample.get("pixel_y"))
-                pixel_x = float(sample.get("pixel_x"))
-            except (TypeError, ValueError):
-                continue
-            axis_value = sample.get("axis_value")
-            try:
-                axis_value = float(axis_value) if axis_value is not None else None
-            except (TypeError, ValueError):
-                axis_value = None
-            samples.append(
-                {
-                    **dict(sample),
-                    "pixel_x": round(pixel_x, 3),
-                    "pixel_y": round(pixel_y, 3),
-                    "vertical_value": round(transform.value_at(pixel_y), 6),
-                    "axis_value": round(axis_value, 6) if axis_value is not None else None,
-                }
-            )
-        if not samples:
-            continue
-        normalized.append(
-            {
-                **dict(raw),
-                "id": str(raw.get("id") or f"curve_trace_{index}"),
-                "samples": samples,
-                "vertical_unit": transform.unit,
-            }
-        )
-    return normalized
-
-
-def _leaf_stratigraphic_units(parsed: Mapping[str, list[dict[str, Any]]]) -> list[dict[str, Any]]:
-    """中文说明：选择最具体的地层/参考区间聚合曲线，避免父子层重复产生响应节点。"""
-
-    units = [
-        *parsed.get("stratigraphic_intervals", []),
-        *parsed.get("reference_intervals", []),
-    ]
-    parent_ids = {
-        str(item.get("attributes", {}).get("parent_id") or "")
-        for item in units
-        if isinstance(item.get("attributes"), Mapping)
-    }
-    leaves = [item for item in units if str(item.get("id") or "") not in parent_ids]
-    return leaves or units
-
-
-def _curve_observations_from_traces(
-    traces: Sequence[Mapping[str, Any]],
-    parsed: Mapping[str, list[dict[str, Any]]],
-) -> list[dict[str, Any]]:
-    """中文说明：按最具体地层段聚合曲线样点，产生可建点和可深度对齐的响应实体。"""
-
-    units = _leaf_stratigraphic_units(parsed)
-    observations: list[dict[str, Any]] = []
-    for trace in traces:
-        samples = [dict(item) for item in trace.get("samples", []) if isinstance(item, Mapping)]
-        if not samples:
-            continue
-        targets: list[Mapping[str, Any]] = units
-        if not targets:
-            vertical_values = [float(item["vertical_value"]) for item in samples]
-            pixel_values = [float(item["pixel_y"]) for item in samples]
-            targets = [
-                {
-                    "id": "full_trace",
-                    "name": "全图可见深度段",
-                    "top_value": min(vertical_values),
-                    "bottom_value": max(vertical_values),
-                    "top_y": min(pixel_values),
-                    "bottom_y": max(pixel_values),
-                    "confidence": trace.get("confidence", 0.75),
-                }
-            ]
-        for unit in targets:
-            try:
-                top_value = float(unit["top_value"])
-                bottom_value = float(unit["bottom_value"])
-            except (KeyError, TypeError, ValueError):
-                continue
-            selected = [
-                item
-                for item in samples
-                if top_value <= float(item.get("vertical_value")) <= bottom_value
-            ]
-            minimum_samples = 1 if str(trace.get("visual_form") or "") == "sample_bars" else 3
-            if len(selected) < minimum_samples:
-                continue
-            values = [float(item["axis_value"]) for item in selected if item.get("axis_value") is not None]
-            value_summary: dict[str, Any] = {}
-            if values:
-                value_summary = {
-                    "value_min": round(min(values), 6),
-                    "value_max": round(max(values), 6),
-                    "value_mean": round(mean(values), 6),
-                    "value_median": round(median(values), 6),
-                }
-                qualitative = (
-                    f"区间内 {len(values)} 个标定样点，取值 "
-                    f"{min(values):.4g}—{max(values):.4g} {trace.get('unit') or ''}"
-                ).strip()
-            else:
-                qualitative = f"区间内检测到 {len(selected)} 个像素轨迹样点，横轴刻度未可靠标定"
-            observation_id = f"visual_obs_{trace.get('curve_id')}_{unit.get('id')}"
-            observations.append(
-                {
-                    "id": observation_id,
-                    "name": f"{trace.get('name') or trace.get('curve_id')}@{unit.get('name')}",
-                    "official_name": f"{trace.get('name') or trace.get('curve_id')} {unit.get('name')} 段响应",
-                    "kind": "curve_observation",
-                    "curve_ids": [str(trace.get("curve_id") or "")],
-                    "curve_trace_id": str(trace.get("id") or ""),
-                    "track_id": str(trace.get("track_id") or ""),
-                    "top_y": round(min(float(item["pixel_y"]) for item in selected), 3),
-                    "bottom_y": round(max(float(item["pixel_y"]) for item in selected) + 0.001, 3),
-                    "top_value": round(top_value, 3),
-                    "bottom_value": round(bottom_value, 3),
-                    "vertical_unit": str(trace.get("vertical_unit") or ""),
-                    "sample_count": len(selected),
-                    "trace_coverage": trace.get("trace_coverage"),
-                    "qualitative_response": qualitative,
-                    **value_summary,
-                    "evidence": (
-                        f"{trace.get('evidence') or trace.get('name')} 与 {unit.get('name')} "
-                        f"公共纵轴区间内的像素采样"
-                    ),
-                    "confidence": round(
-                        min(
-                            float(trace.get("confidence") or 0.75),
-                            float(unit.get("confidence") or 0.8),
-                            0.94,
-                        ),
-                        3,
-                    ),
-                    "attributes": {
-                        "aggregation_basis": "curve_trace_samples_within_vertical_interval",
-                        "source_unit_id": str(unit.get("id") or ""),
-                    },
-                }
-            )
-    return observations
-
-
 def _cross_track_align(
     parsed: Mapping[str, list[dict[str, Any]]],
     tracks: Sequence[Mapping[str, Any]],
@@ -470,7 +310,7 @@ def _track_entity_coverage(
     parsed: Mapping[str, list[dict[str, Any]]],
     visual_quality: Mapping[str, Any],
 ) -> dict[str, Any]:
-    """中文说明：审计每条语义轨道的实体覆盖；关闭曲线 VLM 后将 curve 明确记为已跳过而不伪造观测实体。"""
+    """中文说明：审计每条语义轨道是否生成了对应实体，并区分结构空列与 OCR 噪声。"""
 
     counts: dict[str, int] = defaultdict(int)
     for values in parsed.values():
@@ -486,7 +326,6 @@ def _track_entity_coverage(
     }
     audit = []
     errors = []
-    curve_vlm_skipped = not bool(visual_quality.get("curve_slice_vlm_enabled", True))
     for track in tracks:
         track_id = str(track.get("id") or "")
         role = str(track.get("role") or "unknown")
@@ -494,7 +333,7 @@ def _track_entity_coverage(
         raw_track_audit = raw_audit_by_track.get(track_id, {})
         text_cell_count = int(raw_track_audit.get("text_cell_count") or 0)
         node_count = counts.get(track_id, 0)
-        # 中文说明：无文字不等于无内容，岩性纹理和曲线像素轨道仍必须生成区间或观测实体。
+        # 中文说明：无文字不等于无内容，岩性纹理和曲线轨道仍必须生成对应实体。
         structural_blank = (
             track_type == "table_text"
             and role in {"other", "unknown"}
@@ -502,14 +341,12 @@ def _track_entity_coverage(
             and text_cell_count == 0
         )
         # 中文说明：PP 表线分出的无表头、无 OCR 结构空列不是内容轨道，不强制为其伪造实体。
-        curve_track_skipped = track_type == "curve" and curve_vlm_skipped
         fallback_skipped = bool(raw_track_audit.get("fallback_skipped"))
         ocr_noise_only = bool(raw_track_audit.get("ocr_noise_only"))
         covered = (
             role == "depth"
             or node_count > 0
             or structural_blank
-            or curve_track_skipped
             or fallback_skipped
             or ocr_noise_only
         )
@@ -523,7 +360,6 @@ def _track_entity_coverage(
                 "entity_count": node_count,
                 "text_cell_count": text_cell_count,
                 "structural_blank": structural_blank,
-                "curve_vlm_skipped": curve_track_skipped,
                 "fallback_skipped": fallback_skipped,
                 "ocr_noise_only": ocr_noise_only,
                 "rejected_ocr_cell_count": int(raw_track_audit.get("rejected_ocr_cell_count") or 0),
@@ -545,7 +381,7 @@ def _track_type_and_slice_quality(
     tracks: Sequence[Mapping[str, Any]],
     visual_quality: Mapping[str, Any],
 ) -> dict[str, Any]:
-    """中文说明：审计轨道分类与 legend 切片是否完整，curve 轨道明确记为不使用 VLM 切片。"""
+    """中文说明：审计轨道分类和 legend 切片是否完整，曲线只检查轨道分类。"""
 
     allowed = {"table_text", "legend", "curve"}
     errors: list[str] = []
@@ -556,8 +392,8 @@ def _track_type_and_slice_quality(
         type_counts[track_type or "missing"] += 1
         if track_type not in allowed:
             errors.append(f"轨道 {track_id} 缺少有效 VLM track_type：{track_type or '<empty>'}")
-        elif track_type in {"legend", "curve"} and len(tracks) == 1:
-            errors.append(f"视觉轨道 {track_id} 不存在可作为切分基准的 table_text 轨道")
+        elif track_type == "legend" and len(tracks) == 1:
+            errors.append(f"图例轨道 {track_id} 不存在可作为切分基准的 table_text 轨道")
     slice_quality = visual_quality.get("adjacent_slice_description")
     slice_quality = dict(slice_quality) if isinstance(slice_quality, Mapping) else {}
     recognition_order = list(slice_quality.get("track_recognition_order") or [])
@@ -569,8 +405,6 @@ def _track_type_and_slice_quality(
     vlm_slice_track_types = list(slice_quality.get("vlm_slice_track_types") or [])
     if has_visual_tracks and vlm_slice_track_types != ["legend"]:
         errors.append(f"VLM 切片轨道类型错误：{vlm_slice_track_types!r}")
-    if bool(slice_quality.get("curve_slice_vlm_enabled", True)):
-        errors.append("curve 轨道的 VLM 切片识别未关闭")
     completed_slices = [
         item
         for item in slice_quality.get("slices", [])
@@ -615,7 +449,7 @@ def _track_type_and_slice_quality(
         "visual_track_count": len(visual_track_ids),
         "vlm_slice_track_count": len(vlm_slice_track_ids),
         "described_visual_track_count": len(vlm_slice_track_ids & described_track_ids),
-        "curve_vlm_skipped_track_count": len(curve_track_ids),
+        "full_curve_track_count": len(curve_track_ids),
         "slice_count": int(slice_quality.get("slice_count", 0)),
         "completed_slice_count": int(slice_quality.get("completed_count", 0)),
         "errors": list(dict.fromkeys(errors)),
@@ -667,23 +501,19 @@ def _hierarchy_and_order(parsed: Mapping[str, list[dict[str, Any]]]) -> list[dic
 def _visual_track_adjacent_order(
     parsed: Mapping[str, list[dict[str, Any]]],
 ) -> list[dict[str, Any]]:
-    """中文说明：按原图 y 像素顺序，只为同一图像或曲线轨道中相邻的 VLM 切片实体建立直接上覆链。"""
+    """中文说明：按原图 y 像素顺序，为同一图例轨道中相邻的 VLM 切片实体建立直接上覆链。"""
 
     grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    for field in ("curve_observations", "track_intervals"):
-        for item in parsed.get(field, []):
-            attributes = item.get("attributes")
-            recognition_source = (
-                str(attributes.get("recognition_source") or "")
-                if isinstance(attributes, Mapping)
-                else ""
-            )
-            track_id = str(item.get("track_id") or "")
-            if (
-                track_id
-                and recognition_source == "VLM.adjacent_track_slice_description"
-            ):
-                grouped[track_id].append(item)
+    for item in parsed.get("track_intervals", []):
+        attributes = item.get("attributes")
+        recognition_source = (
+            str(attributes.get("recognition_source") or "")
+            if isinstance(attributes, Mapping)
+            else ""
+        )
+        track_id = str(item.get("track_id") or "")
+        if track_id and recognition_source == "VLM.adjacent_track_slice_description":
+            grouped[track_id].append(item)
     relations: list[dict[str, Any]] = []
     for track_id, entities in grouped.items():
         ordered = sorted(
@@ -895,29 +725,8 @@ class TableEmbeddedHybridPipeline:
                 if isinstance(raw, Mapping)
             ]
         curve_tracks = raw_primitives.get("curve_tracks", [])
-        parsed["curve_tracks"] = [dict(item) for item in curve_tracks if isinstance(item, Mapping)]
-        curve_traces = _normalize_curve_traces(raw_primitives.get("curve_traces", []), transform)
-        trace_by_curve_id = {
-            str(trace.get("curve_id") or ""): trace
-            for trace in curve_traces
-            if trace.get("curve_id")
-        }
-        for curve_track in parsed["curve_tracks"]:
-            trace = trace_by_curve_id.get(str(curve_track.get("id") or ""))
-            if trace:
-                # 中文说明：曲线轨道节点保留精简轨迹样点，供图谱回溯与前端绘制。
-                curve_track["visual_trace"] = trace
-                curve_track["track_id"] = str(trace.get("track_id") or curve_track.get("track_id") or "")
-                curve_track["confidence"] = _confidence(
-                    curve_track.get("confidence"),
-                    float(trace.get("confidence") or 0.8),
-                )
-        visual_curve_observations = _curve_observations_from_traces(curve_traces, parsed)
-        existing_observation_ids = {str(item.get("id") or "") for item in parsed["curve_observations"]}
-        parsed["curve_observations"].extend(
-            item
-            for item in visual_curve_observations
-            if str(item.get("id") or "") not in existing_observation_ids
+        parsed["curve_tracks"] = cache_curve_track_images(
+            task.image_path, tracks, curve_tracks,
         )
         point_markers = raw_primitives.get("point_markers", [])
         parsed["point_markers"] = [
@@ -962,6 +771,12 @@ class TableEmbeddedHybridPipeline:
             if isinstance(visual_track_extraction, Mapping)
             else {}
         )
+        visual_track_extraction["curve"] = {
+            "available": bool(parsed["curve_tracks"]),
+            "mode": "full_track_crop",
+            "node_count": len(parsed["curve_tracks"]),
+            "image_count": len({item["cropped_image_cache_path"] for item in parsed["curve_tracks"]}),
+        }
         track_entity_coverage = _track_entity_coverage(
             tracks,
             parsed,
@@ -987,8 +802,8 @@ class TableEmbeddedHybridPipeline:
                     "semantic_track_grouping_and_visual_primitive_extraction",
                     "semantic_track_and_cell_id_selection",
                     "ppstructure_pixel_coordinate_resolution",
-                    "table_text_entity_projected_legend_then_curve_slice_cache",
-                    "vlm_track_header_and_slice_value_or_legend_interpretation",
+                    "table_text_entity_projected_legend_slice_and_full_curve_track_cache",
+                    "vlm_legend_slice_interpretation",
                     "same_visual_track_adjacent_pixel_order",
                     "depth_and_sequence_alignment",
                     "adjacent_track_depth_alignment",
@@ -1034,7 +849,6 @@ class TableEmbeddedHybridPipeline:
             },
             "ppstructure_geometry": ppstructure_geometry,
             "visual_track_extraction": visual_track_extraction,
-            "curve_traces": curve_traces,
             "legend_entries": [
                 dict(item)
                 for item in raw_primitives.get("legend_entries", [])
@@ -1054,8 +868,6 @@ class TableEmbeddedHybridPipeline:
                 "track_count": len(tracks),
                 "interval_count": sum(len(parsed[field]) for field in INTERVAL_FIELDS),
                 "curve_track_count": len(parsed["curve_tracks"]),
-                "curve_trace_count": len(curve_traces),
-                "visual_curve_observation_count": len(visual_curve_observations),
                 "point_marker_count": len(parsed["point_markers"]),
                 "object_count": len(parsed["objects"]),
                 "node_enrichment_count": 1 + sum(

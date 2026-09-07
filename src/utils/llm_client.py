@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 import time
@@ -13,6 +14,9 @@ from typing import Any, Optional, Sequence
 
 from config.model_config import OpenAICompatibleConfig, settings
 from .llm_rate_limiter import GLOBAL_LLM_RATE_LIMITER, qps_to_min_interval
+
+
+logger = logging.getLogger(__name__)
 
 
 def prompt_to_text(prompt: Any) -> str:
@@ -141,6 +145,12 @@ class LLMClient:
             except Exception as exc:  # 网络或服务端异常均按同一策略重试。
                 last_error = exc
                 if attempt < self.retry_attempts - 1:
+                    logger.warning(
+                        "[LLM] 请求失败，准备第 %s/%s 次重试：%s",
+                        attempt + 2,
+                        self.retry_attempts,
+                        exc,
+                    )
                     time.sleep(self.retry_backoff_base**attempt)
 
         label = f"（{task_name}）" if task_name else ""

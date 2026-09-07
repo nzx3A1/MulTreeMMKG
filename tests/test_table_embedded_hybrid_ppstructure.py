@@ -37,7 +37,7 @@ from src.extractors.image_extractor.stratigraphic_profile.table_embedded_hybrid.
     build_adjacent_visual_track_slices,
     build_semantic_tracks,
     build_visual_track_slice_prompt,
-    cache_visual_track_slices,
+    cache_curve_track_images,
     describe_adjacent_visual_track_slices,
     enrich_visual_track_primitives,
 )
@@ -833,247 +833,8 @@ def test_measurement_track_ocr_noise_is_not_promoted_to_graph_entities() -> None
     assert audit["facies"]["fallback_entity_cell_count"] == 1
 
 
-def legacy_curve_track_is_sliced_by_richer_adjacent_entities_and_described_by_vlm(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """中文说明：保留旧曲线 VLM 切片回归场景作为历史参考，当前默认流程不再收集该测试。"""
-
-    image_path = tmp_path / "microfacies-curve.png"
-    Image.new("RGB", (300, 300), "white").save(image_path)
-    cache_dir = tmp_path / "track-slice-cache"
-    monkeypatch.setenv("TABLE_VISUAL_TRACK_SLICE_CACHE_DIR", str(cache_dir))
-    geometry = {
-        "schema_version": "ppstructurev3.table_geometry.v1",
-        "engine": "test_fixture",
-        "coordinate_space": "original_pixels",
-        "source_image_path": str(image_path),
-        "image_size": {"width": 300, "height": 300},
-        "content_bbox": [0, 0, 300, 300],
-        "tracks": [
-            {"id": "left", "order": 0, "bbox": [0, 0, 80, 300], "header_text": "地层"},
-            {"id": "microfacies", "order": 1, "bbox": [80, 0, 180, 300], "header_text": "沉积微相"},
-            {"id": "sea_level", "order": 2, "bbox": [180, 0, 300, 300], "header_text": "相对海平面变化"},
-        ],
-        "cells": [
-            {"id": "left_body", "bbox": [0, 60, 80, 300], "ocr_ids": ["ocr_left"], "text": "马五段", "track_ids": ["left"]},
-            {"id": "micro_1", "bbox": [80, 60, 180, 180], "ocr_ids": ["ocr_micro_1"], "text": "含膏结核云坪", "track_ids": ["microfacies"]},
-            {"id": "micro_2", "bbox": [80, 180, 180, 220], "ocr_ids": ["ocr_micro_2"], "text": "灰云坪", "track_ids": ["microfacies"]},
-            {"id": "micro_3", "bbox": [80, 220, 180, 300], "ocr_ids": ["ocr_micro_3"], "text": "膏云坪", "track_ids": ["microfacies"]},
-            {"id": "curve_body", "bbox": [180, 60, 300, 300], "ocr_ids": [], "text": "", "track_ids": ["sea_level"]},
-        ],
-        "ocr_lines": [
-            {"id": "ocr_left", "text": "马五段", "confidence": 0.99, "bbox": [10, 100, 60, 130], "cell_id": "left_body", "track_id": "left"},
-            {"id": "ocr_micro_1", "text": "含膏结核云坪", "confidence": 0.99, "bbox": [90, 90, 170, 120], "cell_id": "micro_1", "track_id": "microfacies"},
-            {"id": "ocr_micro_2", "text": "灰云坪", "confidence": 0.99, "bbox": [95, 188, 165, 210], "cell_id": "micro_2", "track_id": "microfacies"},
-            {"id": "ocr_micro_3", "text": "膏云坪", "confidence": 0.99, "bbox": [95, 240, 165, 270], "cell_id": "micro_3", "track_id": "microfacies"},
-        ],
-        "rule_lines": {
-            "available": True,
-            "vertical_lines": [0, 80, 180, 300],
-            "horizontal_lines": [0, 60, 180, 220, 300],
-        },
-        "quality": {"ocr_line_count": 4, "cell_count": 5, "track_count": 3},
-    }
-    payload = {
-        "schema_version": "table_embedded_hybrid.v1",
-        "diagram_id": "microfacies_curve",
-        "diagram_name": "沉积微相与相对海平面变化",
-        "layout_family": "stratigraphic_column_table",
-        "coordinate_system": {
-            "vertical_axis": {
-                "kind": "relative_sequence",
-                "unit": "relative",
-                "increases": "downward",
-                "track_id": "left",
-                "calibration_ocr_ids": [],
-            }
-        },
-        # 中文说明：故意打乱 VLM 返回顺序，验证最终轨道仍按 PP 的 x 坐标从左到右重排。
-        "tracks": [
-            {"id": "sea_level", "track_type": "curve", "role": "curve", "header": "相对海平面变化", "parser": "curve"},
-            {"id": "left", "track_type": "table_text", "role": "stratigraphy", "header": "地层", "parser": "text"},
-            {"id": "microfacies", "track_type": "table_text", "role": "facies", "header": "沉积微相", "parser": "text"},
-        ],
-        "primitives": {
-            **{field: [] for field in (
-                "reference_intervals", "lithology_intervals", "reservoir_intervals",
-                "oil_layer_intervals", "geological_feature_intervals", "curve_observations",
-                "track_intervals",
-            )},
-            "stratigraphic_intervals": [
-                {"id": "ma5", "name": "马五段", "track_id": "left", "geometry_refs": ["left_body"], "evidence": "马五段", "confidence": 0.99}
-            ],
-            "facies_intervals": [
-                {"id": "facies_1", "name": "含膏结核云坪", "track_id": "microfacies", "geometry_refs": ["micro_1"], "evidence": "含膏结核云坪", "confidence": 0.99},
-                {"id": "facies_2", "name": "灰云坪", "track_id": "microfacies", "geometry_refs": ["micro_2"], "evidence": "灰云坪", "confidence": 0.99},
-                {"id": "facies_3", "name": "膏云坪", "track_id": "microfacies", "geometry_refs": ["micro_3"], "evidence": "膏云坪", "confidence": 0.99},
-            ],
-            "curve_tracks": [
-                {"id": "curve_sea_level", "name": "相对海平面变化", "track_id": "sea_level", "color": "black", "visual_form": "continuous_curve", "scale_transform": "linear", "evidence": "曲线表头"}
-            ],
-            "point_markers": [],
-            "objects": [],
-            "legend_entries": [],
-            "explicit_relations": [],
-        },
-        "uncertainties": [],
-    }
-    enriched = apply_ppstructure_geometry(payload, geometry)
-    assert [item["id"] for item in enriched["tracks"]] == ["left", "microfacies", "sea_level"]
-    assert [item["order"] for item in enriched["tracks"]] == [0, 1, 2]
-    assert enriched["tracks"][2]["previous_track_id"] == "microfacies"
-    assert enriched["tracks"][2]["track_type_source"] == "VLM.layout_track_classification"
-    slices = build_adjacent_visual_track_slices(enriched, geometry)
-    assert [item["bbox"] for item in slices] == [
-        [180, 60, 300, 180],
-        [180, 180, 300, 220],
-        [180, 220, 300, 300],
-    ]
-    assert {item["source_track_side"] for item in slices} == {"left"}
-    assert {item["source_track_entity_count"] for item in slices} == {3}
-    assert all(
-        item["pixel_range"]
-        == {
-            "left_x": item["bbox"][0],
-            "top_y": item["top_y"],
-            "right_x": item["bbox"][2],
-            "bottom_y": item["bottom_y"],
-            "coordinate_space": "original_pixels",
-        }
-        for item in slices
-    )
-
-    class SliceVLM:
-        """中文说明：记录每个真实裁剪图尺寸，并按切片 ID 返回受约束曲线变化描述。"""
-
-        def __init__(self) -> None:
-            self.crop_sizes: list[tuple[int, int]] = []
-            self.crop_paths: list[Path] = []
-
-        def describe_image(self, crop_path: str, _prompt: str, **kwargs: Any) -> dict[str, Any]:
-            """中文说明：验证传入 VLM 的是目标轨道裁剪图，而不是整张原图。"""
-
-            with Image.open(crop_path) as crop:
-                self.crop_sizes.append(crop.size)
-            self.crop_paths.append(Path(crop_path))
-            task_name = str(kwargs.get("task_name") or "")
-            expected = next(item for item in slices if item["slice_id"] in task_name)
-            changes = {"micro_1": "falling", "micro_2": "peak", "micro_3": "rising"}
-            return {
-                "schema_version": "table_embedded_hybrid.track_slice_description.v2",
-                "slice_id": expected["slice_id"],
-                "track_id": expected["track_id"],
-                "track_type": expected["track_type"],
-                "source_cell_id": expected["source_cell_id"],
-                "description": f"{expected['source_label']}区间内曲线发生可见变化",
-                "curve_change": changes[expected["source_cell_id"]],
-                "curve_readings": [
-                    {
-                        "curve_name": "相对海平面",
-                        "unit": "relative",
-                        "left_scale_value": 0,
-                        "right_scale_value": 1,
-                        "scale_transform": "linear",
-                        "top_value": 0.2,
-                        "middle_value": 0.5,
-                        "bottom_value": 0.8,
-                        "minimum_value": 0.2,
-                        "maximum_value": 0.8,
-                        "change": changes[expected["source_cell_id"]],
-                        "value_basis": "表头刻度与曲线位置",
-                        "confidence": 0.9,
-                        "uncertainty": "",
-                    }
-                ],
-                "legend_interpretations": [],
-                "visual_features": ["黑色连续曲线"],
-                "confidence": 0.95,
-                "uncertainty": "",
-            }
-
-    task = ImageExtractionTask(
-        document_id="doc",
-        chunk_id="chunk",
-        image_id="microfacies-curve",
-        image_index=0,
-        image_path=str(image_path),
-    )
-    vlm = SliceVLM()
-    described = describe_adjacent_visual_track_slices(task, vlm, enriched)
-    assert vlm.crop_sizes == [(120, 120), (120, 40), (120, 80)]
-    assert all(path.is_absolute() and path.is_file() for path in vlm.crop_paths)
-    assert all(cache_dir.resolve() in path.parents for path in vlm.crop_paths)
-    observations = [
-        item
-        for item in described["primitives"]["curve_observations"]
-        if item.get("recognition_source") == "VLM.adjacent_track_slice_description"
-    ]
-    assert [(item["top_y"], item["bottom_y"]) for item in observations] == [
-        (60.0, 180.0), (180.0, 220.0), (220.0, 300.0)
-    ]
-    assert {item["aligned_from_track_id"] for item in observations} == {"microfacies"}
-    assert all(item["pixel_range"]["coordinate_space"] == "original_pixels" for item in observations)
-    assert all(item["curve_readings"][0]["curve_name"] == "相对海平面" for item in observations)
-    assert all(item["curve_value_source"] == "VLM.track_header_and_cropped_slice" for item in observations)
-    assert {
-        item["cropped_image_cache_path"] for item in observations
-    } == {str(path.resolve()) for path in vlm.crop_paths}
-    intermediate = TableEmbeddedHybridPipeline().run(task, described)
-    observation_ids = {item["id"] for item in intermediate["parsed"]["curve_observations"]}
-    adjacent_edges = [
-        item
-        for item in intermediate["alignment_relations"]
-        if item.get("relation_type") == "aligned_with"
-        and item.get("source_id") in observation_ids
-    ]
-    assert {item["target_id"] for item in adjacent_edges} == {"facies_1", "facies_2", "facies_3"}
-    assert all(item["target_track_id"] == "microfacies" for item in adjacent_edges)
-    visual_order_edges = [
-        item
-        for item in intermediate["alignment_relations"]
-        if item.get("relation_type") == "directly_overlies"
-        and item.get("basis") == "same_visual_track_adjacent_pixel_order"
-    ]
-    ordered_observation_ids = [item["id"] for item in intermediate["parsed"]["curve_observations"]]
-    assert [
-        (item["source_id"], item["target_id"])
-        for item in visual_order_edges
-    ] == list(zip(ordered_observation_ids, ordered_observation_ids[1:]))
-    assert intermediate["quality"]["visual_track_directly_overlies_count"] == 2
-    assert intermediate["quality"]["track_type_and_slice_quality"]["ok"] is True
-    graph = build_table_embedded_hybrid_graph(task, intermediate)
-    description_nodes = [
-        entity
-        for entity in graph.entities
-        if entity.attributes.get("recognition_source")
-        == "VLM.adjacent_track_slice_description"
-    ]
-    assert len(description_nodes) == 3
-    assert all(entity.attributes["pixel_range"]["coordinate_space"] == "original_pixels" for entity in description_nodes)
-    description_node_ids = {entity.id for entity in description_nodes}
-    graph_visual_order_edges = [
-        relation
-        for relation in graph.relations
-        if relation.type == "directly_overlies"
-        and relation.source_id in description_node_ids
-        and relation.target_id in description_node_ids
-    ]
-    assert len(graph_visual_order_edges) == 2
-    assert all(
-        relation.attributes["inference_basis"]
-        == "same_visual_track_adjacent_pixel_order"
-        for relation in graph_visual_order_edges
-    )
-    assert all(
-        Path(entity.attributes["cropped_image_cache_path"]).is_absolute()
-        and Path(entity.attributes["cropped_image_cache_path"]).is_file()
-        for entity in description_nodes
-    )
-
-
 def test_curve_track_does_not_generate_or_request_vlm_slices(tmp_path: Path) -> None:
-    """中文说明：curve 轨道仍保留语义和 PP 几何，但不生成切片，也不允许调用 VLM。"""
+    """中文说明：curve 轨道仍保留语义和 PP 几何，图例切片入口不会为其调用 VLM。"""
 
     image_path = _image(tmp_path)
     payload = {
@@ -1120,7 +881,6 @@ def test_curve_track_does_not_generate_or_request_vlm_slices(tmp_path: Path) -> 
     assert quality["slice_count"] == 0
     assert quality["completed_count"] == 0
     assert quality["vlm_slice_track_types"] == ["legend"]
-    assert quality["curve_slice_vlm_enabled"] is False
     assert described["primitives"]["curve_observations"] == []
 
 
@@ -1128,22 +888,22 @@ def test_visual_track_slice_failure_does_not_stop_following_slices(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """中文说明：即使旧上游混入 curve 切片，描述入口也必须在调用 VLM 前丢弃。"""
+    """中文说明：图例首片两次失败后仍继续识别后续切片，并保留失败审计。"""
 
     image_path = _image(tmp_path)
 
     def make_slice(slice_id: str, source_cell_id: str, top_y: float, bottom_y: float) -> dict[str, Any]:
-        """中文说明：构造带完整文字轨道基准审计字段的曲线切片。"""
+        """中文说明：构造带完整文字轨道基准审计字段的图例切片。"""
 
         return {
             "slice_id": slice_id,
-            "track_id": "curve",
+            "track_id": "legend",
             "track_order": 1,
-            "track_type": "curve",
-            "recognition_stage": 3,
-            "track_role": "curve",
+            "track_type": "legend",
+            "recognition_stage": 2,
+            "track_role": "legend",
             "is_lithology_profile": False,
-            "track_header": "GR 0-350",
+            "track_header": "岩性剖面",
             "source_track_id": "text",
             "source_track_order": 0,
             "source_track_side": "left",
@@ -1192,23 +952,23 @@ def test_visual_track_slice_failure_does_not_stop_following_slices(
         """中文说明：让首片连续失败、次片返回不可读结果，以验证循环不会提前终止。"""
 
         def __init__(self) -> None:
+            """中文说明：初始化切片调用计数。"""
+
             self.call_count = 0
 
         def describe_image(self, _crop_path: str, _prompt: str, **kwargs: Any) -> dict[str, Any]:
-            """中文说明：根据任务名返回坏数组或结构完整的不可读曲线响应。"""
+            """中文说明：根据任务名返回坏数组或结构完整的不可读图例响应。"""
 
             self.call_count += 1
             expected = slices[0] if "bad_slice" in str(kwargs.get("task_name") or "") else slices[1]
             response = {
-                "schema_version": "table_embedded_hybrid.track_slice_description.v2",
+                "schema_version": "table_embedded_hybrid.legend_slice_description.v3",
                 "slice_id": expected["slice_id"],
-                "track_id": "wrong_track" if expected["slice_id"] == "bad_slice" else "curve",
-                "track_type": "curve",
+                "track_id": "wrong_track" if expected["slice_id"] == "bad_slice" else "legend",
+                "track_type": "legend",
                 "source_cell_id": expected["source_cell_id"],
-                "description": "切片过窄，无法可靠读取曲线",
-                "curve_change": "none" if expected["slice_id"] == "unreadable_slice" else "not_applicable",
-                "curve_readings": [None],
-                "legend_interpretations": [],
+                "description": "切片过窄，无法可靠识别图例",
+                "legend_interpretations": [{"legend_type": "unresolved", "category": "unknown", "confidence": 0.0, "uncertainty": "无法读取"}],
                 "visual_features": ["窄切片"],
                 "confidence": 0.0,
                 "uncertainty": "无法读取",
@@ -1233,12 +993,13 @@ def test_visual_track_slice_failure_does_not_stop_following_slices(
     described = describe_adjacent_visual_track_slices(task, vlm, payload)
 
     quality = described["visual_track_extraction"]["adjacent_slice_description"]
-    assert vlm.call_count == 0
-    assert quality["slice_count"] == 0
-    assert quality["completed_count"] == 0
-    assert quality["missing_count"] == 0
-    assert quality["curve_slice_vlm_enabled"] is False
-    assert described["primitives"]["curve_observations"] == []
+    assert vlm.call_count == 3
+    assert quality["slice_count"] == 2
+    assert quality["completed_count"] == 1
+    assert quality["missing_count"] == 1
+    assert len(described["primitives"]["track_intervals"]) == 1
+    assert quality["ok"] is False
+    assert quality["errors"]
 
 
 def test_visual_track_uses_right_neighbor_when_it_has_more_entities() -> None:
@@ -1312,7 +1073,7 @@ def test_visual_track_uses_right_neighbor_when_it_has_more_entities() -> None:
 
 
 def test_visual_tracks_skip_visual_neighbors_and_only_slice_legend() -> None:
-    """中文说明：legend 必须跳过中间视觉列寻找文字基准，curve 不再输出 VLM 切片。"""
+    """中文说明：legend 必须跳过中间视觉列寻找文字基准，且切片结果只包含图例。"""
 
     geometry = {
         "content_bbox": [0, 0, 400, 300],
@@ -1413,14 +1174,12 @@ def test_lithology_profile_prompt_and_legend_type_are_constrained(tmp_path: Path
         "uncertainties": [],
     }
     response = {
-        "schema_version": "table_embedded_hybrid.track_slice_description.v2",
+        "schema_version": "table_embedded_hybrid.legend_slice_description.v3",
         "slice_id": slice_record["slice_id"],
         "track_id": "profile",
         "track_type": "legend",
         "source_cell_id": "row_1_cell",
         "description": "同向斜线组成的白云岩剖面纹理",
-        "curve_change": "not_applicable",
-        "curve_readings": [],
         "legend_interpretations": [
             {
                 "legend_type": "白云岩 Dolomite",
@@ -1442,35 +1201,8 @@ def test_lithology_profile_prompt_and_legend_type_are_constrained(tmp_path: Path
     assert interval["legend_interpretations"][0]["visual_basis"] == "大量同方向斜线"
 
 
-def test_curve_vlm_input_combines_track_header_and_body_slice(tmp_path: Path) -> None:
-    """曲线请求图必须把同轨表头置于正文切片上方，使模型可读取刻度并估算数值。"""
-
-    image_path = tmp_path / "curve-header-and-body.png"
-    image = Image.new("RGB", (120, 120), "white")
-    draw = ImageDraw.Draw(image)
-    draw.rectangle((10, 0, 109, 39), fill=(220, 40, 40))
-    draw.rectangle((10, 60, 109, 99), fill=(40, 80, 220))
-    image.save(image_path)
-    record = {
-        "slice_id": "curve_header_slice",
-        "track_type": "curve",
-        "header_bbox": [10, 0, 110, 40],
-        "bbox": [10, 60, 110, 100],
-    }
-
-    cached = cache_visual_track_slices(image_path, [record])[0]
-
-    assert cached["vlm_input_layout"] == "track_header_above_slice"
-    assert Path(cached["track_header_image_cache_path"]).is_file()
-    assert Path(cached["vlm_input_image_cache_path"]).is_file()
-    with Image.open(cached["vlm_input_image_cache_path"]) as combined:
-        assert combined.size == (100, 84)
-        assert combined.getpixel((50, 20)) == (220, 40, 40)
-        assert combined.getpixel((50, 70)) == (40, 80, 220)
-
-
-def test_local_colored_curve_vectorization_is_disabled(tmp_path: Path) -> None:
-    """视觉轨道描述改由 VLM 负责后，本地颜色追踪不得再生成曲线样点或响应节点。"""
+def test_full_curve_track_crop_reaches_log_curve_graph_nodes(tmp_path: Path) -> None:
+    """中文说明：整轨图包含表头和全段曲线，同轨节点共享图像且图谱序列化保留裁剪依据。"""
 
     image_path = tmp_path / "curve.png"
     image = Image.new("RGB", (400, 300), "white")
@@ -1516,15 +1248,16 @@ def test_local_colored_curve_vectorization_is_disabled(tmp_path: Path) -> None:
             "evidence": "GR 0—100",
         }
     ]
+    payload["primitives"]["curve_tracks"].append(
+        {"id": "curve_sp", "name": "SP", "track_id": "pp_track_002", "unit": "mV"}
+    )
     enriched = apply_ppstructure_geometry(payload, geometry)
-    assert enriched["primitives"]["curve_traces"] == []
+    assert "curve_traces" not in enriched["primitives"]
     assert (
         enriched["visual_track_extraction"]["recognition_mode"]
-        == "vlm_legend_slice_interpretation_curve_slice_disabled"
+        == "vlm_legend_slices_and_full_curve_track_images"
     )
     assert enriched["visual_track_extraction"]["vlm_slice_track_types"] == ["legend"]
-    assert enriched["visual_track_extraction"]["curve_slice_vlm_enabled"] is False
-    assert enriched["visual_track_extraction"]["curve"]["available"] is False
     task = ImageExtractionTask(
         document_id="doc",
         chunk_id="chunk",
@@ -1533,12 +1266,53 @@ def test_local_colored_curve_vectorization_is_disabled(tmp_path: Path) -> None:
         image_path=str(image_path),
     )
     intermediate = TableEmbeddedHybridPipeline().run(task, enriched)
-    local_trace_observations = [
-        item
-        for item in intermediate["parsed"]["curve_observations"]
-        if item.get("curve_trace_id") == "trace_curve_gr"
-    ]
-    assert local_trace_observations == []
+    assert "curve_traces" not in intermediate
+    assert intermediate["parsed"]["curve_observations"] == []
+    graph = build_table_embedded_hybrid_graph(task, intermediate)
+    nodes = [node for node in graph.entities if node.type == "log_curve"]
+    assert len(nodes) == 2
+    paths = {node.attributes["cropped_image_cache_path"] for node in nodes}
+    assert len(paths) == 1
+    crop_path = Path(paths.pop())
+    assert crop_path.is_absolute() and crop_path.is_file()
+    with Image.open(crop_path) as cropped:
+        assert cropped.size == (160, 300)
+        assert cropped.tobytes() == image.crop((160, 0, 320, 300)).tobytes()
+    for node in nodes:
+        attributes = node.model_dump(mode="json")["attributes"]
+        assert attributes["cropped_image_bbox"] == [160, 0, 320, 300]
+        assert attributes["cropped_image_scope"] == "full_track_including_header"
+        assert attributes["cropped_image_source_path"] == str(image_path.resolve())
+    assert {node.name for node in nodes} == {"GR", "SP"}
+    assert graph.validate_references() == []
+    assert intermediate["visual_track_extraction"]["curve"]["image_count"] == 1
+
+
+def test_curve_track_crop_reuses_cache_and_rejects_invalid_bbox(tmp_path: Path) -> None:
+    """中文说明：相同原图和轨道复用同一缓存，越界轨道必须报错而不能生成填充图片。"""
+
+    image_path = tmp_path / "curve-cache.png"
+    Image.new("RGB", (80, 100), "white").save(image_path)
+    tracks = [{"id": "curve_track", "bbox": [20, 0, 80, 100], "track_type": "curve"}]
+    curves = [{"id": "gr", "name": "GR", "track_id": "curve_track"}]
+
+    first = cache_curve_track_images(image_path, tracks, curves)
+    second = cache_curve_track_images(image_path, tracks, curves)
+
+    assert first[0]["cropped_image_cache_path"] == second[0]["cropped_image_cache_path"]
+    assert Path(first[0]["cropped_image_cache_path"]).is_file()
+    with pytest.raises(ValueError, match="边界为空或超出原图"):
+        cache_curve_track_images(
+            image_path,
+            [{"id": "curve_track", "bbox": [20, 0, 81, 100], "track_type": "curve"}],
+            curves,
+        )
+    with pytest.raises(ValueError, match="所属轨道不是 curve"):
+        cache_curve_track_images(
+            image_path,
+            [{"id": "curve_track", "bbox": [20, 0, 80, 100], "track_type": "table_text"}],
+            curves,
+        )
 
 
 def test_vlm_curve_track_is_not_rewritten_by_local_color_rules(tmp_path: Path) -> None:
@@ -1585,7 +1359,7 @@ def test_vlm_curve_track_is_not_rewritten_by_local_color_rules(tmp_path: Path) -
     enriched = apply_ppstructure_geometry(payload, geometry)
     assert [item["id"] for item in enriched["primitives"]["curve_tracks"]] == ["log_phi"]
     assert enriched["primitives"]["curve_tracks"][0]["color"] == "unknown"
-    assert enriched["primitives"]["curve_traces"] == []
+    assert "curve_traces" not in enriched["primitives"]
 
 
 def test_empty_visual_track_fails_entity_coverage_gate(tmp_path: Path) -> None:

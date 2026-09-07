@@ -46,6 +46,7 @@ def _load_env_file(path: Path) -> Dict[str, str]:
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 _load_env_file(PROJECT_ROOT / ".env")
 
+MODEL_NAME = "qwen3.7-plus"
 
 @dataclass(frozen=True)
 class OpenAICompatibleConfig:
@@ -59,14 +60,22 @@ class OpenAICompatibleConfig:
     timeout_secs: float = 120.0
     enable_thinking: bool = False
 
+    # base_url: str = "https://ws-qxohtk9wmrvcddu0.cn-beijing.maas.aliyuncs.com/compatible-mode/v1"
+    # api_key: str = "sk-ws-H.PMXEERR.NHBL.MEUCIQC5w_QlyZ7HnaW4sqnLreVG_nSu58jhw_yKxvFfuCQfwgIgeXgelaxB1qVe7dsbytfSEBc2tRCF5GzvAT6wWYH0520"
+    # model: str = MODEL_NAME
+    # temperature: float = 0.0
+    # max_tokens: int = 8192
+    # timeout_secs: float = 120.0
+    # enable_thinking: bool = False
+
 @dataclass(frozen=True)
 class OpenAIVLMCompatibleConfig:
     """OpenAI 兼容视觉模型配置。"""
 
     # 中文说明：视觉流程使用用户指定的内网多模态服务，与文本 LLM 配置相互独立。
-    base_url: str = "http://10.18.19.66:8000/v1"
-    api_key: str = "sk-0e3c52e6065a4ef4a1b044c2fe5098d5"
-    model: str = "qwen-3.6-27B-FP8"
+    base_url: str = "https://ws-qxohtk9wmrvcddu0.cn-beijing.maas.aliyuncs.com/compatible-mode/v1"
+    api_key: str = "sk-ws-H.PMXEERR.NHBL.MEUCIQC5w_QlyZ7HnaW4sqnLreVG_nSu58jhw_yKxvFfuCQfwgIgeXgelaxB1qVe7dsbytfSEBc2tRCF5GzvAT6wWYH0520"
+    model: str = MODEL_NAME
     temperature: float = 0.0
     max_tokens: int = 8192
     timeout_secs: float = 120.0
@@ -89,7 +98,7 @@ class EmbeddingConfig:
 class MinerUConfig:
     """MinerU 云端接口配置。"""
 
-    token: str = "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJqdGkiOiI1OTIwMDEwNiIsInJvbCI6IlJPTEVfUkVHSVNURVIiLCJpc3MiOiJPcGVuWExhYiIsImlhdCI6MTc4MDMwMDU5MywiY2xpZW50SWQiOiJsa3pkeDU3bnZ5MjJqa3BxOXgydyIsInBob25lIjoiMTgzNzMyOTg1NzMiLCJvcGVuSWQiOm51bGwsInV1aWQiOiI0MzU0Y2UwOS0zMzBmLTRlZTYtOWM0NS0zMzkxOGQxNWVmOWIiLCJlbWFpbCI6IiIsImV4cCI6MTc4ODA3NjU5M30.JTbfGAAmQHprsWUJ0Dk1FnlR_93_Cb1uaMe9hjrfUMDR8ou9DfbG9oCWlJN1AoanMaa0TJGqvdyZ0Pnf_0yHZw"
+    token: str = "sk-zdeqRrVvzMnlLAQq7NMBSj61QxDo8FBFbyTMHHhky36EYje4"
     batch_url: str = "https://mineru.net/api/v4/file-urls/batch"
     timeout_secs: float = 120.0
 
@@ -98,8 +107,8 @@ class MinerUConfig:
 class SummaryConfig:
     """自底向上章节总结使用的模型与输出长度配置。"""
 
-    model: str = "qwen-3.6-27B-FP8"
-    fallback_model: str = "qwen-3.6-27B-FP8"
+    model: str = MODEL_NAME
+    fallback_model: str = MODEL_NAME
     max_tokens: int = 2000
     request_interval_secs: float = 1.0
     enable_thinking: bool = False

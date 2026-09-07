@@ -46,7 +46,9 @@ class MapSpatialExtractor(BaseImageExtractor):
                 "entities",
                 "geological_attributes",
                 "secondary_features",
+                "semantic_relations",
                 "spatial_relations",
+                "georeference",
             }
             if not expected.intersection(payload):
                 raise ValueError("模型 JSON 不包含任何地图空间抽取字段")

@@ -7,7 +7,8 @@ from __future__ import annotations
 
 import logging
 import math
-from typing import Any, Iterable, List, Optional
+import time
+from typing import Any, Iterable, List, Optional, Sequence
 
 import requests
 
@@ -25,14 +26,48 @@ class EmbeddingClient:
         self.config = config or settings.embedding
 
     def encode(self, texts: List[str]) -> List[List[float]]:
-        """使用 Ollama 批量接口将文本列表编码为向量列表。"""
+        """按配置批大小调用 Ollama，并保持输入文本与向量的顺序一致。"""
+
+        return self.embed_batch(texts, batch_size=self.config.batch_size)
+
+    def embed_batch(
+        self,
+        texts: Sequence[str],
+        batch_size: int | None = None,
+    ) -> List[List[float]]:
+        """将文本切成多个请求批次，避免单次请求过大或逐条请求。"""
 
         if not texts:
             return []
-        valid_texts = [text for text in texts if isinstance(text, str) and text.strip()]
-        if not valid_texts:
-            return []
-        return self._get_embeddings(valid_texts)
+        effective_batch_size = batch_size or self.config.batch_size
+        if effective_batch_size <= 0:
+            raise ValueError("embedding batch_size 必须大于 0")
+        if any(not isinstance(text, str) or not text.strip() for text in texts):
+            raise ValueError("Embedding 文本不能为空且必须是字符串")
+
+        embeddings: List[List[float]] = []
+        total_batches = math.ceil(len(texts) / effective_batch_size)
+        for start in range(0, len(texts), effective_batch_size):
+            batch = list(texts[start : start + effective_batch_size])
+            batch_number = start // effective_batch_size + 1
+            started_at = time.perf_counter()
+            logger.info(
+                "[Embedding] 开始批次 %s/%s，本批 %s 条，模型=%s",
+                batch_number,
+                total_batches,
+                len(batch),
+                self.config.model,
+            )
+            batch_embeddings = self._get_embeddings(batch)
+            logger.info(
+                "[Embedding] 完成批次 %s/%s，返回 %s 条，耗时 %.2f 秒",
+                batch_number,
+                total_batches,
+                len(batch_embeddings),
+                time.perf_counter() - started_at,
+            )
+            embeddings.extend(batch_embeddings)
+        return embeddings
 
     def encode_one(self, text: str) -> List[float]:
         """编码单条文本。"""

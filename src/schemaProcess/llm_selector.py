@@ -1,12 +1,18 @@
 """让 LLM 在向量/端点约束候选与 ``NONE`` 之间做保守选择。"""
 from __future__ import annotations
 
+import logging
+import math
+import time
 from typing import Any, Mapping, Protocol, Sequence
 
 from src.utils.llm_client import LLMClient
 
 from .models import SchemaRelation, SelectionDecision, SemanticCandidate, clamp_confidence
 from .semantic_retriever import build_entity_embedding_text
+
+
+logger = logging.getLogger(__name__)
 
 
 class CandidateSelector(Protocol):
@@ -78,10 +84,14 @@ class SchemaLLMSelector:
         system_prompt: str,
         task_name: str,
     ) -> list[SelectionDecision]:
+        """按配置批大小调用 LLM，并输出每批进度和耗时。"""
+
         result: list[SelectionDecision] = []
+        total_batches = math.ceil(len(items) / self.batch_size) if items else 0
         for start in range(0, len(items), self.batch_size):
             batch_items = list(items[start : start + self.batch_size])
             batch_allowed = list(allowed[start : start + self.batch_size])
+            batch_number = start // self.batch_size + 1
             # 每个批次内部重新编号，避免模型输出稀疏或全局索引混淆。
             for local_index, item in enumerate(batch_items):
                 item["index"] = local_index
@@ -97,8 +107,25 @@ class SchemaLLMSelector:
                     ),
                 },
             ]
+            timeout_secs = getattr(getattr(self.llm_client, "config", None), "timeout_secs", None)
+            logger.info(
+                "[LLM][%s] 开始批次 %s/%s，本批 %s 条%s",
+                task_name,
+                batch_number,
+                total_batches,
+                len(batch_items),
+                f"，单次超时={timeout_secs} 秒" if timeout_secs else "",
+            )
+            started_at = time.perf_counter()
             payload = self.llm_client.chat_json(messages)
             result.extend(self._parse_decisions(payload, batch_allowed))
+            logger.info(
+                "[LLM][%s] 完成批次 %s/%s，耗时 %.2f 秒",
+                task_name,
+                batch_number,
+                total_batches,
+                time.perf_counter() - started_at,
+            )
         return result
 
     def select_entities(

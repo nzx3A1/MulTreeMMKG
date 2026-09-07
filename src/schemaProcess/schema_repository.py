@@ -1,6 +1,8 @@
 """从 Neo4j 或 JSON 配置动态加载概念 Schema。"""
 from __future__ import annotations
 
+import logging
+import time
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -8,6 +10,9 @@ from config.neo4j_config import Neo4jSchemaDatabaseConfig, settings as neo4j_set
 from src.utils.json_io import read_json
 
 from .models import SchemaConcept, SchemaRelation, SchemaSnapshot
+
+
+logger = logging.getLogger(__name__)
 
 
 READ_CONCEPTS_CYPHER = """
@@ -52,6 +57,14 @@ class Neo4jSchemaRepository:
         self._owns_driver = driver is None
 
     def load(self) -> SchemaSnapshot:
+        """连接 Neo4j，并一次性加载全部实体概念和有向关系定义。"""
+
+        started_at = time.perf_counter()
+        logger.info(
+            "[Schema 1/2] 正在连接 Neo4j：%s，数据库=%s",
+            self.config.uri,
+            self.config.database,
+        )
         if self._driver is None:
             from neo4j import GraphDatabase
 
@@ -71,6 +84,12 @@ class Neo4jSchemaRepository:
 
         if not concepts:
             raise RuntimeError(f"Neo4j 数据库 {self.config.database!r} 中没有 EntityConcept")
+        logger.info(
+            "[Schema 2/2] Neo4j 加载完成：概念=%s，关系=%s，耗时 %.2f 秒",
+            len(concepts),
+            len(relations),
+            time.perf_counter() - started_at,
+        )
         return SchemaSnapshot(
             concepts=concepts,
             relations=relations,
@@ -85,6 +104,10 @@ class JsonSchemaRepository:
         self.path = Path(path)
 
     def load(self) -> SchemaSnapshot:
+        """从 JSON 文件读取完整 Schema 快照并记录加载规模。"""
+
+        started_at = time.perf_counter()
+        logger.info("[Schema 1/2] 正在读取离线 Schema：%s", self.path)
         payload = read_json(self.path)
         if not isinstance(payload, dict):
             raise TypeError("Schema JSON 顶层必须是对象")
@@ -92,6 +115,12 @@ class JsonSchemaRepository:
         relations = [SchemaRelation.from_mapping(item) for item in payload.get("relations", [])]
         if not concepts:
             raise ValueError(f"Schema JSON 中没有 concepts：{self.path}")
+        logger.info(
+            "[Schema 2/2] 离线 Schema 加载完成：概念=%s，关系=%s，耗时 %.2f 秒",
+            len(concepts),
+            len(relations),
+            time.perf_counter() - started_at,
+        )
         return SchemaSnapshot(concepts, relations, source=str(self.path.resolve()))
 
 
@@ -102,6 +131,8 @@ class InMemorySchemaRepository:
         self.snapshot = snapshot
 
     def load(self) -> SchemaSnapshot:
+        """返回测试或上层调用方预先构造的内存 Schema。"""
+
         return self.snapshot
 
 

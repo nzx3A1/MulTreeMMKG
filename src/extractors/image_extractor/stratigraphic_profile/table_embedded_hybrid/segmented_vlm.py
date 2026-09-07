@@ -219,7 +219,6 @@ def merge_segmented_table_payloads(segments: Mapping[str, Mapping[str, Any]]) ->
         "point_markers": [],
         "objects": [],
         "legend_entries": [],
-        "curve_traces": [],
         "explicit_relations": [],
     }
     owners: dict[str, str] = {}
@@ -520,7 +519,7 @@ def extract_segmented_table_visual(
         merge_segmented_table_payloads(segments),
         geometry=resolved_geometry,
     )
-    # 中文说明：table_text 实体先完成，再按 legend、curve 顺序使用左右最近文字轨道的实体范围逐块裁剪识别。
+    # 中文说明：table_text 实体先完成，再按左右最近文字轨道的实体范围裁剪识别 legend；曲线在确定性流水线中整轨裁剪。
     resolved_payload = describe_adjacent_visual_track_slices(
         task,
         vlm_client,
