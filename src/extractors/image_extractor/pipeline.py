@@ -125,6 +125,8 @@ def _merge_task_graphs(chunk: Mapping[str, Any], task_graphs: Sequence[Graph]) -
             "model_called": graph.metadata.extra.get("model_called", False),
             "classification_code": graph.metadata.extra.get("classification_code"),
             "classification_type": graph.metadata.extra.get("classification_type"),
+            "vlm_call_count": int(graph.metadata.extra.get("vlm_call_count") or 0),
+            "vlm_stages": list(graph.metadata.extra.get("vlm_stages") or []),
             "stratigraphic_subtype": graph.metadata.extra.get("stratigraphic_subtype"),
             "stratigraphic_subtype_name": graph.metadata.extra.get("stratigraphic_subtype_name"),
             "stratigraphic_subtype_confidence": graph.metadata.extra.get("stratigraphic_subtype_confidence"),
@@ -144,6 +146,102 @@ def _merge_task_graphs(chunk: Mapping[str, Any], task_graphs: Sequence[Graph]) -
     else:
         aggregate_status = "not_implemented"
     model_called = any(bool(route.get("model_called")) for route in task_routes)
+    map_relation_details = [
+        graph.metadata.extra.get("relation_generation")
+        for graph in task_graphs
+        if isinstance(graph.metadata.extra.get("relation_generation"), Mapping)
+    ]
+    map_legend_details = [
+        {
+            "image_id": graph.metadata.extra.get("image_id"),
+            "legend_items": list(graph.metadata.extra.get("legend_items") or []),
+            "legend_bindings": list(graph.metadata.extra.get("legend_bindings") or []),
+        }
+        for graph in task_graphs
+        if graph.metadata.extra.get("extractor_kind") == "map_spatial"
+    ]
+    relation_generation: dict[str, Any] | None = None
+    if len(map_relation_details) == 1:
+        relation_generation = dict(map_relation_details[0])
+    elif map_relation_details:
+        # 中文说明：多图 Chunk 合并白名单与空间链审计信息，避免只保留最后一张图的关系生成记录。
+        schema_groups: list[dict[str, Any]] = []
+        seen_groups: set[tuple[str, str, tuple[str, ...]]] = set()
+        candidate_entities: list[str] = []
+        generated_edges: list[dict[str, Any]] = []
+        for detail in map_relation_details:
+            for group in detail.get("relation_schema_candidates") or []:
+                if not isinstance(group, Mapping):
+                    continue
+                key = (
+                    str(group.get("source_type") or ""),
+                    str(group.get("target_type") or ""),
+                    tuple(str(value) for value in group.get("allowed_relations") or []),
+                )
+                if key not in seen_groups:
+                    seen_groups.add(key)
+                    schema_groups.append(dict(group))
+            spatial = detail.get("spatial_direction_mapping")
+            if isinstance(spatial, Mapping):
+                candidate_entities.extend(str(value) for value in spatial.get("candidate_entities") or [])
+                generated_edges.extend(dict(value) for value in spatial.get("generated_edges") or [] if isinstance(value, Mapping))
+        relation_generation = {
+            "legend_driven": True,
+            "deterministic_mapping": True,
+            "relation_schema_candidates": schema_groups,
+            "legend_binding_mapping": {
+                "enabled": True,
+                "generated_by_program": True,
+                "binding_count": sum(
+                    int((detail.get("legend_binding_mapping") or {}).get("binding_count") or 0)
+                    for detail in map_relation_details
+                ),
+                "generated_relation_count": sum(
+                    int((detail.get("legend_binding_mapping") or {}).get("generated_relation_count") or 0)
+                    for detail in map_relation_details
+                ),
+            },
+            "spatial_direction_mapping": {
+                "enabled": True,
+                "candidate_selection_by_vlm": True,
+                "direction_calculated_by_program": True,
+                "directed": True,
+                "max_out_degree": 1,
+                "max_in_degree": 1,
+                "allow_inverse_duplicate": False,
+                "allow_cycle": False,
+                "candidate_entities": list(dict.fromkeys(candidate_entities)),
+                "generated_edges": generated_edges,
+                "generated_edge_count": len(generated_edges),
+                "per_image": map_relation_details,
+            },
+        }
+    extra = {
+        "status": aggregate_status,
+        "image_task_count": len(task_graphs),
+        "routes": task_routes,
+        "model_called": model_called,
+        "vlm_call_count": sum(int(route.get("vlm_call_count") or 0) for route in task_routes),
+    }
+    if relation_generation is not None:
+        extra["relation_generation"] = relation_generation
+    if len(map_legend_details) == 1:
+        extra["legend_items"] = map_legend_details[0]["legend_items"]
+        extra["legend_bindings"] = map_legend_details[0]["legend_bindings"]
+    elif map_legend_details:
+        # 中文说明：多图 Chunk 为每条图例记录补 image_id，防止局部 legend_id 在合并后冲突。
+        extra["legend_items"] = [
+            {"image_id": detail["image_id"], **dict(item)}
+            for detail in map_legend_details
+            for item in detail["legend_items"]
+            if isinstance(item, Mapping)
+        ]
+        extra["legend_bindings"] = [
+            {"image_id": detail["image_id"], **dict(item)}
+            for detail in map_legend_details
+            for item in detail["legend_bindings"]
+            if isinstance(item, Mapping)
+        ]
     return Graph(
         entities=merged.entities,
         relations=merged.relations,
@@ -154,12 +252,7 @@ def _merge_task_graphs(chunk: Mapping[str, Any], task_graphs: Sequence[Graph]) -
             modality=SourceModality.IMAGE,
             stage="stage_04_image_extraction",
             raw_response=[graph.metadata.raw_response for graph in task_graphs if graph.metadata.raw_response is not None],
-            extra={
-                "status": aggregate_status,
-                "image_task_count": len(task_graphs),
-                "routes": task_routes,
-                "model_called": model_called,
-            },
+            extra=extra,
         ),
     )
 

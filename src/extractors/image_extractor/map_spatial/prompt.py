@@ -1,118 +1,172 @@
-"""地图与平面空间图片的证据优先视觉抽取 Prompt。"""
+"""地图空间抽取器三阶段 VLM 提示词。
+
+三个提示词分别负责图例、实体与语义候选，地点方向不交给 VLM 生成。
+"""
 from __future__ import annotations
 
 import json
+from typing import Any, Mapping
 
 from ..schema_models import ImageExtractionTask
 
 
 _FOCUS_BY_CODE = {
-    "A01": "区域位置、盆地/构造分区、边界、井位与油气田",
-    "A02": "岩相、沉积相、古地理单元、相带边界及横向过渡",
-    "A07": "地层或层位、参数名称与单位、等值线、数值范围、高低值区及空间趋势",
-    "A18": "井/油气田/有利区、预测边界、评价属性及空间展布",
+    "A01": "区域位置、盆地或构造分区、边界、井位与油气田",
+    "A02": "岩性、沉积微相、古地理单元、相带边界与横向过渡",
+    "A07": "储层参数、单位、等值线、数值分区、井位与空间趋势",
+    "A18": "井、油气田、有利区、预测边界、评价属性与空间展布",
 }
 
 
-def build_map_spatial_prompt(task: ImageExtractionTask) -> str:
-    """构造覆盖四类地图的统一 JSON 协议，禁止无视觉证据的拓扑推断。"""
+def _task_context(task: ImageExtractionTask) -> str:
+    """生成三个阶段共享的图片上下文。"""
 
-    focus = _FOCUS_BY_CODE.get(task.classification_code, "地图中的地质对象、属性与空间拓扑")
+    return (
+        f"图片ID：{task.image_id}\n"
+        f"分类：{task.classification_code or '未提供'} {task.classification_type or ''}\n"
+        f"图题：{task.caption or '无'}\n"
+        f"章节：{task.section_title or '无'}\n"
+        f"正文参考：{json.dumps(list(task.references), ensure_ascii=False)}\n"
+        f"判读重点：{_FOCUS_BY_CODE.get(task.classification_code, '地图实体、图例与空间结构')}"
+    )
+
+
+def build_legend_prompt(task: ImageExtractionTask) -> str:
+    """构造第一阶段图例解析提示词。"""
+
     return f"""
-你是石油地质地图判读与多模态知识图谱专家。请直接分析随消息提供的平面地图，不要只复述图题。
+你是石油地质地图图例解析专家。当前只执行阶段1“图例解析”，不要抽取图中实例，不要输出实体关系。
 
-图片信息：
-- 图片 ID：{task.image_id}
-- 图片类别：{task.classification_code or "未提供"} {task.classification_type or ""}
-- 图题：{task.caption or "无"}
-- 所属章节：{task.section_title or "无"}
-- 正文参考：{json.dumps(list(task.references), ensure_ascii=False)}
-- 本类重点：{focus}
+{_task_context(task)}
 
-一级目标（图中存在时必须抽取，直接进入知识图谱）：
-1. 地图主题；地层/层位；地理位置；井；油气田；岩性；岩相；沉积相；古地理单元；构造单元。每个实体必须给出明确的 type 和 type_zh。
-2. 分开抽取地质语义关系与纯空间关系。语义关系使用 DISTRIBUTED_IN、DEVELOPED_IN、PART_OF、HAS_LITHOLOGY、HAS_FACIES；空间关系使用 WITHIN、CONTAINS、COVERS、OVERLAPS、INTERSECTS、CROSSES、TOUCHES、ADJACENT_TO、NEAR 和八方位关系。
-3. 为图中真实出现的点、线、面重建几何边界，坐标统一为左上角原点、右下角 [1000,1000] 的 normalized_1000 坐标。
-4. 地质属性及其可见属性值、区间和单位；A07 必须优先读取图题、图例和等值线中的参数名与数值。
+要求：
+1. 先识别图名、地图类型、比例尺、指北信息和地图主题。
+2. 逐项读取真实可见图例，区分填色、纹理、点符号和线型；颜色相近不能臆测为同类。
+3. semantic_type 使用小写 snake_case，优先使用 lithology、sedimentary_microfacies、well、place、
+   paleogeographic_landmass_class、geological_boundary、reservoir_property、parameter_contour_set。
+4. 图例只是类别，不是图中实例。程序会把每个图例物化为独立图例节点，再与图中实例关联；未知语义类型写 UNMAPPED。
+5. 岩性、沉积微相、古陆类别等有知识意义的图例概念设置 emit_entity=true；井位、地名等符号图例设为 false，程序会用 legend_class 类型保存。
+6. 只输出一个 JSON 对象，不要 Markdown。
 
-二级目标（图中存在时推荐抽取）：
-相带过渡、空间展布、高值区、低值区、剖面线、普通边界、地层剥蚀线、相对方向、空间趋势。
-
-判读约束：
-1. 先读图题、图例、比例尺、指北针、文字标注和符号，再匹配面、线、点。井的圆圈符号与地名的方框符号必须区分；井名不得误作断层或地名。
-2. 图例项只定义类别，不等于一个现实地质对象。只有图内实际出现的带名区域或能由图题明确命名的区域才建立对象。
-3. 空白区、被裁切区和图框外区域不是地质单元。接触边界明确才可写 ADJACENT_TO/TOUCHES；面积相交才可写 OVERLAPS；线穿过面才写 CROSSES；完全包容才可写 WITHIN/CONTAINS。
-4. 岩性和岩相是地质概念，不是地点。禁止输出“岩性/岩相 LOCATED_IN 地点”；应按证据输出“岩性 DISTRIBUTED_IN 区域”“沉积相 DEVELOPED_IN 区域”或“区域 HAS_LITHOLOGY 岩性”。构造单元与盆地的层级使用 PART_OF。井、油气田、行政地点等有位置的对象才可使用 LOCATED_IN；几何包含优先使用 WITHIN。
-5. 颜色相近不能单独证明同类；必须结合图例纹理、边界和文字。无法区分“岩相/沉积相”时降低 confidence 并写入 uncertainties，不能臆造。
-6. 地层/层位保留图中原字符，如马五段、奥陶系；按可见层级填写 formation/member/submember/bed/reservoir_interval/unknown。
-7. 属性数值必须在图中、图题或正文参考中明确出现；minimum/maximum 不能靠色彩主观估算。正文证据的 evidence_scope=context，图片证据为 visual。
-8. 相对方向必须以指北针、经纬网或明确方位文字为依据；在 georeference 中记录指北旋转角。没有指北依据时只能写 PAGE_LEFT_OF/PAGE_RIGHT_OF/PAGE_ABOVE/PAGE_BELOW，不得擅自改成东南西北。
-9. 点使用 [x,y]；线和面使用 [[x1,y1],...]，面沿可见边界给出至少 3 个顶点，不能只用文字 position 代替坐标。文字标签框不是地质区域边界。
-10. 比例尺清楚时记录比例尺线段端点、实际距离和单位；至少 3 个经纬度/坐标控制点清楚时才填写 control_points，否则保持空数组，禁止猜坐标。
-11. 每个关系端点和 subject_ids 都只能引用本 JSON 已定义的 id。每项给出简短 evidence 和 0~1 confidence；不清楚的文字不要猜。
-12. 关系必须稀疏。相邻地点只保留形成连续邻接链所需的直接边，例如已有 A—B、B—C 时不要再输出 A—C；嵌套区域只输出最近一级归属，例如井→区块、区块→盆地，不再输出井→盆地。
-13. 每个实体最多主动输出一条最有地质意义的方位关系；空间关系总数原则上不超过可定位实体数的两倍。
-14. 只输出一个 JSON 对象，不要 Markdown。不要为填满字段而创造图中不存在的对象，空类返回 []。
-
-实体 type 取值优先使用：
-geographic_location, province, city, county, town, basin, study_area, block, well,
-oil_gas_field, prospect_area, lithology, lithofacies, sedimentary_facies, subfacies,
-microfacies, paleogeographic_unit, structural_unit, depression, sag, uplift, slope,
-structural_belt, fault, fault_zone。
-
-secondary_features.type 仅使用：
-facies_transition, spatial_distribution, high_value_zone, low_value_zone, section_line,
-boundary, stratigraphic_erosion_line, relative_direction, spatial_trend。
-
-JSON 格式：
+JSON：
 {{
-  "schema_version": "map_spatial.v2",
+  "schema_version": "map_spatial.intermediate.v1",
   "map": {{
-    "id": "map", "title": "地图题名", "theme": "地图主题", "map_type": "regional_geology|facies|paleogeography|parameter_distribution|prospect|other",
-    "scale": "可见比例尺", "north_direction": "可见指北信息", "coordinate_system": "", "evidence": "", "confidence": 0.0
+    "id": "map", "name": "地图题名", "type": "map_spatial", "type_zh": "具体中文图类",
+    "attributes": {{"map_type": "", "scale": "", "orientation": "", "description": "", "classification_code": "{task.classification_code}"}},
+    "evidence": "图题或整幅图证据", "confidence": 0.0
   }},
-  "georeference": {{
-    "coordinate_space": "normalized_1000",
-    "crs": "图中明确标注的坐标参考系或空字符串",
-    "world_coordinate_unit": "degree|m|km|",
-    "north_rotation_degrees_clockwise_from_page_up": null,
-    "scale_bar": {{"start": [], "end": [], "distance": null, "unit": ""}},
-    "control_points": [{{"normalized_point": [0.0,0.0], "world_point": [0.0,0.0], "label": "可见刻度文字"}}]
-  }},
-  "stratigraphic_units": [
-    {{"id": "strat_1", "name": "地层/层位原名", "rank": "formation|member|submember|bed|reservoir_interval|unknown", "evidence": "", "evidence_scope": "visual|caption|context", "confidence": 0.0}}
-  ],
-  "entities": [
+  "legend_items": [
     {{
-      "id": "obj_1", "name": "图中原名", "type": "上述实体类型之一", "type_zh": "类型中文名",
-      "geometry": {{"kind": "point|line|polygon|unknown", "coordinate_space": "normalized_1000", "coordinates": [], "position": "图中位置", "confidence": 0.0}},
-      "attributes": {{}}, "evidence": "", "evidence_scope": "visual|caption|context", "confidence": 0.0
+      "legend_id": "legend_001", "label": "图例原文", "semantic_type": "类型",
+      "type_zh": "类型中文名", "visual_encoding": {{"fill_color": "", "pattern": "", "symbol": "", "line_style": ""}},
+      "emit_entity": false, "binding_relation": "可选关系名", "evidence": "", "confidence": 0.0
     }}
   ],
-  "geological_attributes": [
-    {{
-      "id": "attr_1", "name": "厚度/储层厚度/孔隙度等", "subject_ids": ["map或对象id"],
-      "value": null, "minimum": null, "maximum": null, "unit": "m/%等", "qualifier": "", "method": "等值线/分区/标注",
-      "evidence": "", "evidence_scope": "visual|caption|context", "confidence": 0.0
-    }}
-  ],
-  "secondary_features": [
-    {{
-      "id": "feature_1", "name": "特征名", "type": "上述二级类型之一", "subject_ids": ["对象或属性id"],
-      "source_id": "相对方向或相带过渡的起点id/空", "target_id": "终点id/空", "direction": "north_of/east_of/page_left_of/increasing_toward_north等",
-      "geometry": {{"kind": "point|line|polygon|unknown", "coordinate_space": "normalized_1000", "coordinates": [], "position": "", "confidence": 0.0}},
-      "evidence": "", "evidence_scope": "visual|caption|context", "confidence": 0.0
-    }}
-  ],
-  "semantic_relations": [
-    {{"source_id": "id", "type": "DISTRIBUTED_IN|DEVELOPED_IN|PART_OF|HAS_LITHOLOGY|HAS_FACIES", "target_id": "id", "explicit": true, "evidence": "地质语义依据", "confidence": 0.0}}
-  ],
-  "spatial_relations": [
-    {{"source_id": "id", "type": "LOCATED_IN|WITHIN|CONTAINS|COVERS|OVERLAPS|INTERSECTS|CROSSES|TOUCHES|ADJACENT_TO|NEAR|NORTH_OF|SOUTH_OF|EAST_OF|WEST_OF|NORTHEAST_OF|NORTHWEST_OF|SOUTHEAST_OF|SOUTHWEST_OF|PAGE_LEFT_OF|PAGE_RIGHT_OF|PAGE_ABOVE|PAGE_BELOW", "target_id": "id", "explicit": true, "evidence": "直接可见的符号、边界或方向依据", "confidence": 0.0}}
-  ],
-  "uncertainties": ["无法可靠确认的文字、边界或数值"]
+  "uncertainties": []
 }}
 """.strip()
 
 
-__all__ = ["build_map_spatial_prompt"]
+def build_entity_prompt(task: ImageExtractionTask, legend_result: Mapping[str, Any]) -> str:
+    """构造第二阶段实体、几何与图例绑定提示词。"""
+
+    legends = json.dumps(legend_result.get("legend_items") or [], ensure_ascii=False)
+    return f"""
+你是石油地质地图实体定位专家。当前执行阶段2“实体抽取与图例绑定”。
+
+{_task_context(task)}
+
+阶段1图例：{legends}
+
+要求：
+1. 根据图例找出图中真实实例。重点包括地点、井、油气田、沉积微相、古地理/构造单元、储层参数区、剖面线和边界。
+2. 每个实体必须有稳定的英文小写 id、name、type、type_zh、evidence、confidence。
+3. 每个可定位实体必须给 geometry。坐标以图片左上角为 [0,0]、右下角为 [1000,1000]：
+   点给 center；面给 polygon（至少3点）并可给 bbox；线给 kind=line 和 points（至少2点）。
+4. legend_bindings 只引用阶段1 legend_id 与本次 entity id；绑定错误或不确定时不要强行绑定。
+5. 仅将值得进入稀疏方位骨架的实体列入 spatial_mapping.candidate_entities；通常只选 place。
+   若地图确实以古陆、油气田等命名空间对象为核心，可在 candidate_entity_types 中明确增加其类型。
+6. spatial_anchor 选择最核心实体。不要输出任何 north_of/east_of 等方向，方向由程序计算。
+7. 未知类型写 UNMAPPED，并在 attributes.raw_type 保留原始判断。只输出 JSON，不要 Markdown。
+
+JSON：
+{{
+  "entities": [
+    {{
+      "id": "place_jingbian", "name": "靖边", "type": "place", "type_zh": "地名",
+      "geometry": {{"kind": "point", "center": [481,510], "bbox": [451,490,511,530]}},
+      "attributes": {{"position": "图区中部"}}, "evidence": "", "confidence": 0.0
+    }}
+  ],
+  "legend_bindings": [{{"legend_id": "legend_place", "entity_ids": ["place_jingbian"], "confidence": 0.0}}],
+  "spatial_mapping": {{
+    "enabled": true,
+    "candidate_entity_types": ["place"],
+    "candidate_entities": [{{"entity_id": "place_jingbian", "priority": 1.0, "reason": "研究区中心地名"}}],
+    "spatial_anchor": "place_jingbian"
+  }},
+  "uncertainties": []
+}}
+""".strip()
+
+
+def build_relation_prompt(task: ImageExtractionTask, state: Mapping[str, Any], relation_schema: Mapping[str, Any]) -> str:
+    """构造第五阶段语义关系候选提示词。"""
+
+    entities = [
+        {"id": item.get("id"), "name": item.get("name"), "type": item.get("type")}
+        for item in state.get("entities") or []
+        if isinstance(item, Mapping)
+    ]
+    direction_relations = {
+        "north_of", "south_of", "east_of", "west_of",
+        "northeast_of", "northwest_of", "southeast_of", "southwest_of",
+    }
+    pair_candidates: list[dict[str, Any]] = []
+    for item in relation_schema.get("pairs") or []:
+        if not isinstance(item, Mapping):
+            continue
+        allowed = [value for value in item.get("allowed_relations") or [] if value not in direction_relations]
+        if allowed:
+            pair_candidates.append({**dict(item), "allowed_relations": allowed})
+    return f"""
+你是石油地质地图语义关系审核专家。当前执行阶段5“关系候选判定”，程序将在之后验证几何并建图。
+
+{_task_context(task)}
+
+实体：{json.dumps(entities, ensure_ascii=False)}
+图例绑定：{json.dumps(state.get('legend_bindings') or [], ensure_ascii=False)}
+允许的具体实体对与关系：{json.dumps(pair_candidates, ensure_ascii=False)}
+
+要求：
+1. 只能从给定实体对及 allowed_relations 中选择，不能创造关系名或交换端点。
+2. 图例节点与实体之间的 instance_of、has_dominant_lithology 等绑定关系由程序根据 legend_bindings 自动生成，不要重复输出。
+3. 语义关系（如 has_facies、maps_property）由你判断是否值得保留。
+4. surrounds、overlaps、adjacent_to 等只作为语义候选，程序将用几何确认；证据不足不要输出。
+5. 井/地点落入面、剖面线穿区等可直接由几何计算，不必为了凑数输出。
+6. 严禁输出地点或其他空间候选之间的八方位关系；方向由程序依据中心坐标生成。
+7. 关系要稀疏、直接、无重复。只输出 JSON，不要 Markdown。
+
+JSON：
+{{
+  "relation_candidates": [
+    {{"source_id": "id", "type": "allowed_relation", "target_id": "id", "evidence": "", "confidence": 0.0, "attributes": {{}}}}
+  ],
+  "uncertainties": []
+}}
+""".strip()
+
+
+def build_map_spatial_prompt(task: ImageExtractionTask) -> str:
+    """保留旧公开入口，返回新三阶段流程的第一阶段提示词。"""
+
+    return build_legend_prompt(task)
+
+
+__all__ = [
+    "build_entity_prompt",
+    "build_legend_prompt",
+    "build_map_spatial_prompt",
+    "build_relation_prompt",
+]

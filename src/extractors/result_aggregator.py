@@ -1,7 +1,9 @@
 """归类汇总第四阶段的文本、图片和表格抽取结果。
 
-本模块不合并或去重任何实体、关系和事件，只将三个模态的 Graph 按第三阶段
+本模块不合并或去重任何实体、关系和事件，只将各模态的 Graph 按第三阶段
 文档摘要中的章节与 Chunk 顺序排列，并把原始 Chunk 内容补充到 Graph.metadata。
+同时为每个实体补充 ``metadata.source_modality``，以保留文本、表格、图片或
+公式的来源信息。
 输出继续使用 ``stage_04_text_extraction.json`` 的顶层结构：
 ``_status``、``statistics`` 和 ``graphs``。
 """
@@ -25,12 +27,14 @@ DEFAULT_SUMMARY_PATH = PROJECT_ROOT / "output" / "stage_03_document_summary.json
 DEFAULT_TEXT_PATH = PROJECT_ROOT / "output" / "stage_04_text_extraction.json"
 DEFAULT_IMAGE_PATH = PROJECT_ROOT / "output" / "stage_04_image_extraction.json"
 DEFAULT_TABLE_PATH = PROJECT_ROOT / "output" / "stage_04_table_extraction.json"
+DEFAULT_FORMULA_PATH = PROJECT_ROOT / "output" / "stage_04_formula_extraction.json"
 DEFAULT_OUTPUT_PATH = PROJECT_ROOT / "output" / "stage_04_merged_extraction.json"
 
 MODALITY_METADATA_FIELDS: dict[str, tuple[str, ...]] = {
     "text": ("text",),
     "image": ("image_path", "caption", "references"),
     "table": ("markdown", "caption", "table_path", "references"),
+    "formula": ("latex", "caption"),
 }
 
 
@@ -117,7 +121,7 @@ def _read_extraction_payload(path: str | Path, modality: str) -> dict[str, Any]:
 
 
 def _enrich_graph(graph: Mapping[str, Any], chunk: Mapping[str, Any]) -> dict[str, Any]:
-    """复制 Graph，并从对应原始 Chunk 向 metadata 回填模态字段。"""
+    """复制 Graph，回填 Chunk 元数据，并标记每个实体的来源模态。"""
 
     result = deepcopy(dict(graph))
     metadata = dict(_as_mapping(result.get("metadata"), "graph.metadata"))
@@ -132,6 +136,22 @@ def _enrich_graph(graph: Mapping[str, Any], chunk: Mapping[str, Any]) -> dict[st
         # 字段即使为 null 或空数组也原样写入，确保输出元数据结构稳定。
         metadata[field] = deepcopy(chunk.get(field))
     result["metadata"] = metadata
+
+    entities = _as_sequence(result.get("entities") or [], "graph.entities")
+    enriched_entities: list[dict[str, Any]] = []
+    for entity_index, raw_entity in enumerate(entities):
+        entity = deepcopy(dict(_as_mapping(raw_entity, f"graph.entities[{entity_index}]")))
+        raw_entity_metadata = entity.get("metadata")
+        entity_metadata = (
+            dict(_as_mapping(raw_entity_metadata, f"graph.entities[{entity_index}].metadata"))
+            if raw_entity_metadata is not None
+            else {}
+        )
+        # 合并阶段以所属 Chunk 模态为准，覆盖抽取阶段可能遗留的不一致来源标识。
+        entity_metadata["source_modality"] = modality
+        entity["metadata"] = entity_metadata
+        enriched_entities.append(entity)
+    result["entities"] = enriched_entities
     return result
 
 
@@ -156,6 +176,7 @@ def _build_statistics(graphs: Sequence[Mapping[str, Any]]) -> dict[str, int]:
         "completed_text_chunk_count": modality_counts["text"],
         "completed_image_chunk_count": modality_counts["image"],
         "completed_table_chunk_count": modality_counts["table"],
+        "completed_formula_chunk_count": modality_counts["formula"],
         "entity_count": entity_count,
         "relation_count": relation_count,
         "event_count": event_count,
@@ -167,12 +188,14 @@ def aggregate_extraction_results(
     text_path: str | Path = DEFAULT_TEXT_PATH,
     image_path: str | Path = DEFAULT_IMAGE_PATH,
     table_path: str | Path = DEFAULT_TABLE_PATH,
+    formula_path: str | Path | None = None,
     output_path: str | Path = DEFAULT_OUTPUT_PATH,
 ) -> dict[str, Any]:
-    """汇总三种模态结果、补充 Chunk 元数据并写出排序后的 JSON。
+    """汇总各模态结果、补充 Chunk 元数据并写出排序后的 JSON。
 
     每个输入 Graph 都完整保留，不执行节点、关系或事件合并。若抽取结果包含第三阶段
-    摘要中不存在的 ``chunk_id``，函数会中止，避免产生无法排序和溯源的数据。
+    摘要中不存在的 ``chunk_id``，函数会中止，避免产生无法排序和溯源的数据。公式
+    结果文件为可选参数，避免影响当前只生成文本、图片、表格结果的调用方。
     """
 
     summary_payload = _as_mapping(read_json(summary_path), "第三阶段文档摘要")
@@ -186,6 +209,8 @@ def aggregate_extraction_results(
         ("image", _read_extraction_payload(image_path, "image")),
         ("table", _read_extraction_payload(table_path, "table")),
     )
+    if formula_path is not None:
+        extraction_payloads += (("formula", _read_extraction_payload(formula_path, "formula")),)
 
     enriched_graphs: list[tuple[int, int, dict[str, Any]]] = []
     input_position = 0
@@ -226,11 +251,12 @@ def aggregate_extraction_results(
 def main() -> None:
     """命令行入口。"""
 
-    parser = argparse.ArgumentParser(description="归类汇总第四阶段文本、图片和表格 Graph")
+    parser = argparse.ArgumentParser(description="归类汇总第四阶段文本、图片、表格和公式 Graph")
     parser.add_argument("--summary", type=Path, default=DEFAULT_SUMMARY_PATH, help="第三阶段文档摘要 JSON")
     parser.add_argument("--text", type=Path, default=DEFAULT_TEXT_PATH, help="第四阶段文本抽取 JSON")
     parser.add_argument("--image", type=Path, default=DEFAULT_IMAGE_PATH, help="第四阶段图片抽取 JSON")
     parser.add_argument("--table", type=Path, default=DEFAULT_TABLE_PATH, help="第四阶段表格抽取 JSON")
+    parser.add_argument("--formula", type=Path, help="可选的第四阶段公式抽取 JSON")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT_PATH, help="汇总结果 JSON")
     args = parser.parse_args()
 
@@ -239,6 +265,7 @@ def main() -> None:
         text_path=args.text,
         image_path=args.image,
         table_path=args.table,
+        formula_path=args.formula,
         output_path=args.output,
     )
     statistics = result["statistics"]
@@ -248,6 +275,7 @@ def main() -> None:
         f"文本={statistics['completed_text_chunk_count']}，"
         f"图片={statistics['completed_image_chunk_count']}，"
         f"表格={statistics['completed_table_chunk_count']}，"
+        f"公式={statistics['completed_formula_chunk_count']}，"
         f"输出文件：{args.output.resolve()}"
     )
 
@@ -258,6 +286,7 @@ if __name__ == "__main__":
 
 __all__ = [
     "DEFAULT_IMAGE_PATH",
+    "DEFAULT_FORMULA_PATH",
     "DEFAULT_OUTPUT_PATH",
     "DEFAULT_SUMMARY_PATH",
     "DEFAULT_TABLE_PATH",

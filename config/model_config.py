@@ -46,27 +46,27 @@ def _load_env_file(path: Path) -> Dict[str, str]:
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 _load_env_file(PROJECT_ROOT / ".env")
 
-MODEL_NAME = "qwen3.7-plus"
+MODEL_NAME = "qwen3.8-flash"
 
 @dataclass(frozen=True)
 class OpenAICompatibleConfig:
     """OpenAI 兼容聊天模型配置。"""
 
-    base_url: str = "http://10.18.19.66:8000/v1"
-    api_key: str = "sk-lwctfhzpjhwclurfgdtpkwynqkawporxgvrhkjrtbuujayij"
-    model: str = "qwen-3.6-27B-FP8"
-    temperature: float = 0.0
-    max_tokens: int = 8192
-    timeout_secs: float = 120.0
-    enable_thinking: bool = False
-
-    # base_url: str = "https://ws-qxohtk9wmrvcddu0.cn-beijing.maas.aliyuncs.com/compatible-mode/v1"
-    # api_key: str = "sk-ws-H.PMXEERR.NHBL.MEUCIQC5w_QlyZ7HnaW4sqnLreVG_nSu58jhw_yKxvFfuCQfwgIgeXgelaxB1qVe7dsbytfSEBc2tRCF5GzvAT6wWYH0520"
-    # model: str = MODEL_NAME
+    # base_url: str = "http://10.18.19.66:8000/v1"
+    # api_key: str = "sk-lwctfhzpjhwclurfgdtpkwynqkawporxgvrhkjrtbuujayij"
+    # model: str = "qwen-3.6-27B-FP8"
     # temperature: float = 0.0
     # max_tokens: int = 8192
     # timeout_secs: float = 120.0
     # enable_thinking: bool = False
+
+    base_url: str = "https://ws-qxohtk9wmrvcddu0.cn-beijing.maas.aliyuncs.com/compatible-mode/v1"
+    api_key: str = "sk-ws-H.PMXEERR.NHBL.MEUCIQC5w_QlyZ7HnaW4sqnLreVG_nSu58jhw_yKxvFfuCQfwgIgeXgelaxB1qVe7dsbytfSEBc2tRCF5GzvAT6wWYH0520"
+    model: str = MODEL_NAME
+    temperature: float = 0.0
+    max_tokens: int = 8192
+    timeout_secs: float = 120.0
+    enable_thinking: bool = False
 
 @dataclass(frozen=True)
 class OpenAIVLMCompatibleConfig:

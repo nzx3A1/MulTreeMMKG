@@ -13,6 +13,8 @@ class MapSpatialClassificationProvider:
     """调用方已确认图片类型时，直接将图片送入地图空间抽取器。"""
 
     def resolve(self, chunk: Mapping[str, Any], image_path: str, image_index: int) -> ImageClassification:
+        """为已确认的地图图片返回固定地图分类。"""
+
         _ = (chunk, image_path, image_index)
         return ImageClassification(code="A01", type_name="地图与平面空间图（调用方已指定）")
 

@@ -9,12 +9,14 @@ from __future__ import annotations
 import argparse
 import html
 import json
+import math
 import os
 import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Iterable
+from uuid import uuid4
 
 
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
@@ -32,6 +34,12 @@ TABLE_LAYOUT_MODEL_NAME = "PicoDet_layout_1x_table"
 # 默认使用第 0 张 GPU；如需切换设备，可通过 AMARKDOWN_PADDLE_DEVICE 覆盖，例如 cpu 或 gpu:1。
 TABLE_LAYOUT_DEVICE = os.getenv("AMARKDOWN_PADDLE_DEVICE", "gpu:0")
 TABLE_CONTINUATION_THRESHOLD = 0.95
+PDF_IMAGE_RENDER_SCALE = 4.0
+PDF_IMAGE_RENDER_PADDING_POINTS = 0.0
+PDF_IMAGE_RENDER_JPEG_QUALITY = 95
+MINERU_CONTENT_LIST_GLOB = "*_content_list.json"
+MINERU_LAYOUT_FILENAME = "layout.json"
+MINERU_RENDERABLE_ASSET_TYPES = frozenset({"image", "table", "chart"})
 _TABLE_LAYOUT_MODEL: Any | None = None
 _CUDA_DLL_HANDLES: list[Any] = []
 TableImageDetector = Callable[[Path, float], bool]
@@ -66,6 +74,38 @@ class SectionNode:
         }
 
 
+@dataclass(frozen=True)
+class MinerUContentImage:
+    """保存 content_list 中一个可渲染视觉资源的路径、类型、页码及 MinerU 坐标框。"""
+
+    image_path: Path
+    asset_type: str
+    page_idx: int
+    bbox: tuple[float, float, float, float]
+
+
+@dataclass(frozen=True)
+class MinerULayoutImage:
+    """保存 layout.json 中一个可渲染视觉资源的 PDF 坐标框及版面顺序。"""
+
+    asset_type: str
+    page_idx: int
+    bbox: tuple[float, float, float, float]
+    layout_index: int
+
+
+@dataclass(frozen=True)
+class MinerUImageRenderTask:
+    """保存替换一个 MinerU 视觉资源时所需的文件路径和双坐标系溯源信息。"""
+
+    image_path: Path
+    asset_type: str
+    page_idx: int
+    content_bbox: tuple[float, float, float, float]
+    layout_bbox: tuple[float, float, float, float]
+    layout_index: int
+
+
 class AMarkdownParser:
     """解析论文 Markdown，并输出按章节组织的结构化 JSON。"""
 
@@ -76,17 +116,40 @@ class AMarkdownParser:
         use_llm_basic_info: bool = False,
         table_image_detector: TableImageDetector | None = None,
         table_continuation_threshold: float = TABLE_CONTINUATION_THRESHOLD,
+        source_pdf: str | Path | None = None,
+        replace_mineru_images_from_pdf: bool = False,
+        pdf_image_render_scale: float = PDF_IMAGE_RENDER_SCALE,
+        pdf_image_render_padding_points: float = PDF_IMAGE_RENDER_PADDING_POINTS,
     ) -> None:
-        """初始化解析器，并配置切分表格图片的检测器与置信度阈值。"""
+        """初始化解析器，并可选配置从原 PDF 重渲染 MinerU 图片的参数。"""
+
+        if pdf_image_render_scale <= 0:
+            raise ValueError("PDF 图片渲染倍数必须大于 0")
+        if pdf_image_render_padding_points < 0:
+            raise ValueError("PDF 图片裁剪外扩距离不能小于 0")
 
         self.use_llm_basic_info = use_llm_basic_info
         self.table_image_detector = table_image_detector or detect_table_image_with_picodet
         self.table_continuation_threshold = table_continuation_threshold
+        self.source_pdf = Path(source_pdf).expanduser() if source_pdf is not None else None
+        self.replace_mineru_images_from_pdf = replace_mineru_images_from_pdf
+        self.pdf_image_render_scale = pdf_image_render_scale
+        self.pdf_image_render_padding_points = pdf_image_render_padding_points
 
     def parse_file(self, input_file: str | Path) -> dict[str, Any]:
-        """读取 Markdown 文件并解析为目标阶段 1 JSON。"""
+        """读取 Markdown 文件；启用时先用原 PDF 高清替换对应 MinerU 图片。"""
 
-        markdown_path = Path(input_file)
+        markdown_path = Path(input_file).expanduser().resolve()
+        image_rebuild: dict[str, Any] | None = None
+        if self.replace_mineru_images_from_pdf:
+            if self.source_pdf is None:
+                raise ValueError("启用 MinerU 图片替换时必须提供 source_pdf")
+            image_rebuild = replace_mineru_images_from_pdf(
+                mineru_output_dir=markdown_path.parent,
+                source_pdf=self.source_pdf,
+                render_scale=self.pdf_image_render_scale,
+                padding_points=self.pdf_image_render_padding_points,
+            )
         text = read_text(markdown_path)
         result = self.parse_text(
             text,
@@ -94,6 +157,8 @@ class AMarkdownParser:
             input_file=str(markdown_path.resolve()),
             asset_base_dir=markdown_path.parent,
         )
+        if image_rebuild is not None:
+            result["_image_rebuild"] = image_rebuild
         return result
 
     def parse_text(
@@ -564,6 +629,367 @@ def serialize_asset_path(image_ref: str, asset_base_dir: Path | None) -> str:
     return str(resolve_markdown_image_path(image_ref, asset_base_dir))
 
 
+def _read_json_file(path: Path, description: str) -> Any:
+    """读取 MinerU JSON 文件，并在格式或编码异常时给出带路径的错误信息。"""
+
+    try:
+        with path.open("r", encoding="utf-8") as file:
+            return json.load(file)
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"无法读取{description}：{path}；原因：{exc}") from exc
+
+
+def _parse_bbox(value: Any, description: str) -> tuple[float, float, float, float]:
+    """校验并转换四值 bbox，确保裁剪框具有正面积。"""
+
+    if not isinstance(value, (list, tuple)) or len(value) != 4:
+        raise ValueError(f"{description} 必须是四个数值组成的 bbox：{value!r}")
+    try:
+        x0, y0, x1, y1 = (float(item) for item in value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{description} 含有非数值坐标：{value!r}") from exc
+    if not x1 > x0 or not y1 > y0:
+        raise ValueError(f"{description} 没有正面积：{value!r}")
+    return x0, y0, x1, y1
+
+
+def _ensure_relative_image_path(image_ref: str, mineru_output_dir: Path) -> Path:
+    """解析 content_list 图片路径，并拒绝跳出 MinerU 输出目录的引用。"""
+
+    raw_path = Path(image_ref)
+    if raw_path.is_absolute():
+        candidate = raw_path.resolve()
+    else:
+        candidate = (mineru_output_dir / raw_path).resolve()
+    try:
+        candidate.relative_to(mineru_output_dir)
+    except ValueError as exc:
+        raise ValueError(f"MinerU 图片路径越出了输出目录：{image_ref}") from exc
+    return candidate
+
+
+def find_mineru_content_list_path(mineru_output_dir: str | Path) -> Path:
+    """定位当前 MinerU 输出目录唯一的 content_list JSON，优先使用固定文件名。"""
+
+    output_dir = Path(mineru_output_dir).expanduser().resolve()
+    fixed_path = output_dir / "content_list.json"
+    if fixed_path.is_file():
+        return fixed_path
+    candidates = sorted(output_dir.glob(MINERU_CONTENT_LIST_GLOB))
+    if len(candidates) != 1:
+        raise FileNotFoundError(
+            f"目录 {output_dir} 中应存在唯一的 content_list JSON，实际找到 {len(candidates)} 个："
+            f"{[path.name for path in candidates]}"
+        )
+    return candidates[0]
+
+
+def load_mineru_content_images(mineru_output_dir: str | Path) -> tuple[Path, list[MinerUContentImage]]:
+    """读取 content_list 内可替换的图、表、图表记录，并保留 MinerU 坐标作为溯源。"""
+
+    output_dir = Path(mineru_output_dir).expanduser().resolve()
+    content_list_path = find_mineru_content_list_path(output_dir)
+    content = _read_json_file(content_list_path, "MinerU content_list")
+    if not isinstance(content, list):
+        raise ValueError(f"MinerU content_list 根节点必须是列表：{content_list_path}")
+
+    images: list[MinerUContentImage] = []
+    for record_index, item in enumerate(content):
+        asset_type = str(item.get("type") or "").lower() if isinstance(item, dict) else ""
+        if asset_type not in MINERU_RENDERABLE_ASSET_TYPES:
+            continue
+        image_ref = str(item.get("img_path") or "").strip()
+        if not image_ref:
+            raise ValueError(f"content_list 第 {record_index} 条 {asset_type} 缺少 img_path")
+        page_idx = item.get("page_idx")
+        if isinstance(page_idx, bool) or not isinstance(page_idx, int) or page_idx < 0:
+            raise ValueError(f"content_list 第 {record_index} 条 {asset_type} 的 page_idx 无效：{page_idx!r}")
+        image_path = _ensure_relative_image_path(image_ref, output_dir)
+        if not image_path.is_file():
+            raise FileNotFoundError(f"content_list 指向的 MinerU 图片不存在：{image_path}")
+        images.append(
+            MinerUContentImage(
+                image_path=image_path,
+                asset_type=asset_type,
+                page_idx=page_idx,
+                bbox=_parse_bbox(item.get("bbox"), f"content_list 第 {record_index} 条 {asset_type} bbox"),
+            )
+        )
+    if not images:
+        raise ValueError(f"content_list 中没有可重渲染的 image/table/chart 记录：{content_list_path}")
+    return content_list_path, images
+
+
+def load_mineru_layout_images(mineru_output_dir: str | Path) -> tuple[Path, list[MinerULayoutImage]]:
+    """读取 layout.json 的图、表、图表框；该坐标系将作为 PDF 局部渲染裁剪框。"""
+
+    output_dir = Path(mineru_output_dir).expanduser().resolve()
+    layout_path = output_dir / MINERU_LAYOUT_FILENAME
+    if not layout_path.is_file():
+        raise FileNotFoundError(f"MinerU layout.json 不存在：{layout_path}")
+    layout = _read_json_file(layout_path, "MinerU layout")
+    if not isinstance(layout, dict) or not isinstance(layout.get("pdf_info"), list):
+        raise ValueError(f"MinerU layout 缺少 pdf_info 页面列表：{layout_path}")
+
+    images: list[MinerULayoutImage] = []
+    for page_idx, page in enumerate(layout["pdf_info"]):
+        if not isinstance(page, dict):
+            raise ValueError(f"layout.json 第 {page_idx} 页不是对象")
+        blocks = page.get("preproc_blocks")
+        if not isinstance(blocks, list):
+            raise ValueError(f"layout.json 第 {page_idx} 页缺少 preproc_blocks 列表")
+        for block_index, block in enumerate(blocks):
+            asset_type = str(block.get("type") or "").lower() if isinstance(block, dict) else ""
+            if asset_type not in MINERU_RENDERABLE_ASSET_TYPES:
+                continue
+            images.append(
+                MinerULayoutImage(
+                    asset_type=asset_type,
+                    page_idx=page_idx,
+                    bbox=_parse_bbox(block.get("bbox"), f"layout.json 第 {page_idx} 页第 {block_index} 个 {asset_type} bbox"),
+                    layout_index=int(block.get("index", block_index)),
+                )
+            )
+    if not images:
+        raise ValueError(f"layout.json 中没有可重渲染的 image/table/chart 版面记录：{layout_path}")
+    return layout_path, images
+
+
+def _bbox_sort_key(bbox: tuple[float, float, float, float]) -> tuple[float, float, float, float]:
+    """返回稳定的从上到下、从左到右 bbox 排序键，用于页内图片配对。"""
+
+    return bbox[1], bbox[0], bbox[3], bbox[2]
+
+
+def _bbox_aspect_ratio(bbox: tuple[float, float, float, float]) -> float:
+    """计算 bbox 宽高比，供跨坐标系图片配对的形状校验使用。"""
+
+    return (bbox[2] - bbox[0]) / (bbox[3] - bbox[1])
+
+
+def _image_aspect_ratio(image_path: Path) -> float:
+    """读取现有 MinerU 图片尺寸并返回宽高比，作为 layout 配对的视觉校验依据。"""
+
+    try:
+        from PIL import Image
+    except ImportError as exc:
+        raise RuntimeError("图片布局校验需要 Pillow，请安装 PIL/Pillow 后重试") from exc
+    try:
+        with Image.open(image_path) as image:
+            if image.width <= 0 or image.height <= 0:
+                raise ValueError(f"图片尺寸无效：{image.size}")
+            return image.width / image.height
+    except OSError as exc:
+        raise ValueError(f"无法读取 MinerU 图片用于布局校验：{image_path}") from exc
+
+
+def _ensure_layout_shape_matches(
+    content_image: MinerUContentImage,
+    layout_image: MinerULayoutImage,
+) -> None:
+    """校验资源类型和形状均与 layout 候选框一致，避免页内错配后错误覆盖。"""
+
+    if content_image.asset_type != layout_image.asset_type:
+        raise ValueError(
+            "content_list 与 layout.json 的视觉资源类型不匹配，拒绝覆盖："
+            f"图片={content_image.image_path.name}，页码={content_image.page_idx}，"
+            f"content_type={content_image.asset_type}，layout_type={layout_image.asset_type}"
+        )
+
+    # content_list bbox 属于 MinerU 预处理页面坐标，部分版本的纵横比例会失真，
+    # 因此用实际导出图片的像素比例和 layout 的 PDF 坐标比例进行校验。
+    content_ratio = _image_aspect_ratio(content_image.image_path)
+    layout_ratio = _bbox_aspect_ratio(layout_image.bbox)
+    ratio_distance = abs(math.log(content_ratio / layout_ratio))
+    if ratio_distance > 0.12:
+        raise ValueError(
+            "MinerU 图片与 layout.json 的候选框形状不匹配，拒绝覆盖："
+            f"图片={content_image.image_path.name}，页码={content_image.page_idx}，"
+            f"image_ratio={content_ratio:.4f}，layout_ratio={layout_ratio:.4f}"
+        )
+
+
+def build_mineru_image_render_tasks(mineru_output_dir: str | Path) -> tuple[Path, Path, list[MinerUImageRenderTask]]:
+    """按页内阅读顺序配对 content_list 图片与 layout 图片框，构建高清重渲染任务。"""
+
+    content_list_path, content_images = load_mineru_content_images(mineru_output_dir)
+    layout_path, layout_images = load_mineru_layout_images(mineru_output_dir)
+    content_by_page: dict[int, list[MinerUContentImage]] = {}
+    layout_by_page: dict[int, list[MinerULayoutImage]] = {}
+    for image in content_images:
+        content_by_page.setdefault(image.page_idx, []).append(image)
+    for image in layout_images:
+        layout_by_page.setdefault(image.page_idx, []).append(image)
+
+    all_pages = sorted(set(content_by_page) | set(layout_by_page))
+    tasks: list[MinerUImageRenderTask] = []
+    for page_idx in all_pages:
+        page_content_images = sorted(content_by_page.get(page_idx, []), key=lambda item: _bbox_sort_key(item.bbox))
+        page_layout_images = sorted(layout_by_page.get(page_idx, []), key=lambda item: _bbox_sort_key(item.bbox))
+        if len(page_content_images) != len(page_layout_images):
+            raise ValueError(
+                f"第 {page_idx} 页图片数量不一致，content_list={len(page_content_images)}，"
+                f"layout.json={len(page_layout_images)}；拒绝覆盖。"
+            )
+        for content_image, layout_image in zip(page_content_images, page_layout_images):
+            _ensure_layout_shape_matches(content_image, layout_image)
+            tasks.append(
+                MinerUImageRenderTask(
+                    image_path=content_image.image_path,
+                    asset_type=content_image.asset_type,
+                    page_idx=page_idx,
+                    content_bbox=content_image.bbox,
+                    layout_bbox=layout_image.bbox,
+                    layout_index=layout_image.layout_index,
+                )
+            )
+    if not tasks:
+        raise ValueError("没有构建出任何 MinerU 图片高清重渲染任务")
+    return content_list_path, layout_path, tasks
+
+
+def _expanded_pdf_clip(page: Any, bbox: tuple[float, float, float, float], padding_points: float) -> Any:
+    """把 layout bbox 外扩并裁剪到 PDF 页面边界，返回可安全渲染的 PyMuPDF Rect。"""
+
+    import fitz
+
+    page_rect = page.rect
+    clip = fitz.Rect(
+        bbox[0] - padding_points,
+        bbox[1] - padding_points,
+        bbox[2] + padding_points,
+        bbox[3] + padding_points,
+    )
+    tolerance = 0.5
+    if (
+        clip.x0 < page_rect.x0 - tolerance
+        or clip.y0 < page_rect.y0 - tolerance
+        or clip.x1 > page_rect.x1 + tolerance
+        or clip.y1 > page_rect.y1 + tolerance
+    ):
+        raise ValueError(
+            f"layout bbox 超出 PDF 页面边界，可能不是 PDF 坐标系："
+            f"bbox={list(bbox)}，page_rect={list(page_rect)}"
+        )
+    clip = clip & page_rect
+    if clip.is_empty or clip.is_infinite:
+        raise ValueError(f"PDF 图片裁剪框无效：{list(bbox)}")
+    return clip
+
+
+def _temporary_image_path(image_path: Path) -> Path:
+    """生成与目标图片同目录、同扩展名的临时文件路径，便于安全原子替换。"""
+
+    return image_path.with_name(f".{image_path.stem}.{uuid4().hex}.pdf-render{image_path.suffix}")
+
+
+def _save_pixmap_with_original_extension(pixmap: Any, output_path: Path) -> None:
+    """以原图片扩展名保存 RGB Pixmap，确保图片名称和下游引用保持不变。"""
+
+    try:
+        from PIL import Image
+    except ImportError as exc:
+        raise RuntimeError("高清图片保存需要 Pillow，请安装 PIL/Pillow 后重试") from exc
+
+    suffix = output_path.suffix.lower()
+    if suffix in {".jpg", ".jpeg"}:
+        image_format = "JPEG"
+    elif suffix == ".png":
+        image_format = "PNG"
+    else:
+        raise ValueError(f"不支持保持原名称的图片扩展名：{output_path.suffix}")
+    if pixmap.n != 3 or pixmap.alpha:
+        raise ValueError("PDF 渲染结果不是无透明通道的 RGB 图像")
+
+    image = Image.frombytes("RGB", (pixmap.width, pixmap.height), pixmap.samples)
+    save_kwargs: dict[str, Any] = {"format": image_format}
+    if image_format == "JPEG":
+        save_kwargs.update({"quality": PDF_IMAGE_RENDER_JPEG_QUALITY, "subsampling": 0, "optimize": True})
+    image.save(output_path, **save_kwargs)
+
+
+def replace_mineru_images_from_pdf(
+    mineru_output_dir: str | Path,
+    source_pdf: str | Path,
+    render_scale: float = PDF_IMAGE_RENDER_SCALE,
+    padding_points: float = PDF_IMAGE_RENDER_PADDING_POINTS,
+) -> dict[str, Any]:
+    """依据 MinerU layout 的 PDF 坐标局部重渲染，并原子替换同名低清图片。"""
+
+    if render_scale <= 0:
+        raise ValueError("PDF 图片渲染倍数必须大于 0")
+    if padding_points < 0:
+        raise ValueError("PDF 图片裁剪外扩距离不能小于 0")
+    output_dir = Path(mineru_output_dir).expanduser().resolve()
+    pdf_path = Path(source_pdf).expanduser().resolve()
+    if not output_dir.is_dir():
+        raise FileNotFoundError(f"MinerU 输出目录不存在：{output_dir}")
+    if not pdf_path.is_file():
+        raise FileNotFoundError(f"原始 PDF 不存在：{pdf_path}")
+    content_list_path, layout_path, tasks = build_mineru_image_render_tasks(output_dir)
+
+    try:
+        import fitz
+    except ImportError as exc:
+        raise RuntimeError("高清 PDF 图片重渲染需要 PyMuPDF，请安装 fitz/PyMuPDF 后重试") from exc
+
+    temporary_files: list[tuple[Path, Path]] = []
+    rendered_images: list[dict[str, Any]] = []
+    try:
+        with fitz.open(pdf_path) as document:
+            matrix = fitz.Matrix(render_scale, render_scale)
+            for task in tasks:
+                if task.page_idx >= document.page_count:
+                    raise ValueError(
+                        f"图片 {task.image_path.name} 指向第 {task.page_idx} 页，"
+                        f"但 PDF 仅有 {document.page_count} 页"
+                    )
+                page = document[task.page_idx]
+                if page.rotation != 0:
+                    raise ValueError(
+                        f"PDF 第 {task.page_idx} 页存在 {page.rotation} 度旋转，"
+                        "当前需先完成坐标转换校准，拒绝直接覆盖图片。"
+                    )
+                clip = _expanded_pdf_clip(page, task.layout_bbox, padding_points)
+                pixmap = page.get_pixmap(
+                    matrix=matrix,
+                    clip=clip,
+                    colorspace=fitz.csRGB,
+                    alpha=False,
+                )
+                temporary_path = _temporary_image_path(task.image_path)
+                _save_pixmap_with_original_extension(pixmap, temporary_path)
+                temporary_files.append((temporary_path, task.image_path))
+                rendered_images.append(
+                    {
+                        "image_path": str(task.image_path),
+                        "asset_type": task.asset_type,
+                        "page_idx": task.page_idx,
+                        "content_bbox": list(task.content_bbox),
+                        "layout_bbox": list(task.layout_bbox),
+                        "layout_index": task.layout_index,
+                        "rendered_size": [pixmap.width, pixmap.height],
+                    }
+                )
+        for temporary_path, destination_path in temporary_files:
+            temporary_path.replace(destination_path)
+    finally:
+        for temporary_path, _ in temporary_files:
+            if temporary_path.exists():
+                temporary_path.unlink()
+
+    return {
+        "mode": "pdf_clip_render",
+        "source_pdf": str(pdf_path),
+        "content_list": str(content_list_path),
+        "layout": str(layout_path),
+        "render_scale": render_scale,
+        "padding_points": padding_points,
+        "image_count": len(rendered_images),
+        "images": rendered_images,
+    }
+
+
 def populate_section_assets(
     node: SectionNode,
     reference_text: str = "",
@@ -1026,14 +1452,47 @@ def main() -> None:
     )
     cli.add_argument("-o", "--output", help="输出 JSON 文件路径；目录输入且不传时默认写入 output/amarkdown_parser_results.json")
     cli.add_argument("--use-llm-basic-info", action="store_true", help="尝试用项目 LLMClient 补全基本信息")
+    cli.add_argument("--source-pdf", type=Path, help="与 MinerU 输出同源的原始 PDF；高清替换图片时必填")
+    cli.add_argument(
+        "--replace-mineru-images-from-pdf",
+        action="store_true",
+        help="按 layout.json 的 PDF 坐标以高清局部渲染替换同名 MinerU 图片",
+    )
+    cli.add_argument(
+        "--pdf-image-render-scale",
+        type=float,
+        default=PDF_IMAGE_RENDER_SCALE,
+        help=f"PDF 图片局部渲染倍数，默认 {PDF_IMAGE_RENDER_SCALE:g}",
+    )
+    cli.add_argument(
+        "--pdf-image-render-padding-points",
+        type=float,
+        default=PDF_IMAGE_RENDER_PADDING_POINTS,
+        help=f"图片框四周外扩的 PDF point，默认 {PDF_IMAGE_RENDER_PADDING_POINTS:g}",
+    )
     args = cli.parse_args()
+
+    if args.replace_mineru_images_from_pdf and args.source_pdf is None:
+        cli.error("--replace-mineru-images-from-pdf 必须同时提供 --source-pdf")
+    if args.pdf_image_render_scale <= 0:
+        cli.error("--pdf-image-render-scale 必须大于 0")
+    if args.pdf_image_render_padding_points < 0:
+        cli.error("--pdf-image-render-padding-points 不能小于 0")
 
     input_path = Path(args.input)
     if not input_path.is_absolute():
         input_path = project_root() / input_path
 
-    parser = AMarkdownParser(use_llm_basic_info=args.use_llm_basic_info)
     input_files = resolve_markdown_inputs(input_path)
+    if args.replace_mineru_images_from_pdf and len(input_files) != 1:
+        cli.error("高清替换图片时一次只能解析一个 full.md，以避免单个 PDF 错配多篇论文")
+    parser = AMarkdownParser(
+        use_llm_basic_info=args.use_llm_basic_info,
+        source_pdf=args.source_pdf,
+        replace_mineru_images_from_pdf=args.replace_mineru_images_from_pdf,
+        pdf_image_render_scale=args.pdf_image_render_scale,
+        pdf_image_render_padding_points=args.pdf_image_render_padding_points,
+    )
     result = build_cli_result([parser.parse_file(path) for path in input_files], input_path)
 
     output_path = Path(args.output) if args.output else None
