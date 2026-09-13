@@ -171,8 +171,8 @@ def test_entity_semantic_none_preserves_raw_type_and_marks_unmapped() -> None:
     result = aligner.align_many([source])[0]
     assert result["type"] == "open_type"
     assert result["raw_type"] == "open_type"
-    assert result["schema_type"] is None
-    assert result["schema_type_zh"] is None
+    assert result["schema_type"] == "open_type"
+    assert result["schema_type_zh"] == "原始类型（open_type）"
     assert result["schema_alignment"]["status"] == "UNMAPPED"
     assert result["custom"] == {"keep": True}
 
@@ -201,7 +201,18 @@ def test_predefined_table_and_chart_types_skip_all_schema_mapping() -> None:
         "SKIPPED",
         "RULE_MAPPED",
     ]
-    assert all(item["schema_type"] is None for item in results[:4])
+    assert [item["schema_type"] for item in results[:4]] == [
+        "TableCell",
+        "chart_axis",
+        "chart_trend",
+        "MapTheme",
+    ]
+    assert [item["schema_type_zh"] for item in results[:4]] == [
+        "表格单元格",
+        "图表坐标轴",
+        "图表趋势",
+        "地图主题",
+    ]
     assert all(
         item["schema_alignment"]["method"] == "predefined_type_filter"
         for item in results[:4]

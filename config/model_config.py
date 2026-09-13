@@ -50,7 +50,7 @@ MODEL_NAME = "qwen3.8-flash"
 
 @dataclass(frozen=True)
 class OpenAICompatibleConfig:
-    """OpenAI 兼容聊天模型配置。"""
+    """仅供文本 LLM 使用的 OpenAI 兼容聊天模型配置。"""
 
     # base_url: str = "http://10.18.19.66:8000/v1"
     # api_key: str = "sk-lwctfhzpjhwclurfgdtpkwynqkawporxgvrhkjrtbuujayij"
@@ -60,13 +60,23 @@ class OpenAICompatibleConfig:
     # timeout_secs: float = 120.0
     # enable_thinking: bool = False
 
-    base_url: str = "https://ws-qxohtk9wmrvcddu0.cn-beijing.maas.aliyuncs.com/compatible-mode/v1"
-    api_key: str = "sk-ws-H.PMXEERR.NHBL.MEUCIQC5w_QlyZ7HnaW4sqnLreVG_nSu58jhw_yKxvFfuCQfwgIgeXgelaxB1qVe7dsbytfSEBc2tRCF5GzvAT6wWYH0520"
-    model: str = MODEL_NAME
+    # base_url: str = "https://ws-qxohtk9wmrvcddu0.cn-beijing.maas.aliyuncs.com/compatible-mode/v1"
+    # api_key: str = "sk-ws-H.PMXEERR.NHBL.MEUCIQC5w_QlyZ7HnaW4sqnLreVG_nSu58jhw_yKxvFfuCQfwgIgeXgelaxB1qVe7dsbytfSEBc2tRCF5GzvAT6wWYH0520"
+    # model: str = MODEL_NAME
+    # temperature: float = 0.0
+    # max_tokens: int = 8192
+    # timeout_secs: float = 120.0
+    # enable_thinking: bool = False
+
+    # 中文说明：此处只影响 settings.llm；VLM、Embedding、MinerU 和 Summary 均有独立配置。
+    base_url: str = "https://assistant.cup.edu.cn/api/v1"
+    # 中文说明：密钥只能通过 LLM_API_KEY 或 OPENAI_API_KEY 注入，禁止写入源码。
+    api_key: str = "2ae48efd-0a6d-6e51-8d55-1762525bc094"
+    model: str = "deepseek-r1-cup"
     temperature: float = 0.0
     max_tokens: int = 8192
     timeout_secs: float = 120.0
-    enable_thinking: bool = False
+    enable_thinking: bool = True
 
 @dataclass(frozen=True)
 class OpenAIVLMCompatibleConfig:

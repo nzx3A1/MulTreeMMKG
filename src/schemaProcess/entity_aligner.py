@@ -11,7 +11,11 @@ from .category_router import CategoryRoute, SchemaCategoryRouter
 from .entity_rules import EntityRuleMapper
 from .entity_cache import EntityMappingCache, build_entity_mapping_key
 from .llm_selector import CandidateSelector
-from .mapping_filter import is_predefined_non_schema_type
+from .mapping_filter import (
+    is_predefined_non_schema_type,
+    resolve_schema_type,
+    resolve_schema_type_zh,
+)
 from .models import SelectionDecision, SemanticCandidate
 from .semantic_retriever import VectorSemanticRetriever
 
@@ -53,8 +57,12 @@ class EntityAligner:
 
         result = deepcopy(dict(entity))
         result["raw_type"] = entity.get("raw_type", entity.get("type"))
-        result["schema_type"] = None
-        result["schema_type_zh"] = None
+        result["schema_type"] = resolve_schema_type(entity.get("type"))
+        result["schema_type_zh"] = resolve_schema_type_zh(
+            result["raw_type"],
+            entity.get("type_zh"),
+            entity.get("schema_type_zh"),
+        )
         result["schema_alignment"] = {
             "status": "UNMAPPED",
             "method": "none",
@@ -70,8 +78,12 @@ class EntityAligner:
         result = deepcopy(dict(entity))
         raw_type = entity.get("raw_type", entity.get("type"))
         result["raw_type"] = raw_type
-        result["schema_type"] = None
-        result["schema_type_zh"] = None
+        result["schema_type"] = resolve_schema_type(entity.get("type"))
+        result["schema_type_zh"] = resolve_schema_type_zh(
+            raw_type,
+            entity.get("type_zh"),
+            entity.get("schema_type_zh"),
+        )
         result["schema_alignment"] = {
             "status": "SKIPPED",
             "method": "predefined_type_filter",
@@ -100,8 +112,15 @@ class EntityAligner:
 
         result = deepcopy(dict(entity))
         result["raw_type"] = entity.get("raw_type", entity.get("type"))
-        result["schema_type"] = template.get("schema_type")
-        result["schema_type_zh"] = template.get("schema_type_zh")
+        result["schema_type"] = resolve_schema_type(
+            entity.get("type"),
+            template.get("schema_type"),
+        )
+        result["schema_type_zh"] = resolve_schema_type_zh(
+            result["raw_type"],
+            entity.get("type_zh"),
+            template.get("schema_type_zh"),
+        )
         result["schema_alignment"] = deepcopy(template.get("schema_alignment") or {})
         if cache_hit:
             result["schema_alignment"]["cache_hit"] = True

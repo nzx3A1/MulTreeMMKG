@@ -1,5 +1,5 @@
 # Stage 05：开放抽取图的概念 Schema 对齐
-
+![alt text](image.png)
 实体映射采用“标准化去重/缓存 → 规则 → Schema 一级分类 → 类别内向量召回 → 高置信向量直连 → 批量 LLM 消歧”的保守流程；关系映射仍在实体完成后，按有向端点 Schema 查询 `SCHEMA_RELATION`。
 
 
