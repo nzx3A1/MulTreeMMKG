@@ -39,6 +39,7 @@ def build_two_dimensional_stratigraphic_log_prompt(
 - 每个实体 id 在本图内唯一；parent_id、序列、横向组和关系端点只能引用 entities 中已有 id。
 - 同一地层在多口井分别出现时：若图中表达的是同一跨井层位，可只建一个区域实体；若各井深度段需要分别保留，则建立井内区间实体并用 correlates_with 连接。
 - 除图片/Chunk 根节点外，每个实体必须至少出现在 parent_id、stratigraphic_sequences 或 relations 之一；完全孤立的实体不要输出。
+- entities 中 attributes 的所有属性名必须使用中文，例如 {{"顶界深度": "1500 m", "厚度": "35 m"}}；id、name、type、parent_id、position、evidence、confidence 等结构字段仍保持英文键名，禁止在 attributes 内使用 top_depth、thickness 等英文属性名。
 
 关系类型只使用：
 part_of, contains, directly_overlies, directly_underlies,

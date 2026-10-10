@@ -53,7 +53,7 @@ JSON：
   "schema_version": "map_spatial.intermediate.v1",
   "map": {{
     "id": "map", "name": "地图题名", "type": "map_spatial", "type_zh": "具体中文图类",
-    "attributes": {{"map_type": "", "scale": "", "orientation": "", "description": "", "classification_code": "{task.classification_code}"}},
+    "attributes": {{"地图类型": "", "比例尺": "", "指北信息": "", "描述": "", "分类编码": "{task.classification_code}"}},
     "evidence": "图题或整幅图证据", "confidence": 0.0
   }},
   "legend_items": [
@@ -88,7 +88,8 @@ def build_entity_prompt(task: ImageExtractionTask, legend_result: Mapping[str, A
 5. 仅将值得进入稀疏方位骨架的实体列入 spatial_mapping.candidate_entities；通常只选 place。
    若地图确实以古陆、油气田等命名空间对象为核心，可在 candidate_entity_types 中明确增加其类型。
 6. spatial_anchor 选择最核心实体。不要输出任何 north_of/east_of 等方向，方向由程序计算。
-7. 未知类型写 UNMAPPED，并在 attributes.raw_type 保留原始判断。只输出 JSON，不要 Markdown。
+7. 未知类型写 UNMAPPED，并在 attributes.原始类型 保留原始判断。
+8. attributes 必须是对象，且其中所有属性名必须使用中文。例如 {{"位置": "图区中部", "面积": "15平方千米"}}；id、name、type、type_zh、geometry、evidence、confidence 等结构字段仍按本格式使用英文，禁止在 attributes 内使用 position、area、raw_type 等英文属性名。只输出 JSON，不要 Markdown。
 
 JSON：
 {{
@@ -96,7 +97,7 @@ JSON：
     {{
       "id": "place_jingbian", "name": "靖边", "type": "place", "type_zh": "地名",
       "geometry": {{"kind": "point", "center": [481,510], "bbox": [451,490,511,530]}},
-      "attributes": {{"position": "图区中部"}}, "evidence": "", "confidence": 0.0
+      "attributes": {{"位置": "图区中部", "面积": "15平方千米"}}, "evidence": "", "confidence": 0.0
     }}
   ],
   "legend_bindings": [{{"legend_id": "legend_place", "entity_ids": ["place_jingbian"], "confidence": 0.0}}],
@@ -146,7 +147,7 @@ def build_relation_prompt(task: ImageExtractionTask, state: Mapping[str, Any], r
 4. surrounds、overlaps、adjacent_to 等只作为语义候选，程序将用几何确认；证据不足不要输出。
 5. 井/地点落入面、剖面线穿区等可直接由几何计算，不必为了凑数输出。
 6. 严禁输出地点或其他空间候选之间的八方位关系；方向由程序依据中心坐标生成。
-7. 关系要稀疏、直接、无重复。只输出 JSON，不要 Markdown。
+7. 关系要稀疏、直接、无重复。若 relation attributes 非空，其中所有属性名必须使用中文。只输出 JSON，不要 Markdown。
 
 JSON：
 {{

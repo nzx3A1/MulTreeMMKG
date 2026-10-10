@@ -1,0 +1,110 @@
+{
+  "version": "1.0",
+  "chunk_local_raw_types": [
+    "annotation",
+    "axis",
+    "caption",
+    "chart",
+    "chart_anomaly",
+    "chart_axis",
+    "chart_correlation",
+    "chart_panel",
+    "chart_threshold",
+    "chart_trend",
+    "curve_response_interval",
+    "data_series",
+    "diagram_track",
+    "figure",
+    "figure_element",
+    "figure_panel",
+    "legend",
+    "map_theme",
+    "profile_line",
+    "quantitative_chart",
+    "stratigraphic_profile",
+    "symbol",
+    "table",
+    "table_cell",
+    "table_column",
+    "table_header",
+    "table_row",
+    "track_interval"
+  ],
+  "chunk_local_prefixes": [
+    "chart_",
+    "diagram_",
+    "table_"
+  ],
+  "compatible_schema_type_zh": [
+    ["沉积相", "微相"],
+    ["沉积相", "亚相"],
+    ["段", "亚段/小层"],
+    ["地质时代", "沉积阶段"],
+    ["构造单元", "隆起"],
+    ["储层/储集层", "目的层/储层段"]
+  ],
+  "incompatible_schema_type_zh": [
+    ["井", "地理位置"],
+    ["井", "岩性"],
+    ["井", "矿物"],
+    ["岩性", "矿物"],
+    ["岩性", "地理位置"],
+    ["盆地", "井"],
+    ["油气田", "井"],
+    ["地质时代", "地理位置"]
+  ],
+  "identity_attribute_keys": [
+    "id",
+    "code",
+    "编号",
+    "井号",
+    "well_id",
+    "sample_id",
+    "样品编号"
+  ],
+  "identifier_schema_type_zh": [
+    "井",
+    "段",
+    "亚段/小层",
+    "组",
+    "地质时代",
+    "样品"
+  ],
+  "abbreviation_suffixes": [
+    "亚段",
+    "小层",
+    "盆地",
+    "气田",
+    "油田",
+    "组",
+    "段",
+    "井"
+  ],
+  "name_replacements": {
+    "储集层": "储层",
+    "镁离子": "mg2+",
+    "二价镁离子": "mg2+"
+  },
+  "relation_evidence_attribute_keys": [
+    "confidence",
+    "explicit",
+    "inference_basis",
+    "mapping_basis",
+    "validation_source",
+    "selection_mode",
+    "evidence_detail"
+  ],
+  "absorb_self_loop_relations": [
+    "same_as",
+    "alias_of",
+    "同义于",
+    "别名"
+  ],
+  "symmetric_relations": [
+    "related_to",
+    "correlates_with",
+    "associated_with",
+    "相关于",
+    "关联"
+  ]
+}

@@ -17,6 +17,7 @@ data/mineru_output/
 Thumbs.db
 **/*.json
 !config/schema_alignment_rules.json
+!config/multimodal_alignment_rules.json
 *.html
 *.css
 *.js
@@ -34,5 +35,10 @@ testdata/
 data/*
 tests/*
 !tests/test_stage_05_schema_alignment.py
+!tests/test_stage_06_multimodal_alignment.py
+# 仅放行 MVP 评测集的可复现清单、Schema 与聚焦测试，避免扩大 JSON/测试跟踪范围。
+!eval/dataset_split/manifest.json
+!eval/mvp/**/*.json
+!tests/test_mvp_eval_dataset.py
 *.log
 logs/

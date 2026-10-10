@@ -46,7 +46,7 @@ def _load_env_file(path: Path) -> Dict[str, str]:
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 _load_env_file(PROJECT_ROOT / ".env")
 
-MODEL_NAME = "qwen3.8-flash"
+MODEL_NAME = "gpt-6-luna"
 
 @dataclass(frozen=True)
 class OpenAICompatibleConfig:
@@ -68,23 +68,23 @@ class OpenAICompatibleConfig:
     # timeout_secs: float = 120.0
     # enable_thinking: bool = False
 
-    # 中文说明：此处只影响 settings.llm；VLM、Embedding、MinerU 和 Summary 均有独立配置。
-    base_url: str = "https://assistant.cup.edu.cn/api/v1"
-    # 中文说明：密钥只能通过 LLM_API_KEY 或 OPENAI_API_KEY 注入，禁止写入源码。
-    api_key: str = "2ae48efd-0a6d-6e51-8d55-1762525bc094"
-    model: str = "deepseek-r1-cup"
+    # 中文说明：文本和视觉模型默认接入本机 LM Studio 的 OpenAI 兼容 API。
+    base_url: str = "http://127.0.0.1:8317/v1"
+    # 中文说明：本地服务通常不校验密钥；使用非空占位值兼容 OpenAI 客户端。
+    api_key: str = "local"
+    model: str = MODEL_NAME
     temperature: float = 0.0
     max_tokens: int = 8192
     timeout_secs: float = 120.0
-    enable_thinking: bool = True
+    enable_thinking: bool = False  # 中文说明：CUP DeepSeek 的思考参数必须放入 chat_template_kwargs，禁止使用顶层开关。
 
 @dataclass(frozen=True)
 class OpenAIVLMCompatibleConfig:
     """OpenAI 兼容视觉模型配置。"""
 
-    # 中文说明：视觉流程使用用户指定的内网多模态服务，与文本 LLM 配置相互独立。
-    base_url: str = "https://ws-qxohtk9wmrvcddu0.cn-beijing.maas.aliyuncs.com/compatible-mode/v1"
-    api_key: str = "sk-ws-H.PMXEERR.NHBL.MEUCIQC5w_QlyZ7HnaW4sqnLreVG_nSu58jhw_yKxvFfuCQfwgIgeXgelaxB1qVe7dsbytfSEBc2tRCF5GzvAT6wWYH0520"
+    # 中文说明：视觉流程与文本 LLM 共用本机 OpenAI 兼容服务。
+    base_url: str = "http://127.0.0.1:8317/v1"
+    api_key: str = "local"
     model: str = MODEL_NAME
     temperature: float = 0.0
     max_tokens: int = 8192

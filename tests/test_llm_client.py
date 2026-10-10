@@ -1,8 +1,23 @@
 """验证 LLM 客户端针对 CUP DeepSeek 的配置隔离和请求参数。"""
 from __future__ import annotations
 
+import _bootstrap  # noqa: F401 - 直接运行测试文件时注入项目根目录。
+
 from config.model_config import OpenAICompatibleConfig
 from src.utils.llm_client import LLMClient
+
+
+def main() -> None:
+    """直接运行时调用模型并打印回复。"""
+
+    client = LLMClient(config=OpenAICompatibleConfig())
+    reply = client.chat(
+        [
+            {"role": "system", "content": "你是一个简洁的中文助手。"},
+            {"role": "user", "content": "你好"},
+        ]
+    )
+    print(reply)
 
 
 def test_cup_deepseek_is_llm_only_default() -> None:
@@ -38,3 +53,7 @@ def test_other_text_models_keep_existing_thinking_contract() -> None:
     )
 
     assert client._thinking_extra_body("qwen3.8-flash") == {"enable_thinking": False}
+
+
+if __name__ == "__main__":
+    main()

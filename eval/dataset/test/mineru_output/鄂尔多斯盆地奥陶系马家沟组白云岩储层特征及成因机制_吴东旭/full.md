@@ -1,0 +1,263 @@
+DOI: 10.16108/j.issn1006-7493.2020222
+
+引用格式：吴东旭，李昌，周进高，胡琮，黄正良，于洲，李维岭，郭玮. 2022. 鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制 [J]. 高校地质学报，28（4）：606-616
+
+# 鄂尔多斯盆地奥陶系马家沟组白云岩储层特征及成因机制
+
+吴东旭1,2，李  昌1,2\*，周进高1,2，胡  琮3，黄正良3，于  洲1,2，李维岭1，郭  玮3
+
+1. 中国石油杭州地质研究院，杭州 310023；2. 中国石油天然气集团有限公司碳酸盐岩储层重点实验室，杭州 310023；3. 中国石油长庆油田分公司勘探开发研究院，西安 710018
+
+摘要：鄂尔多斯盆地奥陶系白云岩是重要的天然气储集层，对其白云岩成因和储层发育规律的研究对于碳酸盐岩深层勘探理论的发展具有重要意义。文章基于大量岩心、薄片的观察，并结合稳定碳氧同位素、稀土元素、白云岩有序度、地层水、包裹体特征等地球化学分析，对盆地奥陶系存在的两种典型白云岩储层的发育特征和形成机理进行了详细研究。分析表明，含硬石膏结核或柱状晶的泥粉晶白云岩主要为潮坪蒸发环境的萨布哈成因，其规模储层的发育主要受到长时不整合面的控制，不整合面以下发育大量硬石膏结核和柱状晶溶模孔；颗粒滩白云岩主要为回流渗透成因，其储层孔隙的发育主要受到海平面高频升降的影响，发育多旋回的粒（晶）间孔隙型储层，虽然两种白云岩的白云石化流体都为浓缩海水但由于白云石化的机制和速率不同，二者的原始孔隙类型和特征迥异。两种白云岩孔隙在后期的成岩改造和演变过程中，既有相同之处，又有明显的区别。这一认识也将对深层的白云岩储层勘探提供指导作用。
+
+关键词：鄂尔多斯盆地；奥陶系；白云岩；储层成因；硬石膏；铸模孔；颗粒滩
+
+中图分类号：P618.13
+
+文献标识码：A
+
+文章编号：1006-7493（2022）04-606-11
+
+# Characteristics and Genesis Mechanism of the Dolomite Reservoir in the Ordovician Majiagou Formation in the Ordos Basin
+
+WU Dongxu1,2，LI Chang1,2\*，ZHOU Jingao1,2，HU Cong3，HUANG Zhengliang3，YU Zhou1,2， LI Weiling1，GUO wei3
+
+1. Petrochina Hangzhou Research Institute of Geology, Hangzhou 310023, China: 2. Key Laboratory of Carbonate Reservoir, CNPC, Hangzhou 310023, China; 3. Research Institute of Exploration and Development, Changqing Oilfield Company, PetroChina, Xi’an 710018, China
+
+Abstract: The Ordovician dolomite in Ordos basin is an important natural gas reservoir. Studying the genesis of dolomite and reservoir development is of great significance to the development of the deep carbonate exploration theory. Based on observations of a large number of cores and thin sections, combined with geochemical analysis of stable carbon and oxygen isotopes, rare earth elements, order degree of dolomite, formation water and inclusions, the developmental characteristics and formation mechanism of two Ordovician type dolomite reservoirs in the basin were studied in detail. The analyses reveal that the dolomicrite containing anhydrite nodules or columnar crystals is mainly sabkha genesis in an evaporitic environment of tidal flat. The developmen of its large scale reservoir was mainly controlled by the long term unconformity surface, below which plenty of dissolved mol holes of the anhydrite nodules and columnar crystals were developed. The granular beach dolomite is mainly genesis result of seepage reflux and the development of its reservoir pores is primarily affected by the high-frequency fluctuations of the sea level, generating multi-cycle intergranular (intercrystalline) porous reservoirs. Although the dolomitization fluids of both types of dolomite were concentrated seawater, the original pore types and characteristics of the two dolomites are different due to their different mechanisms and rates of dolomitization. In the subsequent diagenetic transformation and evolution, the two types of dolomite pores show both similarities and obvious differences. This finding will provide useful guidance for the exploration of deep dolomite reservoirs.
+
+Key words: Ordos Basin; Ordovician; dolomite; genesis of reservoir; anhydrite; mold pores; granular beach Corresponding author: LI Chang, Senior Engineer; E-mail: lic\_hz@petrochina.com.cn
+
+白云岩储层是碳酸盐岩油气藏的重要勘探领域。对全球 226 个大中型以上碳酸盐岩油气田（占全球碳酸盐岩油气储量的 90%）的统计表明，有102 个油气田和 50% 的储量分布于白云岩储集层中（白国平，2006）。在古生界海相碳酸盐岩大油气田中，白云岩储层占所有储层油气总可采储量的76.5%（王大鹏等，2016）。并且随着勘探的重心向天然气和深层转移，埋深3500 m和4500 m以下的深层—超深层日益成为勘探的重点。根据 2009年国土资源部颁布的探明储量公报 , 中国已发现探明储量超过 1000 万吨油气当量的深层碳酸盐岩油气田 17 个 , 主要分布于中国的鄂尔多斯、塔里木、四川等3 个盆地的不同层系的白云岩储层中。而其中储量规模最大的气田为鄂尔多斯盆地靖边气田（张宁宁等，2014）。
+
+白云岩是储层发育的基础，白云岩储层孔隙的形成和保存与白云岩化的过程密切相关，二者是一个连续的过程。对于鄂尔多斯盆地奥陶系白云岩的形成，前人进行了大量的研究，提出了包括准同生云化、混合水云化、回流渗透云化、埋藏云化、热液云化、微生物云化等在内的多种白云石化模式（杨华等，2011，2012；黄正良等，2012；赵俊兴等，2005；苏中堂等，2011；王保全等，2009；姚泾利等，2009；赵卫卫等，2011）。但他们的研究主要针对某一个层位，或者某一种成因分别研究，而没有将其联系起来。笔者认为，基于盆地内奥陶系广泛发育的膏盐岩和白云岩互层沉积，有必要把白云岩的产状、层位等考虑在内。并且对其矿物类型加以研究，再联系地球化学分析数据，对不同类型白云岩形成过程之间的联系和区别进行详尽阐述。在此基础上，才能对储层形成的物质基础和过程有一个清晰的了解。
+
+因此，本文以鄂尔多斯盆地靖边气田的主力碳酸盐岩储层——奥陶系白云岩储层为例，对其储层发育特征和形成机理进行了详细表征和实验分析，以期加深对深层白云岩储层形成机制的理论认识，从而指导深层碳酸盐岩油气勘探。
+
+## 1 地质背景
+
+鄂尔多斯盆地位于中国中北部，总面积$3 2 \times 1 0 ^ { 4 } ~ \mathrm { k m } ^ { 2 }$ ，是中国第二大沉积盆地。奥陶纪时期，盆地是华北地台的一部分 , 位于华北地台西部（Yang et al., 2005）。由于具有坚实的太古代—早元古代花岗岩—变质岩基底，整个华北地台奥陶纪发育相对稳定的陆表海沉积。但因为受到构造运动和气候等因素的影响，盆地的相对海平面发生了频繁的振荡，形成了包括石灰岩、白云岩、含泥碳酸盐岩以及膏岩、盐岩等蒸发岩在内的丰富的岩性和沉积相组合（图1）。
+
+盆地奥陶系地层由下而上依次为冶里组，亮用山组和马家沟组。冶里组和亮甲山组主要岩性为含燧石结核或条带白云岩、泥质白云岩和竹叶状白云岩，层厚一般不超过 100 m。与之相比，马家沟组厚度在 100～900 m 之间，主要为碳酸盐岩和蒸发岩沉积，是鄂尔多斯盆地白云岩储层发育的主要层位。马家沟组地层从下到上可以分为马一—马六总共 6 个段。其中马一、马三和马五为相对海退期，以碳酸盐岩局限台地和蒸发台地相为主。岩性主要为白云岩，且发育了三大套的膏盐岩沉积。马二、马四和马六段为相对海侵期，主要为碳酸盐岩开阔台地和局限台地相，以白云岩和灰岩沉积为主。马五段根据相对海平面升降，从上到下又可以分为马五 —马五 十个亚段，其中马五 亚段为马五段主要的蒸发岩发育期（图2）。
+
+从图 2 可知，在海平面上升时期，波浪能量较高，发育了大量的颗粒滩沉积。而在海平面下降时期，潮间带和潮上带范围扩大，发育大量的蒸发岩沉积。这两种截然不同的沉积微相和岩性类型为后期储层的发育提供了重要的物质基础（Strohmengeret al., 2010）。
+
+图1 鄂尔多斯盆地奥陶系马家沟组马五段沉积相分布及靖边气田位置  
+![](images/a10add54f532f58ad45d313b7df33a2f4233ac579aa63991f325845ec8aaabad.jpg)  
+Fig. 1 Map showing the sedimentary facies distribution of Ma5 in the Ordos Basin and the location of the Jingbian gas field
+
+## 2 白云岩储层特征
+
+通过对 62 口钻井的 423 块薄片和接近 500 m岩芯的观察，对马家沟组白云岩主要的储集空间类型进行了总结，其主要发育两大类共4 种孔隙类型（图 3）。并进一步运用三维 CT 扫描和孔渗结构分析，对其储集特征进行了详细表征。
+
+## 2.1  孔隙类型及特征
+
+## 2.1.1  第一大类为硬石膏铸模孔
+
+此类孔隙的最大特点是，分布相对孤立，孔隙之间的喉道相对较窄。但后期经风化壳岩溶作用改造以后，孔隙和喉道均会大幅增大。此类孔隙主要分布于潮上带的泥晶或泥粉晶白云岩中，可以细分为两种：硬石膏结核溶模孔和硬石膏柱状晶溶模孔（图 3）。
+
+## （1）硬石膏结核溶模孔
+
+根据压实作用的影响程度，孔隙呈圆形或椭圆形，一般直径在 0.5\~4 mm 之间。由于后期多期成岩作用叠加，导致孔隙充填物类型多样，充填程度可以为未充填、半充填或全充填。充填物主要有白云石、方解石、石英、渗流粉砂、硬石膏、铁方解石、黄铁矿、有机质等，其组合类型至少可以达到6 种（王琪等，2016; 刘新社等，2017）。
+
+## （2）硬石膏柱状晶溶模孔
+
+孔隙呈长条状、板柱状矩形分布，长度一般在 0.5\~5 mm，最长可达 1 cm，宽度一般为 0.2\~0.5mm。分布相对孤立，局部呈集合体形状出现。此类孔隙与硬石膏结核溶模孔发育于同一种环境，经常会伴生发育。充填物主要有白云石、方解石、石英、渗流粉砂、硬石膏等。
+
+## 2.1.2  第二大类为白云石粒（晶）间孔
+
+此类孔隙的特点为，孔隙基本相互连通，孔隙之间的喉道与孔隙大小差别不大。孔隙主要分布于潮下带的颗粒滩或藻屑滩白云岩中，可以分为两种：白云岩粒间孔和白云岩晶间孔。
+
+## （1）白云岩粒间孔
+
+颗粒灰岩白云石化以后，原岩的颗粒形态清晰可辨，颗粒间发育粒间孔。孔隙呈立体连通网状，孔隙大小取决于颗粒大小，直径一般在200\~500 μm，喉道直径一般在几十微米。充填物一般为方解石、白云石、硬石膏以及少量石英。
+
+## （2）白云石晶间孔
+
+颗粒灰岩白云石化程度较高，原岩的颗粒形态不可辨识，只能识别出孔隙存在于白云石晶体之间。孔隙一般呈不规则状多边形，边缘平直，直径一般在 50\~500 μm。孔隙依靠晶体间缝隙连通，连通性取决于白云石晶体的分布。由于晶体分布的不均匀性，孔隙体经常呈不规则片状分布。
+
+需要指出的是，白云石粒间孔和白云石晶间孔并不是截然分开的，晶间孔只是粒间孔进一步白云化的产物。所以样品中经常可以见到残余颗粒结构的晶间孔和带有晶体结构的粒间孔。
+
+![](images/787873a7863480cdb8cd2b32373fe10780afb8365cc9153ebd6aa6e0ebcea629.jpg)  
+图2 鄂尔多斯盆地奥陶系白云岩储层分布柱状图  
+Fig. 2 The stratigraphic column showing of the Ordovician dolomite reservoir distribution in the Ordos Basin
+
+## 2.2  孔渗和孔喉特征
+
+## 2.2.1  孔渗特征
+
+第一类孔隙和第二类孔隙的孔渗特征见图 4，孔隙度一般为 0%\~15%，渗透率为 0.01\~100 mD。二者孔隙度和渗透率都具有良好的相关性，基本呈正相关关系。
+
+但我们可以看到，在孔隙度小于 2.5% 的范围内，白云岩粒（晶）间孔的渗透率明显大于膏模孔的渗透率（图 4），说明在膏模孔形成初期，各个孔隙是相对孤立的，渗透率较低：而粒（晶）间孔则得益于其立体网状结构，渗透率相对较高。随着孔隙度增大同样体积内膏模孔的数量增多 孤立膏模孔相互之间产生联络，导致渗透率上升，与粒（晶）间孔隙相当。但局部仍然存在孔隙度较大而渗透率很小的膏模孔，表明其可能为孤立的较大孔洞，喉道很小，导致渗透率没有明显增大。
+
+综上可知，孔隙形成初期，孔隙结构对孔渗性能有重要影响，但后期随着孔隙度和渗透率的增高，其影响减弱，不同类型孔隙的孔渗性能趋
+
+![](images/7b51010d422cd8e9faa539486eb318184668f383a7fb133e179198ffb7b2e33d.jpg)  
+照片a（陕290井，深度3758m），b（陕319井，深度3725m）和c（陕319井，深度3725m）分别为硬石膏结核铸模孔的薄片和岩芯。a中的铸模孔被白云石渗流粉砂半充填，可见示顶底构造；b中的铸模孔被白云石渗流粉砂、方解石和石英半充填。照片c（陕294井，深度3474 m）和h（陕187井，深度3125 m）分别为硬石膏柱状晶铸模孔的薄片和岩芯。c中的孔隙未充填，h中的孔隙被方解石全充填。  
+照片d（靳8井，深度3663 m）、e（桃38井，深度3612 m）和i（靳8井，深度3663 m）分别为粒间孔的薄片和岩芯，其喉道和孔隙的直径差异较小。d为砂屑云岩，e为鲕粒云岩。照片f（桃17井，深度3782 m）为晶间孔的薄片，是d和e的进一步白云化产物
+
+图3 鄂尔多斯盆地奥陶系典型白云岩孔隙薄片和岩芯特征  
+Fig. 3 Core and thin-section photographs of typical Ordovician dolomite pores in the Ordos Basin  
+![](images/9b16185cc734f608d2165f15b6d01c439e6cd2540d49f05255e35f34d0515749.jpg)  
+图4 两类白云岩储层的孔渗特征对比（膏模孔：N=1730，粒（晶）间孔：N=784）  
+Fig. 4 The contrast of porosity-permeability relationship between anhydrite mold pores (N=1730) and intergranular and intercrystalline pores (N=784)
+
+于一致。
+
+## 2.2.2  3D-CT扫描表征
+
+3D CT 扫描选取的样品大小为直径 2.5 cm，长度 5 cm 的柱塞样，扫描分辨率为 8 μm。第一类孔隙中选取了经岩溶改造的硬石膏结核溶模孔进行了扫描，第二类孔隙中选取了残余部分颗粒结构的白云岩晶间孔进行了扫描（图5）。
+
+对比两者可知，改造后的硬石膏结核溶模孔的孔隙一般较大，直径在 0\~450 μm，喉道相对较小，直径在 0\~230 μm。最大孔隙和最大喉道直径相差一倍（图 5c）。而白云石晶间孔的孔隙一般较小，直径在 0\~180 μm，喉道直径与其类似，在0\~150 μm。最大孔隙和最大喉道直径相差不大（图5f）。这也与薄片下的观察结论一致。同时也表明，膏模孔受后期表生溶蚀的影响较大，可以明显提升其孔隙和喉道大小。
+
+![](images/c96d5ce0950a5285a35200aa21a76eefd5bd197749ffbe8e16742480957f7504.jpg)
+
+![](images/b26e606543ddf4d6b300c75ded85227c88be04689ea963f62c32169192c2fab6.jpg)
+
+![](images/9ecd7cae8904936532529afee13eba82e4e4777006efea3d07bd85c3ce3fb479.jpg)
+
+![](images/56b09ee5b635476e4afee19ce489d01f8b1a775a01ba7ac6857a1ac16e82660d.jpg)
+
+![](images/3386bf47f3609228435199afbfe2b3864d499f8b2033be58cc24bb66498ae370.jpg)
+
+![](images/30348594001578a6119b0e71053a0705074a1f7981763c0389243ceec76b6223.jpg)  
+(a) 是硬石膏铸模孔的横截面，(b) 为同一样品的孔隙—喉道（node-link）模型，(c) 为同一样品的孔喉半径分布图。统99井， $\stackrel { \overline { { { U } } } } {  } \mathcal { \overline { { { \hbar } } } } _ { 9 } ,$ ，粉晶白云岩；(d) 为晶间孔的横截面，(e) 为同一样品的孔隙—喉道（node-link）模型，(f) 为同一样品的孔喉半径分布图。靳7井，马 $\operatorname { \overline { { \mathbf { \Pi } } } } _ { 9 }$ ，粗粉晶砂屑云岩  
+图5 两类孔隙的3D-CT扫描表征  
+Fig. 5 3D-CT Scan characteristics of the two types of pores
+
+## 3 白云岩储层成因机制
+
+## 3.1  白云岩化机理
+
+奥陶系马家沟组白云岩主要有两大类，一类是含有硬石膏结核、柱状晶等矿物的泥晶、泥粉晶白云岩。沉积相上，主要呈层状分布于台内洼地的周缘潮间带和潮上带。另一类则是含有大量颗粒组分（鲕粒、砂屑、藻砂屑等）的细晶、颗粒云岩。沉积相上，一般位于潮下带的颗粒滩相，主要呈块状分布。前者主要分布于相对海退期的马一段、马三段以及马 $\overline { { \mathcal { \pm } } } _ { \mathrm { ~ 1 0 } } \mathrm { ~ , ~ }$ 、马五 、马五 和马五 亚段，而后者主要分布于相对海侵的马二段、马四段以及马五 、马五 、和马五 亚段。此外，在储层的孔隙中还分布一定量的细晶到粗晶白云石胶结物。
+
+通过对包括泥粉晶白云岩、细晶白云岩、孔隙充填白云岩、方解石以及泥晶灰岩在内的 56 块次样品的稳定碳氧同位素分析（图6），我们发现：泥粉晶白云岩和细晶白云岩其碳氧同位素分布特征类似，没有明显差别，说明其白云化流体应该是相同的（Wang et al., 2002）。对比同时期的泥晶灰岩，白云岩的 $\delta ^ { 1 8 } 0$ 明显偏正，说明当时的白云化流体应该是海水蒸发浓缩形成的（Swart et al., 2015）。再结合白云岩有序度分析（表 1）可知，从泥晶到粉晶再到细晶，其有序度不断升高。说明泥、粉晶白云岩的白云化速度较快，而细晶白云岩的有序度相对较高，说明其白云化的速度相对较慢，晶体生长也相对较完整。
+
+![](images/05ec536a8b4315159b910c33912826048fbe86a83ae40c550e45bb2703b29b82.jpg)  
+图6 白云岩和灰岩、方解石碳氧同位素对比（N=56）  
+Fig. 6 Comparison of carbon and oxygen isotopes of the dolomite, limestone, and calcite (N=56)
+
+通过对白云岩的稀土元素分析，其均一化后的 REE 分布特征与近海平面海水的分布特征相类似，具有明显的 Eu 的负异常和 Ce 的略微负异常（Elderfield and Greaves，1982），说明白云石化流体应该是海平面附近的蒸发海水（图7）。
+
+表1  白云岩有序度数据和薄片对比  
+Table 1 Comparison of the dolomite degree of order and core slices  
+![](images/db09536bce840abd28f73a43bd16a0aaa07e60c4ac238b93d664a45e26366731.jpg)
+
+由此可以合理推断，海退期的泥、粉晶白云石形成于萨布哈蒸发环境，在潮汐的作用下，海水不断被补充到潮上带，蒸发作用使潮上灰岩地层孔隙内水体的 $\mathrm { M g } ^ { 2 + }$ 浓度不断增大（Mü ller et al., 1990），导致早期的泥晶灰岩发生白云石化（图8）。且形成速率较快，有序度较低。在萨布哈白云化完成以后，剩余的高度浓缩的海水向下回流渗透，使下伏的海侵期沉积的颗粒滩灰岩发生白云石化（图 9）。由于向下渗透的速率较慢，所以其白云石化速率要慢于萨布哈白云石化作用。但回流渗透的速率一般较为稳定，所以其白云石化的有序度要高于潮上带泥晶白云岩。海退期，不同层位石膏结核和石膏晶体的发育程度和范围有明显区别，反映了蒸发作用受到气候的影响强烈。而下伏的颗粒和晶粒白云岩，其回流渗透白云石化过程较为缓慢，对气候的响应则相对较弱，所以形成了块状结构。
+
+![](images/2a4d07419ff7b3dba84d05c84936e2d3a5b880e004b3dfd3b1ed3a603ecae8cf.jpg)  
+A: 盟6井，马五 ，粉晶白云岩；B: 莲70井，马五 ，粗粉晶白云岩；C: 莲55， $\stackrel { \overline { { { U } } } } {  } \overline { { { \mathrm { \large D } } } } _ { 5 } ,$ 粗粉晶白云岩  
+图7 白云岩稀土元素分布特征  
+Fig. 7 Distribution characteristics of the rare earth elements in the dolomite
+
+![](images/c05e5f21288b34d21112005f87dc0a9547e2df64064ad7002b0b41abc27d6d0b.jpg)  
+图8 萨布哈白云石化模式图
+
+Fig. 8 Diagram of the Sabkha dolomitization model  
+![](images/46e7f59b5f41d22b1828a146e4dd96f9be91ec908bf633a29582d45233a65813.jpg)  
+图9 回流渗透白云石化模式图  
+Fig. 9 Diagram of the seepage reflux dolomitization model
+
+## 3.2  储层成因机制
+
+上文提到的两种典型的孔隙类型，其形成的物质基础不同，过程也有明显差别。
+
+首先是白云石粒间孔，它在颗粒灰岩沉积的初期就已经存在。同沉积期，颗粒灰岩粒间孔隙充填的是原始海水。在流体密度差异导致的回流渗透作用下，被高盐度浓缩海水所替代，进而发生回流渗透白云石化作用。颗粒灰岩中的 $\mathrm { C a } ^ { 2 + }$ 被高盐度海水中的 $\mathrm { M g } ^ { 2 + }$ 替代，发生渗透回流白云石化。同时， $\mathrm { C a } ^ { 2 + }$ 进入白云石化以后的孔隙间流体。当流体的温度或 PH 条件发生变化时，流体中的 $\mathrm { C a } ^ { 2 + }$ 与 $\mathrm { S O } _ { 4 } ^ { 2 - }$ 结合，沉淀石膏晶体（Jones etal., 2005）。通过脱水作用或水化作用，石膏可以与硬石膏相互转换（Amadi et al., 2012）。同沉积期海平面十分动荡，硬石膏胶结的颗粒滩白云岩有可能会受到短期的大气淡水和正常海水的交替影响。此时，对石膏或硬石膏不饱和的溶液进入孔隙，导致石膏或硬石膏被溶解，白云石粒间孔隙被富含 $\mathrm { C a } ^ { 2 + }$ 与 $\mathrm { C l ^ { - } }$ 的地层水所占据。当然，后期由于其他流体成分的进入，孔隙中可能会沉淀其他矿物（图 10a）。
+
+如孔隙中充填的白云石胶结物，其 $\delta ^ { 1 8 } 0$ 明显偏负，说明其受到了高温流体的影响，可能是形成于埋藏环境的地下流体或热液（Hartig et al.,2011）。而孔隙充填的方解石，大部分 $\delta ^ { 1 3 } \mathrm { C }$ 明显偏负，且 $\delta ^ { 1 8 } \mathrm { C }$ 也明显偏负，说明其形成于高温环境，并且存在有机碳的混入（Cantrell et al., 2004）。原因可能是，地层埋藏进入生油窗后，烃源岩中的有机质发生脱羧基作用并释放 $\mathrm { C O } _ { 2 } , \mathrm { C O } _ { 2 }$ 中的 C 与孔隙流体中的C发生交换，然后在后期碱性高温环境下，方解石得以沉淀。同一时期，少量的地层硅酸盐在碱性溶液的作用下会发生溶解形成 $\mathrm { S i O } _ { 2 }$ ，在后期酸性条件下沉淀石英晶体。通过包裹体分析，孔隙充填的白云石、方解石、石英等，均一温度在 118℃左右（表2）。
+
+![](images/587faacaf5a2da8c4e924f0738205cc968e4bd38ee26d8f6d0190a0e3d48bdef.jpg)
+
+![](images/10b9228215a7816571e12f2a88f19c12c7d8109de9d2b969e05ef7a30ca23c1d.jpg)  
+图10 （a）渗透回流白云石化 和（b）萨布哈白云石化的孔隙发育过程  
+Fig. 10 The developing process of the pores during (a) the seepage reflux dolomitization and (b) the sabkha dolomitization
+
+再来看硬石膏溶模孔，其原岩，即未固结的泥晶灰岩含有大量粒间微孔隙，孔隙中充填的同样为原始海水。由于处于潮上带，其蒸发作用强烈，原始海水被蒸发浓缩导致 $\mathrm { M g } ^ { 2 + }$ 浓度增大，使泥晶灰岩中的 $\mathrm { C a } ^ { 2 + }$ 被 $\mathrm { M g } ^ { 2 + }$ 替换发生萨布哈白云化。需要强调的是，泥晶白云岩中沉淀石膏的形态与颗粒白云岩完全不同。由于气候和温度的不稳定性导致蒸发作用的不均匀性，再加上潮上带的海水是通过潮汐作用间断性得到补充，所以泥晶白云岩孔隙间的流体供应也是不规律的（Adams et al., 1960）。所以石膏的沉淀是呈结核状或柱状，由核部向外慢速生长的。而颗粒岩中的流体不受气候或温度的影响，并且颗粒间的喉道较大，导致粒间的流体分布相对较为均匀，所以就形成了连片他形的石膏胶结物形态。硬石膏 / 石膏结核和柱状晶同样也会被非饱和流体所溶解。但与连片他形胶结物不同，膏模孔的溶解更为艰难。因为，当含有石膏结核或柱状晶的泥晶白云岩形成以后，由于其抗压实能力与颗粒白云岩比明显更差，所以粒间微孔隙大部分被压实。只能依靠存在的少量裂缝或窄喉道作为流体运移的通道。所以，石膏溶模孔的发育，所需时间更长。这也解释了为什么马一、马三、马 $\overline { { \mathcal { \pm } } } _ { \mathrm { ~ 1 0 ~ } }$ 、马五 、 $^ { 8 \cdot }$ 马五 、马五 都发育硬石膏结核或柱状晶，但只 $_ { 1 - 4 }$ 有马五 $_ { 1 - 4 }$ 发育了大量的膏模孔。因为马 $\overline { { \mathcal { \pm } } } _ { \mathrm { ~ l - 4 ~ } }$ 距离上部风化壳最近，其承受了长达 1.3 亿年的风化剥蚀和大气淡水的溶虑，有充足的时间将其喉道溶蚀、拓宽形成立体的膏模孔网络（Vahrenkamp, 1995）。同样，再埋藏以后，膏模孔也会经历不同矿物组分
+
+表2  孔隙充填白云石、方解石和石英的包裹体均一温度 Table 2 The inclusion homogenization temperature of the pore filled with dolomite, calcite, and quartz  
+![](images/d93e53f495babec78781235a7d4bb0122d078fa801defba6b346b28447add3f2.jpg)
+
+的充填作用（图10b）。
+
+白云岩膏模孔主要发育于长时不整合面之下，如马家沟组晚期的风化壳岩溶储层，主要受（含）硬石膏结核云坪微相和岩溶古地貌的影响（图11a，b）。而颗粒滩白云岩储层主要发育于高频层序短时暴露面之下，以颗粒滩为溶蚀的基础，具有多旋回多期次成储的特征（吴东旭等，2017；图11c，d）。
+
+![](images/5e1e84b842c25f962c2769dd3ccc72ef2a05322eb5e4f12721fc5dd65e1c54a2.jpg)
+
+## 4 结论
+
+（1）鄂尔多斯盆地奥陶系白云岩的形成与其海
+
+![](images/665e81edd6a6d88eac67fdc9dd2e334dfc22d60bb30c667039a7cb53e75eb1e6.jpg)
+
+![](images/74b9d42829162905c633e309a147ffc6502cbeebc070c5191a32a79981ffc83d.jpg)
+
+![](images/981cf39a69fa30cc52fc149802ba18ec60a6a0831ffbb901e7a113d506e20221.jpg)  
+（a）靖边地区马五小层沉积微相分布图，以（含）硬石膏结核云坪为主：（b）靖边地区马五小层孔隙度平面分布图，高孔隙度区主要分布于（含）硬石膏结核云坪中，受到加里东期风化壳岩溶切割：（c）鄂尔多斯盆地中东部马五。亚段沉积微相分布图，颗粒滩呈条带状沿台内凸起分布：（d）鄂尔多斯盆地中东部马五.亚段储层分布图，储层主要受控于颗粒滩的分布和准同生溶蚀作用的影响
+
+图11 鄂尔多斯盆地两种典型白云岩储层的平面分布特征
+
+Fig. 11 Plane view of the distribution characteristics of two type dolomite reservoirs in the Ordos Basin
+
+白云岩储层特征及主控因素[J]. 海相油气地质，22(2): 40-50
+
+平面变化密切相关。海退期含石膏 / 硬石膏结核和柱状晶的白云岩主要为蒸发潮坪萨布哈成因，而海侵期颗粒滩白云岩则主要为回流渗透成因。导致二者白云石化的流体基本一致，但白云石化的时间和速度有明显差别。所以两种白云岩既有相似之处，却又特征分明。说明同一种流体在不同的机制下，会形成不同类型的白云岩。
+
+（2）不同类型的白云岩为不同类型孔隙的发育提供了物质基础。颗粒云岩由于具有良好的粒间立体网状孔隙结构，所以孔隙流体的运移更加通畅。在海平面高频旋回的影响下，粒间的石膏 / 硬石膏被溶解，会形成跟层序界面相关的粒间孔隙。而在泥晶白云岩中，其石膏结核或柱状晶的溶蚀通道普遍较窄，在间歇暴露的短时间内难以形成规模储层，只有在长时间的沉积间断后才能形成规模的以不整合面为基础的膏模孔储层。
+
+（3） 随着天然气勘探日益向深层发展，白云岩膏模孔领域勘探应主要集中在长时不整合面，以风化岩溶时期的高地和斜坡为勘探重点。而颗粒滩白云岩储层的勘探应集中于高频层序相关的短时暴露面之下，其具有多旋回多期次成储的特征。
+
+## 参考文献 (References):
+
+白国平. 2006. 世界碳酸盐岩大油气田分布特征[J]. 古地理学报，8(2): 241-250.
+
+黄正良，陈调胜，任军峰，等. 2012. 鄂尔多斯盆地奥陶系中组合白云岩储层及圈闭成藏特征[J]. 石油学报，33(增刊2): 118-124.
+
+黄正良，包洪平，任军峰，等. 2011. 鄂尔多斯盆地南部奥陶系马家沟组白云岩特征及成因机理分析[J]. 现代地质，25(5): 925-930.
+
+刘新社，漆亚玲，李树同，等. 2017. 鄂尔多斯盆地古隆起东北侧马五\_4\~1储层膏模孔类型及充填过程分析[J]. 沉积学报，35(6):1217-1224.
+
+苏中堂，陈洪德，徐粉燕，等. 2011. 鄂尔多斯盆地马家沟组白云岩地球化学特征及白云岩化机制分析[J]. 岩石学报，27(8):2230-2238.
+
+王保全，强子同，张帆，等. 2009. 鄂尔多斯盆地奥陶系马家沟组马五段白云岩的同位素地球化学特征[J]. 地球化学，38(5):472-479.
+
+王大鹏，白国平，徐艳，等. 2016. 全球古生界海相碳酸盐岩大油气田特征及油气分布[J]. 古地理学报，18(1): 80-92.
+
+王琪，许勇，刘新社，等. 2016. 岩溶背景下的优质天然气储层形成机理及主控因素——以鄂尔多斯盆地奥陶系马家沟组马五\_4\~1储层为例[J]. 天然气地球科学，27(12): 2103-2114.
+
+吴东旭，吴兴宁，王少依，等. 2017. 鄂尔多斯盆地奥陶系颗粒滩
+
+杨华，包洪平. 2011. 鄂尔多斯盆地奥陶系中组合成藏特征及勘探启示[J]. 天然气工业，31(12): 11-20.
+
+杨华，王宝清，孙六一，等. 2012. 鄂尔多斯盆地中奥陶统马家沟组碳酸盐岩碳、氧稳定同位素特征[J]. 天然气地球科学，23(4):616-625.
+
+姚泾利，王保全，王一，等. 2009. 鄂尔多斯盆地下奥陶统马家沟组马五段白云岩的地球化学特征[J]. 沉积学报，27(3): 381-389.
+
+张宁宁，何登发，孙衍鹏，等. 2014. 全球碳酸盐岩大油气田分布特征及其控制因素[J]. 中国石油勘探，19(6): 54-65.
+
+赵俊兴，陈洪德，张锦泉，等. 2005. 鄂尔多斯盆地中部马五段白云岩成因机理研究[J]. 石油学报，26(5): 38-41，47.
+
+赵卫卫，王宝清. 2011. 鄂尔多斯盆地苏里格地区奥陶系马家沟组马五段白云岩的地球化学特征[J]. 地球学报，32(6): 681-690.
+
+Adams J E and Rhodes M L. 1960. Dolomitization by seepage refluxion [J]. AAPG Bulletin, 44(12): 1912-1920.
+
+Amadi F O, Major R P and Baria L R. 2012. Origins of gypsum in deep carbonate reservoirs: Implications for hydrocarbon exploration and production [J]. AAPG Bulletin, 96(2): 375-390.
+
+Cantrell D, Swart P and Hagerty R. 2004. Genesis and characterization of dolomite, Arab-D reservoir, Ghawar field, Saudi Arabia [J]. GeoArabia, 9(2): 11-36.
+
+Elderfield H and Greaves M J. 1982. The rare earth elements in seawate [J]. Nature, 296(5854): 214.
+
+Hartig K A, Soreghan G S, Goldstein R H, et al. 2011. Dolomite in permian paleosols of the Bravo Dome CO field, USA: Permian reflux followed by late recrystallization at elevated temperature [J]. Journal of Sedimentary Research, 81(4): 248-265.
+
+Jones G D and Xiao Y. 2005. Dolomitization, anhydrite cementation, and porosity evolution in a reflux system: Insights from reactive transport models [J]. AAPG Bulletin, 89(5): 577-601.
+
+Müller D W, McKenzie J A and Mueller P A. 1990. Abu Dhabi sabkha, Persian Gulf, revisited: application of strontium isotopes to test an early dolomitization model [J]. Geology, 18(7): 618-621.
+
+Strohmenger C J, Al Mansoori A, Al Jeelani O, et al. 2010. The sabkha sequence at Mussafah Channel (Abu Dhabi, United Arab Emirates): facies stacking patterns, microbial-mediated dolomite and evaporite overprint [J]. GeoArabia, 15(1): 49-90.
+
+Swart Peter K. 2015. The geochemistry of carbonate diagenesis: The past, present and future [J]. Sedimentology, 62(5): 1233-1304.
+
+Vahrenkamp V C. 1995. The post rotliegend reservoirs of Auk Field, British North Sea: subaerial exposure and reservoir creation [C] // Budd D A, Saller A H, Harris P M, Unconformities and Porosity in Carbonate Strata, 63: 197-211.
+
+Wang B and Al-Aasm I S. 2002. Karst-controlled diagenesis and reservoir development: Example from the Ordovician main-reservoir carbonate rocks on the eastern margin of the Ordos basin, China [J]. AAPG Bulletin, 86(9): 1639-1658.
+
+Yang Y, Li W and Ma L. 2005. Tectonic and stratigraphic controls of hydrocarbon systems in the Ordos basin: A multicycle cratonic basin in central China [J]. AAPG Bulletin, 89(2): 255-269.

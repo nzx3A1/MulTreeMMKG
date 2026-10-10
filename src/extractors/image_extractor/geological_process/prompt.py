@@ -58,6 +58,7 @@ def build_visual_extraction_prompt(task: ImageExtractionTask) -> str:
 8. 只输出 JSON，不要 Markdown；每个判断都必须带具体 evidence 和 0~1 confidence。
 9. 控制输出规模：evidence 每项不超过 40 个汉字；不输出互为反向的重复关系；spatial_relations 最多 24 条、temporal_relations 最多 10 条、causal_relations 最多 12 条。
 10. 第一轮岩性只做可靠的粗匹配，无法确认时留空；后续会用第二次视觉调用专项复核，不能为了填满字段而猜测。
+11. entities 中 attributes 的所有属性名必须使用中文，例如 {{"面积": "15平方千米", "储集空间类型": "裂缝-孔洞型"}}；id、name、type 等 JSON 结构字段仍按本格式使用英文，禁止在 attributes 内使用 area、reservoir_type 等英文属性名。
 
 关系类型优先使用：
 - 空间/构造：above, below, directly_overlies, directly_underlies, within, contains, adjacent_to,
