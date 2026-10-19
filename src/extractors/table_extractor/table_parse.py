@@ -737,7 +737,8 @@ class RapidTableRecognizer:
         self,
         image: Any,
         *,
-        tile_size: int = 896,
+        # 中文说明：OOM 回退时进一步减小分块，降低 ONNX CPU 在单块上的峰值内存。
+        tile_size: int = 512,
         overlap: int = 96,
         include_header_band: bool = True,
     ) -> Any:

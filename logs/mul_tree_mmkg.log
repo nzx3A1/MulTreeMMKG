@@ -217,3 +217,178 @@
 2026-09-07 10:59:10,304 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/单图] 完成：chunk=1:image:0，image_index=0，extractor=map_spatial，status=completed，实体=16，关系=56，事件=0，耗时=85.45s
 2026-09-07 10:59:10,305 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/Chunk] 完成 1/1：chunk=1:image:0，status=completed，单图任务=1，实体=16，关系=56，事件=0，耗时=85.45s
 2026-09-07 10:59:10,305 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/管线] 完成：Graph=1，实体=16，关系=56，事件=0，耗时=85.46s
+2026-10-10 19:12:23,742 | INFO | mul_tree_mmkg.extractors.text_extractor | 无 Schema 文本抽取流程启动：document_id=File1039，Chunk数=6，章节数=5
+2026-10-10 19:12:23,743 | INFO | mul_tree_mmkg.extractors.text_extractor | 文本抽取并发线程数=1
+2026-10-10 19:12:23,743 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1039::1:text:0 开始无 Schema 抽取：字符数=395
+2026-10-10 19:12:23,744 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1039::1:text:0 实体抽取完成：候选数=0，候选名称=[]
+2026-10-10 19:12:23,744 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1039::1:text:0 关系抽取完成：候选数=0，候选类型=[]
+2026-10-10 19:12:23,744 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1039::1:text:0 解析校验完成：实体=0，关系=0，事件=0，拒绝=0
+2026-10-10 19:12:23,744 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1039::4.1:text:0 开始无 Schema 抽取：字符数=492
+2026-10-10 19:12:23,744 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1039::4.1:text:0 实体抽取完成：候选数=0，候选名称=[]
+2026-10-10 19:12:23,744 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1039::4.1:text:0 关系抽取完成：候选数=0，候选类型=[]
+2026-10-10 19:12:23,745 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1039::4.1:text:0 解析校验完成：实体=0，关系=0，事件=0，拒绝=0
+2026-10-10 19:12:23,745 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1039::4.3:text:0 开始无 Schema 抽取：字符数=466
+2026-10-10 19:12:23,745 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1039::4.3:text:0 实体抽取完成：候选数=0，候选名称=[]
+2026-10-10 19:12:23,745 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1039::4.3:text:0 关系抽取完成：候选数=0，候选类型=[]
+2026-10-10 19:12:23,745 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1039::4.3:text:0 解析校验完成：实体=0，关系=0，事件=0，拒绝=0
+2026-10-10 19:12:23,745 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1039::4.4:text:0 开始无 Schema 抽取：字符数=395
+2026-10-10 19:12:23,745 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1039::4.4:text:0 实体抽取完成：候选数=0，候选名称=[]
+2026-10-10 19:12:23,746 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1039::4.4:text:0 关系抽取完成：候选数=0，候选类型=[]
+2026-10-10 19:12:23,746 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1039::4.4:text:0 解析校验完成：实体=0，关系=0，事件=0，拒绝=0
+2026-10-10 19:12:23,746 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1039::4.1:text:1 开始无 Schema 抽取：字符数=474
+2026-10-10 19:12:23,746 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1039::4.1:text:1 实体抽取完成：候选数=0，候选名称=[]
+2026-10-10 19:12:23,746 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1039::4.1:text:1 关系抽取完成：候选数=0，候选类型=[]
+2026-10-10 19:12:23,746 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1039::4.1:text:1 解析校验完成：实体=0，关系=0，事件=0，拒绝=0
+2026-10-10 19:12:23,746 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1039::0:text:2 开始无 Schema 抽取：字符数=633
+2026-10-10 19:12:23,746 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1039::0:text:2 实体抽取完成：候选数=0，候选名称=[]
+2026-10-10 19:12:23,747 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1039::0:text:2 关系抽取完成：候选数=0，候选类型=[]
+2026-10-10 19:12:23,747 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1039::0:text:2 解析校验完成：实体=0，关系=0，事件=0，拒绝=0
+2026-10-10 19:12:23,755 | INFO | mul_tree_mmkg.extractors.text_extractor | 无 Schema 文本抽取流程完成：Graph=6，实体=0，关系=0，事件=0
+2026-10-10 19:12:23,756 | INFO | mul_tree_mmkg.extractors.text_extractor | 无 Schema 文本抽取流程启动：document_id=File1066，Chunk数=6，章节数=5
+2026-10-10 19:12:23,756 | INFO | mul_tree_mmkg.extractors.text_extractor | 文本抽取并发线程数=1
+2026-10-10 19:12:23,756 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1066::1:text:0 开始无 Schema 抽取：字符数=493
+2026-10-10 19:12:23,756 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1066::1:text:0 实体抽取完成：候选数=0，候选名称=[]
+2026-10-10 19:12:23,756 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1066::1:text:0 关系抽取完成：候选数=0，候选类型=[]
+2026-10-10 19:12:23,756 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1066::1:text:0 解析校验完成：实体=0，关系=0，事件=0，拒绝=0
+2026-10-10 19:12:23,756 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1066::2.2.2:text:0 开始无 Schema 抽取：字符数=514
+2026-10-10 19:12:23,756 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1066::2.2.2:text:0 实体抽取完成：候选数=0，候选名称=[]
+2026-10-10 19:12:23,756 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1066::2.2.2:text:0 关系抽取完成：候选数=0，候选类型=[]
+2026-10-10 19:12:23,756 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1066::2.2.2:text:0 解析校验完成：实体=0，关系=0，事件=0，拒绝=0
+2026-10-10 19:12:23,757 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1066::2.3:text:0 开始无 Schema 抽取：字符数=499
+2026-10-10 19:12:23,757 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1066::2.3:text:0 实体抽取完成：候选数=0，候选名称=[]
+2026-10-10 19:12:23,757 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1066::2.3:text:0 关系抽取完成：候选数=0，候选类型=[]
+2026-10-10 19:12:23,757 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1066::2.3:text:0 解析校验完成：实体=0，关系=0，事件=0，拒绝=0
+2026-10-10 19:12:23,757 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1066::2.1:text:1 开始无 Schema 抽取：字符数=360
+2026-10-10 19:12:23,757 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1066::2.1:text:1 实体抽取完成：候选数=0，候选名称=[]
+2026-10-10 19:12:23,757 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1066::2.1:text:1 关系抽取完成：候选数=0，候选类型=[]
+2026-10-10 19:12:23,757 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1066::2.1:text:1 解析校验完成：实体=0，关系=0，事件=0，拒绝=0
+2026-10-10 19:12:23,757 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1066::2.4:text:1 开始无 Schema 抽取：字符数=347
+2026-10-10 19:12:23,757 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1066::2.4:text:1 实体抽取完成：候选数=0，候选名称=[]
+2026-10-10 19:12:23,758 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1066::2.4:text:1 关系抽取完成：候选数=0，候选类型=[]
+2026-10-10 19:12:23,758 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1066::2.4:text:1 解析校验完成：实体=0，关系=0，事件=0，拒绝=0
+2026-10-10 19:12:23,758 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1066::2.4:text:2 开始无 Schema 抽取：字符数=486
+2026-10-10 19:12:23,758 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1066::2.4:text:2 实体抽取完成：候选数=0，候选名称=[]
+2026-10-10 19:12:23,758 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1066::2.4:text:2 关系抽取完成：候选数=0，候选类型=[]
+2026-10-10 19:12:23,758 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File1066::2.4:text:2 解析校验完成：实体=0，关系=0，事件=0，拒绝=0
+2026-10-10 19:12:23,758 | INFO | mul_tree_mmkg.extractors.text_extractor | 无 Schema 文本抽取流程完成：Graph=6，实体=0，关系=0，事件=0
+2026-10-10 19:12:23,758 | INFO | mul_tree_mmkg.extractors.text_extractor | 无 Schema 文本抽取流程启动：document_id=File108，Chunk数=6，章节数=4
+2026-10-10 19:12:23,758 | INFO | mul_tree_mmkg.extractors.text_extractor | 文本抽取并发线程数=1
+2026-10-10 19:12:23,759 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File108::2:text:0 开始无 Schema 抽取：字符数=599
+2026-10-10 19:12:23,759 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File108::2:text:0 实体抽取完成：候选数=0，候选名称=[]
+2026-10-10 19:12:23,759 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File108::2:text:0 关系抽取完成：候选数=0，候选类型=[]
+2026-10-10 19:12:23,759 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File108::2:text:0 解析校验完成：实体=0，关系=0，事件=0，拒绝=0
+2026-10-10 19:12:23,759 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File108::3:text:0 开始无 Schema 抽取：字符数=685
+2026-10-10 19:12:23,759 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File108::3:text:0 实体抽取完成：候选数=0，候选名称=[]
+2026-10-10 19:12:23,759 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File108::3:text:0 关系抽取完成：候选数=0，候选类型=[]
+2026-10-10 19:12:23,759 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File108::3:text:0 解析校验完成：实体=0，关系=0，事件=0，拒绝=0
+2026-10-10 19:12:23,759 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File108::4.1:text:0 开始无 Schema 抽取：字符数=831
+2026-10-10 19:12:23,759 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File108::4.1:text:0 实体抽取完成：候选数=0，候选名称=[]
+2026-10-10 19:12:23,760 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File108::4.1:text:0 关系抽取完成：候选数=0，候选类型=[]
+2026-10-10 19:12:23,760 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File108::4.1:text:0 解析校验完成：实体=0，关系=0，事件=0，拒绝=0
+2026-10-10 19:12:23,760 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File108::5.2:text:0 开始无 Schema 抽取：字符数=385
+2026-10-10 19:12:23,760 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File108::5.2:text:0 实体抽取完成：候选数=0，候选名称=[]
+2026-10-10 19:12:23,760 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File108::5.2:text:0 关系抽取完成：候选数=0，候选类型=[]
+2026-10-10 19:12:23,760 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File108::5.2:text:0 解析校验完成：实体=0，关系=0，事件=0，拒绝=0
+2026-10-10 19:12:23,760 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File108::3:text:1 开始无 Schema 抽取：字符数=630
+2026-10-10 19:12:23,760 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File108::3:text:1 实体抽取完成：候选数=0，候选名称=[]
+2026-10-10 19:12:23,760 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File108::3:text:1 关系抽取完成：候选数=0，候选类型=[]
+2026-10-10 19:12:23,760 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File108::3:text:1 解析校验完成：实体=0，关系=0，事件=0，拒绝=0
+2026-10-10 19:12:23,760 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File108::5.2:text:2 开始无 Schema 抽取：字符数=498
+2026-10-10 19:12:23,760 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File108::5.2:text:2 实体抽取完成：候选数=0，候选名称=[]
+2026-10-10 19:12:23,760 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File108::5.2:text:2 关系抽取完成：候选数=0，候选类型=[]
+2026-10-10 19:12:23,760 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File108::5.2:text:2 解析校验完成：实体=0，关系=0，事件=0，拒绝=0
+2026-10-10 19:12:23,761 | INFO | mul_tree_mmkg.extractors.text_extractor | 无 Schema 文本抽取流程完成：Graph=6，实体=0，关系=0，事件=0
+2026-10-10 19:12:23,761 | INFO | mul_tree_mmkg.extractors.text_extractor | 无 Schema 文本抽取流程启动：document_id=File460，Chunk数=6，章节数=6
+2026-10-10 19:12:23,761 | INFO | mul_tree_mmkg.extractors.text_extractor | 文本抽取并发线程数=1
+2026-10-10 19:12:23,761 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File460::1.1:text:0 开始无 Schema 抽取：字符数=371
+2026-10-10 19:12:23,761 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File460::1.1:text:0 实体抽取完成：候选数=0，候选名称=[]
+2026-10-10 19:12:23,761 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File460::1.1:text:0 关系抽取完成：候选数=0，候选类型=[]
+2026-10-10 19:12:23,761 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File460::1.1:text:0 解析校验完成：实体=0，关系=0，事件=0，拒绝=0
+2026-10-10 19:12:23,762 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File460::1.3:text:0 开始无 Schema 抽取：字符数=304
+2026-10-10 19:12:23,762 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File460::1.3:text:0 实体抽取完成：候选数=0，候选名称=[]
+2026-10-10 19:12:23,762 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File460::1.3:text:0 关系抽取完成：候选数=0，候选类型=[]
+2026-10-10 19:12:23,762 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File460::1.3:text:0 解析校验完成：实体=0，关系=0，事件=0，拒绝=0
+2026-10-10 19:12:23,762 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File460::2.2:text:0 开始无 Schema 抽取：字符数=423
+2026-10-10 19:12:23,762 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File460::2.2:text:0 实体抽取完成：候选数=0，候选名称=[]
+2026-10-10 19:12:23,762 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File460::2.2:text:0 关系抽取完成：候选数=0，候选类型=[]
+2026-10-10 19:12:23,762 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File460::2.2:text:0 解析校验完成：实体=0，关系=0，事件=0，拒绝=0
+2026-10-10 19:12:23,762 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File460::2.4:text:0 开始无 Schema 抽取：字符数=427
+2026-10-10 19:12:23,762 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File460::2.4:text:0 实体抽取完成：候选数=0，候选名称=[]
+2026-10-10 19:12:23,762 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File460::2.4:text:0 关系抽取完成：候选数=0，候选类型=[]
+2026-10-10 19:12:23,762 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File460::2.4:text:0 解析校验完成：实体=0，关系=0，事件=0，拒绝=0
+2026-10-10 19:12:23,762 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File460::3.1:text:0 开始无 Schema 抽取：字符数=368
+2026-10-10 19:12:23,763 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File460::3.1:text:0 实体抽取完成：候选数=0，候选名称=[]
+2026-10-10 19:12:23,763 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File460::3.1:text:0 关系抽取完成：候选数=0，候选类型=[]
+2026-10-10 19:12:23,763 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File460::3.1:text:0 解析校验完成：实体=0，关系=0，事件=0，拒绝=0
+2026-10-10 19:12:23,763 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File460::3.2:text:0 开始无 Schema 抽取：字符数=417
+2026-10-10 19:12:23,763 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File460::3.2:text:0 实体抽取完成：候选数=0，候选名称=[]
+2026-10-10 19:12:23,763 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File460::3.2:text:0 关系抽取完成：候选数=0，候选类型=[]
+2026-10-10 19:12:23,763 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File460::3.2:text:0 解析校验完成：实体=0，关系=0，事件=0，拒绝=0
+2026-10-10 19:12:23,763 | INFO | mul_tree_mmkg.extractors.text_extractor | 无 Schema 文本抽取流程完成：Graph=6，实体=0，关系=0，事件=0
+2026-10-10 19:12:23,763 | INFO | mul_tree_mmkg.extractors.text_extractor | 无 Schema 文本抽取流程启动：document_id=File565，Chunk数=6，章节数=5
+2026-10-10 19:12:23,764 | INFO | mul_tree_mmkg.extractors.text_extractor | 文本抽取并发线程数=1
+2026-10-10 19:12:23,764 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File565::2.3:text:0 开始无 Schema 抽取：字符数=394
+2026-10-10 19:12:23,764 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File565::2.3:text:0 实体抽取完成：候选数=0，候选名称=[]
+2026-10-10 19:12:23,764 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File565::2.3:text:0 关系抽取完成：候选数=0，候选类型=[]
+2026-10-10 19:12:23,764 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File565::2.3:text:0 解析校验完成：实体=0，关系=0，事件=0，拒绝=0
+2026-10-10 19:12:23,764 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File565::3.2:text:0 开始无 Schema 抽取：字符数=434
+2026-10-10 19:12:23,764 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File565::3.2:text:0 实体抽取完成：候选数=0，候选名称=[]
+2026-10-10 19:12:23,764 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File565::3.2:text:0 关系抽取完成：候选数=0，候选类型=[]
+2026-10-10 19:12:23,764 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File565::3.2:text:0 解析校验完成：实体=0，关系=0，事件=0，拒绝=0
+2026-10-10 19:12:23,764 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File565::4.3:text:0 开始无 Schema 抽取：字符数=423
+2026-10-10 19:12:23,765 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File565::4.3:text:0 实体抽取完成：候选数=0，候选名称=[]
+2026-10-10 19:12:23,765 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File565::4.3:text:0 关系抽取完成：候选数=0，候选类型=[]
+2026-10-10 19:12:23,765 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File565::4.3:text:0 解析校验完成：实体=0，关系=0，事件=0，拒绝=0
+2026-10-10 19:12:23,765 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File565::4.2:text:1 开始无 Schema 抽取：字符数=475
+2026-10-10 19:12:23,765 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File565::4.2:text:1 实体抽取完成：候选数=0，候选名称=[]
+2026-10-10 19:12:23,765 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File565::4.2:text:1 关系抽取完成：候选数=0，候选类型=[]
+2026-10-10 19:12:23,765 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File565::4.2:text:1 解析校验完成：实体=0，关系=0，事件=0，拒绝=0
+2026-10-10 19:12:23,765 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File565::物源定量分析讨论:text:1 开始无 Schema 抽取：字符数=665
+2026-10-10 19:12:23,765 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File565::物源定量分析讨论:text:1 实体抽取完成：候选数=0，候选名称=[]
+2026-10-10 19:12:23,765 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File565::物源定量分析讨论:text:1 关系抽取完成：候选数=0，候选类型=[]
+2026-10-10 19:12:23,766 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File565::物源定量分析讨论:text:1 解析校验完成：实体=0，关系=0，事件=0，拒绝=0
+2026-10-10 19:12:23,766 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File565::物源定量分析讨论:text:3 开始无 Schema 抽取：字符数=424
+2026-10-10 19:12:23,766 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File565::物源定量分析讨论:text:3 实体抽取完成：候选数=0，候选名称=[]
+2026-10-10 19:12:23,766 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File565::物源定量分析讨论:text:3 关系抽取完成：候选数=0，候选类型=[]
+2026-10-10 19:12:23,766 | INFO | mul_tree_mmkg.extractors.text_extractor | Chunk File565::物源定量分析讨论:text:3 解析校验完成：实体=0，关系=0，事件=0，拒绝=0
+2026-10-10 19:12:23,766 | INFO | mul_tree_mmkg.extractors.text_extractor | 无 Schema 文本抽取流程完成：Graph=6，实体=0，关系=0，事件=0
+2026-10-10 19:12:23,814 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 开始：chunk=File1039::1:image:0，image=1/1，path=C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\eval\dataset\dev\mineru_output\File1039\images\385343a0feb5ba6961d4774768f7345695c5fcc05387a3c4cfdccc9a8f201ae3.jpg
+2026-10-10 19:12:23,814 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 完成：chunk=File1039::1:image:0，image_index=0，code=未分类，type=未知，耗时=0.00s
+2026-10-10 19:12:23,815 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 开始：chunk=File1039::2.1:image:1，image=1/1，path=C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\eval\dataset\dev\mineru_output\File1039\images\d02aeb40fe6c57296606f02ff00fdf927645ba3d32d57d9d19a072e44a00ba37.jpg
+2026-10-10 19:12:23,815 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 完成：chunk=File1039::2.1:image:1，image_index=0，code=未分类，type=未知，耗时=0.00s
+2026-10-10 19:12:23,815 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 开始：chunk=File1039::2.2:image:0，image=1/1，path=C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\eval\dataset\dev\mineru_output\File1039\images\eec0f99094e89c4235a53245c4d5eba661bc4ba0ecf37c945a677cdf2c4ee2c7.jpg
+2026-10-10 19:12:23,815 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 完成：chunk=File1039::2.2:image:0，image_index=0，code=未分类，type=未知，耗时=0.00s
+2026-10-10 19:12:23,815 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 开始：chunk=File1039::2.2:image:1，image=1/1，path=C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\eval\dataset\dev\mineru_output\File1039\images\e850f9bdeaa6328870e3393885efad070aa4cd444f2569d2e4cc61f187d2e835.jpg
+2026-10-10 19:12:23,816 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 完成：chunk=File1039::2.2:image:1，image_index=0，code=未分类，type=未知，耗时=0.00s
+2026-10-10 19:12:23,816 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 开始：chunk=File1039::3.3:image:4，image=1/1，path=C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\eval\dataset\dev\mineru_output\File1039\images\27c1b40112cda47250832b06a9899f78dfdb8405f5ef3d77ca88765ab25236b0.jpg
+2026-10-10 19:12:23,816 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 完成：chunk=File1039::3.3:image:4，image_index=0，code=未分类，type=未知，耗时=0.00s
+2026-10-10 19:12:23,816 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 开始：chunk=File1039::3.2:image:0，image=1/1，path=C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\eval\dataset\dev\mineru_output\File1039\images\200f1c13c0ed62e38cd15d2ef1ce5a0293210d9477d039252d21083408f50331.jpg
+2026-10-10 19:12:23,816 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 完成：chunk=File1039::3.2:image:0，image_index=0，code=未分类，type=未知，耗时=0.00s
+2026-10-10 19:12:23,816 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 开始：chunk=File1039::4.3:image:0，image=1/1，path=C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\eval\dataset\dev\mineru_output\File1039\images\44af6d755ebdc972198e27de41e65f34f5d125905332b02c8b23c8348b69a7cd.jpg
+2026-10-10 19:12:23,816 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 完成：chunk=File1039::4.3:image:0，image_index=0，code=未分类，type=未知，耗时=0.00s
+2026-10-10 19:12:23,816 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 开始：chunk=File1066::1:image:0，image=1/1，path=C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\eval\dataset\dev\mineru_output\File1066\images\06fc11425eccabbd41229e0f0488f75f662d6501289be6d942f369587b3bed08.jpg
+2026-10-10 19:12:23,816 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 完成：chunk=File1066::1:image:0，image_index=0，code=未分类，type=未知，耗时=0.00s
+2026-10-10 19:12:23,816 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 开始：chunk=File1066::2.1:image:0，image=1/1，path=C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\eval\dataset\dev\mineru_output\File1066\images\27fe9ae356a70c208fa3ab8d37ea477dc9c3b4af506e0ef455f3fab2b7653443.jpg
+2026-10-10 19:12:23,816 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 完成：chunk=File1066::2.1:image:0，image_index=0，code=未分类，type=未知，耗时=0.00s
+2026-10-10 19:12:23,816 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 开始：chunk=File1066::2.2.1:image:0，image=1/1，path=C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\eval\dataset\dev\mineru_output\File1066\images\15ea57bdfb9462f94c41162b8a884a8cc8c020e564d0c7be247c26fbb6b7f522.jpg
+2026-10-10 19:12:23,816 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 完成：chunk=File1066::2.2.1:image:0，image_index=0，code=未分类，type=未知，耗时=0.00s
+2026-10-10 19:12:23,816 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 开始：chunk=File108::5.1:image:0，image=1/2，path=C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\eval\dataset\dev\mineru_output\File108\images\1c34f897dae56986e8ad2c74fe8e2842578fe6a2bd7927807995b6a752ee422c.jpg
+2026-10-10 19:12:23,816 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 完成：chunk=File108::5.1:image:0，image_index=0，code=未分类，type=未知，耗时=0.00s
+2026-10-10 19:12:23,816 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 开始：chunk=File108::5.1:image:0，image=2/2，path=C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\eval\dataset\dev\mineru_output\File108\images\e77287db812df017d67bb17123d5d7d3845a7e9446915447a637a834fd586aa7.jpg
+2026-10-10 19:12:23,816 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 完成：chunk=File108::5.1:image:0，image_index=1，code=未分类，type=未知，耗时=0.00s
+2026-10-10 19:12:23,816 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 开始：chunk=File108::5.2:image:1，image=1/1，path=C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\eval\dataset\dev\mineru_output\File108\images\a264745d59222eb2da40c4d12301dadbfcdcfab18ad97a1adeac2ca0a8001ab7.jpg
+2026-10-10 19:12:23,816 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 完成：chunk=File108::5.2:image:1，image_index=0，code=未分类，type=未知，耗时=0.00s
+2026-10-10 19:12:23,817 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 开始：chunk=File460::3.2:image:0，image=1/2，path=C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\eval\dataset\dev\mineru_output\File460\images\a629c60c5401402f107e3a965dd138d71f4dcf36cebf46a3b3975ade04de4970.jpg
+2026-10-10 19:12:23,817 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 完成：chunk=File460::3.2:image:0，image_index=0，code=未分类，type=未知，耗时=0.00s
+2026-10-10 19:12:23,817 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 开始：chunk=File460::3.2:image:0，image=2/2，path=C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\eval\dataset\dev\mineru_output\File460\images\c849163437f609a16a7a3ddc48a946b84cfb8543a4aac57342ce4547cb2c46d0.jpg
+2026-10-10 19:12:23,817 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 完成：chunk=File460::3.2:image:0，image_index=1，code=未分类，type=未知，耗时=0.00s
+2026-10-10 19:12:23,817 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 开始：chunk=File565::2.2:image:0，image=1/4，path=C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\eval\dataset\dev\mineru_output\File565\images\63904e1bd5fc6168755f98f985cd0e0bbb3d1563aa4b0de16d2d53c94574a535.jpg
+2026-10-10 19:12:23,817 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 完成：chunk=File565::2.2:image:0，image_index=0，code=未分类，type=未知，耗时=0.00s
+2026-10-10 19:12:23,817 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 开始：chunk=File565::2.2:image:0，image=2/4，path=C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\eval\dataset\dev\mineru_output\File565\images\2c315856c6fc02a1c2d821748ebe9efbf190a97cb15c84aed0f42e2fb66b3af0.jpg
+2026-10-10 19:12:23,817 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 完成：chunk=File565::2.2:image:0，image_index=1，code=未分类，type=未知，耗时=0.00s
+2026-10-10 19:12:23,817 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 开始：chunk=File565::2.2:image:0，image=3/4，path=C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\eval\dataset\dev\mineru_output\File565\images\2154ca63f00827ef664e270bac06bc1ea9818631eebedac3021ba20878b091ef.jpg
+2026-10-10 19:12:23,817 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 完成：chunk=File565::2.2:image:0，image_index=2，code=未分类，type=未知，耗时=0.00s
+2026-10-10 19:12:23,817 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 开始：chunk=File565::2.2:image:0，image=4/4，path=C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\eval\dataset\dev\mineru_output\File565\images\f73c330c7b32abd95b4a260403a558d13228a0a06fc6b054fbb1a79735f910a3.jpg
+2026-10-10 19:12:23,817 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 完成：chunk=File565::2.2:image:0，image_index=3，code=未分类，type=未知，耗时=0.00s
+2026-10-10 19:12:23,817 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 开始：chunk=File565::3.3:image:1，image=1/1，path=C:\Users\nzx\Desktop\Python\毕业论文项目\MulTreeMMKG\eval\dataset\dev\mineru_output\File565\images\a16363f426ca6d8e77024eadbbd4dc4b169ff69756c639cac8e170e9bcc5d908.jpg
+2026-10-10 19:12:23,817 | INFO | mul_tree_mmkg.extractors.image_extractor.pipeline | [图片抽取/分类] 完成：chunk=File565::3.3:image:1，image_index=0，code=未分类，type=未知，耗时=0.00s

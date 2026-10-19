@@ -111,7 +111,8 @@ class TableSemanticPlan(MMKGBaseModel):
     subject_type_zh: str = "表格行"
     headers: list[str] = Field(default_factory=list)
     subject_header: str = ""
-    analysis_source: Literal["rule", "vlm", "llm_fallback"] = "rule"
+    analysis_source: Literal["rule", "vlm", "llm_fallback", "generated"] = "rule"
+    generated_key: bool = False
     confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     reasons: list[str] = Field(default_factory=list)
 

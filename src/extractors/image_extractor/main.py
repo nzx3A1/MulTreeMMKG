@@ -20,6 +20,7 @@ from src.extractors.image_extractor.classification import (
     VLMImageClassificationProvider,
 )
 from src.extractors.image_extractor.pipeline import extract_from_images, write_image_extraction_result
+from src.extractors.image_extractor.postprocess import merge_same_name_entities
 from src.extractors.image_extractor.schema_models import as_string_tuple
 from src.utils.json_io import read_json
 from src.utils.llm_client import LLMClient
@@ -60,6 +61,16 @@ def _chunk_id(chunk: Mapping[str, Any]) -> str:
     return str(chunk.get("id") or chunk.get("chunk_id") or "").strip()
 
 
+def _parse_saved_graph(raw_graph: Mapping[str, Any]) -> Graph:
+    """中文说明：读取历史图片 Graph 时忽略旧版误写入的 metadata.model_config 字段。"""
+
+    payload = dict(raw_graph)
+    metadata = payload.get("metadata")
+    if isinstance(metadata, Mapping):
+        payload["metadata"] = {key: value for key, value in metadata.items() if key != "model_config"}
+    return Graph(**payload)
+
+
 def _load_reusable_graphs(output_path: str | Path) -> dict[str, Graph]:
     """读取已有结果，只复用同时含实体和关系的图片 Chunk Graph。"""
 
@@ -93,7 +104,7 @@ def _load_reusable_graphs(output_path: str | Path) -> dict[str, Graph]:
         if not isinstance(relations, list) or not relations:
             continue
         try:
-            reusable[chunk_id] = Graph(**dict(raw_graph))
+            reusable[chunk_id] = _parse_saved_graph(raw_graph)
         except Exception as exc:
             logger.warning(
                 f"[图片抽取/续跑] 已有 Chunk Graph 校验失败，将重新抽取：chunk={chunk_id}，error={exc}"
@@ -157,7 +168,7 @@ def extract_images_from_summary_file(
         if graph.metadata.chunk_id
     }
     graphs = [
-        reusable_graphs.get(_chunk_id(chunk)) or extracted_by_chunk_id[_chunk_id(chunk)]
+        merge_same_name_entities(reusable_graphs.get(_chunk_id(chunk)) or extracted_by_chunk_id[_chunk_id(chunk)])
         for chunk in image_chunks
     ]
     write_image_extraction_result(resolved_output, graphs, status="completed")

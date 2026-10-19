@@ -14,6 +14,7 @@ import os
 import re
 import sys
 from dataclasses import dataclass, field
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any, Callable, Iterable
 from uuid import uuid4
@@ -30,6 +31,7 @@ TABLE_CAPTION_START_RE = re.compile(
 FORMULA_RE = re.compile(r"\$\$\s*([\s\S]*?)\s*\$\$")
 REFERENCE_HEADING_RE = re.compile(r"^#{2,6}\s+.*?(References|参考文献)", re.IGNORECASE)
 MARKUP_TAG_RE = re.compile(r"</?(?:sup|sub|span|b|strong|i|em)[^>]*>", re.IGNORECASE)
+HTML_TAG_RE = re.compile(r"<!--.*?-->|<![^>]*>|</?[A-Za-z][^>]*>", re.DOTALL)
 TABLE_LAYOUT_MODEL_NAME = "PicoDet_layout_1x_table"
 # 默认使用第 0 张 GPU；如需切换设备，可通过 AMARKDOWN_PADDLE_DEVICE 覆盖，例如 cpu 或 gpu:1。
 TABLE_LAYOUT_DEVICE = os.getenv("AMARKDOWN_PADDLE_DEVICE", "gpu:0")
@@ -192,7 +194,7 @@ class AMarkdownParser:
             intro_lines,
             Path(asset_base_dir) if asset_base_dir is not None else None,
         )
-        return {
+        result = {
             "filename": filename,
             "title": title,
             "basicInformation": basic_information,
@@ -201,6 +203,7 @@ class AMarkdownParser:
             "_produced_by": self.produced_by,
             "input_file": input_file,
         }
+        return strip_html_tags_from_result(result)
 
     def _parse_toc(
         self,
@@ -278,6 +281,69 @@ def normalize_newlines(text: str) -> str:
     """统一换行符，避免 Windows/Unix 换行差异影响正则匹配。"""
 
     return text.replace("\r\n", "\n").replace("\r", "\n")
+
+
+class _HTMLTextStripper(HTMLParser):
+    """删除非表格文本的 HTML 标签，并保留标签内部的实际内容。"""
+
+    def __init__(self) -> None:
+        """初始化文本片段列表和标准库 HTML 解析器。"""
+
+        super().__init__(convert_charrefs=True)
+        self.parts: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        """把非表格区域的换行标签转换为普通换行。"""
+
+        if tag in {"br", "hr"}:
+            self.parts.append("\n")
+
+    def handle_endtag(self, tag: str) -> None:
+        """在非表格段落结尾插入换行，避免相邻内容粘连。"""
+
+        if tag in {"p", "div", "li"}:
+            self.parts.append("\n")
+
+    def handle_data(self, data: str) -> None:
+        """保留标签内部的实际文字与数字。"""
+
+        self.parts.append(data)
+
+
+def strip_html_tags(text: str) -> str:
+    """清理表格之外的 HTML 标签，完整保留 HTML 表格及内部标签。"""
+
+    if not HTML_TAG_RE.search(html.unescape(text)):
+        return text
+    segments: list[str] = []
+    offset = 0
+    for table_match in HTML_TABLE_RE.finditer(text):
+        segments.append(_strip_non_table_tags(html.unescape(text[offset:table_match.start()])))
+        segments.append(table_match.group(0))
+        offset = table_match.end()
+    segments.append(_strip_non_table_tags(html.unescape(text[offset:])))
+    return "".join(segments).strip()
+
+
+def _strip_non_table_tags(text: str) -> str:
+    """使用标准库 HTML 解析器删除一个非表格片段的标签。"""
+
+    parser = _HTMLTextStripper()
+    parser.feed(text)
+    parser.close()
+    return "".join(parser.parts)
+
+
+def strip_html_tags_from_result(value: Any) -> Any:
+    """递归清理第一阶段文本值，同时保留 HTML 表格原始结构。"""
+
+    if isinstance(value, dict):
+        return {key: strip_html_tags_from_result(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [strip_html_tags_from_result(item) for item in value]
+    if isinstance(value, str):
+        return strip_html_tags(value)
+    return value
 
 
 def clean_inline_text(text: str, strip_markup: bool = True) -> str:

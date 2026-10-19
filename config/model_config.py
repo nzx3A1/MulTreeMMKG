@@ -71,7 +71,7 @@ class OpenAICompatibleConfig:
     # 中文说明：文本和视觉模型默认接入本机 LM Studio 的 OpenAI 兼容 API。
     base_url: str = "http://127.0.0.1:8317/v1"
     # 中文说明：本地服务通常不校验密钥；使用非空占位值兼容 OpenAI 客户端。
-    api_key: str = "local"
+    api_key: str = "123456"
     model: str = MODEL_NAME
     temperature: float = 0.0
     max_tokens: int = 8192
@@ -84,7 +84,7 @@ class OpenAIVLMCompatibleConfig:
 
     # 中文说明：视觉流程与文本 LLM 共用本机 OpenAI 兼容服务。
     base_url: str = "http://127.0.0.1:8317/v1"
-    api_key: str = "local"
+    api_key: str = "123456"
     model: str = MODEL_NAME
     temperature: float = 0.0
     max_tokens: int = 8192

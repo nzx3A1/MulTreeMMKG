@@ -121,38 +121,131 @@ def _refine_context_type(header: str, value: str, inferred_type: str) -> str:
     return inferred_type
 
 
+def _visual_subject_has_names(
+    table: RecognizedTable,
+    orientation: str,
+    subject_index: int,
+    data_start_index: int,
+    subject_header: str,
+) -> bool:
+    """验证 VLM 主键轴含有名称或编号，拦截温度等纯数值测量列。"""
+
+    if orientation == "horizontal":
+        values = [row[subject_index] for row in table.grid.matrix[data_start_index:]]
+    else:
+        values = table.grid.matrix[subject_index][data_start_index:]
+    names = [_clean_name(value) for value in values if _clean_name(value)]
+    if not names:
+        return False
+    numeric_count = sum(
+        bool(re.fullmatch(r"[+-]?\d+(?:[.,]\d+)?(?:\s*[~～–—-]\s*[+-]?\d+(?:[.,]\d+)?)?\s*(?:℃|°C|%)?", name))
+        for name in names
+    )
+    if numeric_count < len(names) * 0.8:
+        return True
+    candidate = _subject_candidate(subject_header)
+    # 中文说明：样品编号和井号允许纯数字，测量指标即使全是数字也不作为记录主键。
+    return candidate is not None and candidate[1] in {"Sample", "Well"} and any(
+        word in subject_header for word in ("编号", "号")
+    )
+
+
+def _finalize_generated_key_plan(
+    table: RecognizedTable,
+    plan: TableSemanticPlan,
+    visual: Any,
+) -> TableSemanticPlan:
+    """没有可靠原文主键时，按记录轴生成稳定键并保留视觉模型确认的方向与表头。"""
+
+    if plan.subject_column is not None or plan.subject_row is not None:
+        return plan
+    grid = table.grid
+    if isinstance(visual, Mapping) and visual.get("status") == "success":
+        orientation = str(visual.get("orientation") or "")
+        if orientation in {"horizontal", "vertical"}:
+            plan.orientation = orientation
+            grid.orientation = orientation
+            data_start_index = int(visual.get("data_start_index", 0))
+            if orientation == "horizontal":
+                plan.data_start_row = data_start_index
+                headers = [str(item) for item in visual.get("headers") or []]
+                if len(headers) == grid.column_count:
+                    grid.header_paths = headers
+                    plan.headers = headers
+            else:
+                plan.data_start_col = data_start_index
+                plan.headers = [str(item) for item in visual.get("headers") or []]
+    if plan.orientation != "vertical":
+        plan.orientation = "horizontal"
+        plan.subject_type, plan.subject_type_zh = "TableRow", "表格行"
+        axis_name = "行"
+    else:
+        plan.subject_type, plan.subject_type_zh = "TableColumn", "表格列"
+        axis_name = "列"
+    plan.generated_key = True
+    plan.analysis_source = "generated"
+    plan.reasons.append(f"未找到可靠的原文主键，按表格任务 ID 和{axis_name}号生成记录键")
+    return plan
+
+
 def infer_semantic_plan(table: RecognizedTable, llm_client: Any | None = None) -> TableSemanticPlan:
     """优先采用 VLM 视觉语义，缺失时用 HTML 规则和可选文本 LLM 补充。"""
 
     grid = table.grid
     visual = table.details.get("visual_semantics")
+    visual_rejection = ""
     if isinstance(visual, Mapping) and visual.get("status") == "success":
         orientation = str(visual.get("orientation") or grid.orientation)
         headers = [str(item) for item in visual.get("headers") or []]
         subject_header = str(visual.get("subject_header") or "")
         subject_index = int(visual.get("subject_index", 0))
         data_start_index = int(visual.get("data_start_index", 0))
-        if orientation == "horizontal" and len(headers) == grid.column_count:
-            # 中文说明：VLM 读取原图得到的字段文字用于最终记录属性；逻辑坐标仍完全来自 HTML。
-            grid.header_paths = headers
-        grid.orientation = orientation
-        inferred = _infer_subject(subject_header)
-        subject_type, subject_type_zh = inferred or ("TableRow", "表格行")
-        plan = TableSemanticPlan(
-            orientation=orientation,
-            data_start_row=data_start_index if orientation == "horizontal" else max(grid.header_rows, default=-1) + 1,
-            data_start_col=data_start_index if orientation == "vertical" else max(grid.header_columns, default=-1) + 1,
-            subject_column=subject_index if orientation == "horizontal" else None,
-            subject_row=subject_index if orientation == "vertical" else None,
-            subject_type=subject_type,
-            subject_type_zh=subject_type_zh,
-            headers=headers,
-            subject_header=subject_header,
-            analysis_source="vlm",
-            confidence=float(visual.get("confidence") or 0.0),
-            reasons=[str(visual.get("reason") or "VLM 根据原图识别记录方向、表头和主题字段")],
-        )
-        return plan
+        if _visual_subject_has_names(table, orientation, subject_index, data_start_index, subject_header):
+            if orientation == "horizontal" and len(headers) == grid.column_count:
+                # 中文说明：VLM 读取原图得到的字段文字用于最终记录属性；逻辑坐标仍完全来自 HTML。
+                grid.header_paths = headers
+            grid.orientation = orientation
+            inferred = _infer_subject(subject_header)
+            subject_type, subject_type_zh = inferred or ("TableRow", "表格行")
+            plan = TableSemanticPlan(
+                orientation=orientation,
+                data_start_row=data_start_index if orientation == "horizontal" else max(grid.header_rows, default=-1) + 1,
+                data_start_col=data_start_index if orientation == "vertical" else max(grid.header_columns, default=-1) + 1,
+                subject_column=subject_index if orientation == "horizontal" else None,
+                subject_row=subject_index if orientation == "vertical" else None,
+                subject_type=subject_type,
+                subject_type_zh=subject_type_zh,
+                headers=headers,
+                subject_header=subject_header,
+                analysis_source="vlm",
+                confidence=float(visual.get("confidence") or 0.0),
+                reasons=[str(visual.get("reason") or "VLM 根据原图识别记录方向、表头和主题字段")],
+            )
+            if inferred is None and orientation == "horizontal":
+                # 中文说明：VLM 若选了泛化且重复的行标签，优先采用同一表头中可识别的领域主键。
+                candidates = []
+                for column_index, header in enumerate(headers):
+                    candidate = _subject_candidate(header)
+                    if candidate and _visual_subject_has_names(table, orientation, column_index, data_start_index, header):
+                        candidates.append((*candidate, column_index, header))
+                if candidates:
+                    _, schema, zh_name, column_index, header = min(candidates)
+                    plan.subject_column = column_index
+                    plan.subject_type, plan.subject_type_zh = schema, zh_name
+                    plan.subject_header = header
+                    plan.reasons.append(f"领域主键字段 {header} 优于泛化行标签 {subject_header}")
+            if orientation == "horizontal" and _normalize_record_text(subject_header) in {"地层", "地层名称"}:
+                # 中文说明：地层列经邻列恢复后若全部是“组”名，直接使用具体的组概念而非泛化表格行。
+                unit_names = [
+                    _row_subject_cell(table, plan, row_index)[0]
+                    for row_index in range(plan.data_start_row, grid.row_count)
+                ]
+                unit_names = [name for name in unit_names if name]
+                if len(unit_names) >= 2 and all(name.endswith("组") for name in unit_names):
+                    plan.subject_type, plan.subject_type_zh = "Formation", "组"
+                    plan.reasons.append("原始单元格中的主键值均为地层组名")
+            return plan
+        visual_rejection = f"VLM 主键字段 {subject_header or subject_index} 缺少有效名称，回退 HTML 规则"
 
     header_end = max(grid.header_rows, default=-1)
     plan = TableSemanticPlan(
@@ -162,7 +255,7 @@ def infer_semantic_plan(table: RecognizedTable, llm_client: Any | None = None) -
         headers=list(grid.header_paths),
         analysis_source="rule",
         confidence=0.45,
-        reasons=["使用 HTML 网格方向与表头边界"],
+        reasons=["使用 HTML 网格方向与表头边界", *([visual_rejection] if visual_rejection else [])],
     )
 
     if grid.orientation == "vertical":
@@ -179,6 +272,9 @@ def infer_semantic_plan(table: RecognizedTable, llm_client: Any | None = None) -
             for column_index, value in enumerate(row[:label_width]):
                 candidate = _subject_candidate(value)
                 if candidate is None:
+                    continue
+                if not _visual_subject_has_names(table, "vertical", row_index, column_index + 1, value):
+                    plan.reasons.append(f"字段 {value} 的数据值不适合作为主键")
                     continue
                 priority, schema, zh_name = candidate
                 candidates.append((priority, row_index, column_index, schema, zh_name, value))
@@ -197,6 +293,9 @@ def infer_semantic_plan(table: RecognizedTable, llm_client: Any | None = None) -
         for column_index, header in enumerate(grid.header_paths):
             candidate = _subject_candidate(header)
             if candidate is None:
+                continue
+            if not _visual_subject_has_names(table, "horizontal", column_index, plan.data_start_row, header):
+                plan.reasons.append(f"字段 {header} 的数据值不适合作为主键")
                 continue
             priority, schema, zh_name = candidate
             candidates.append((priority, column_index, schema, zh_name, header))
@@ -230,9 +329,17 @@ def infer_semantic_plan(table: RecognizedTable, llm_client: Any | None = None) -
                 subject_column = payload.get("subject_column")
                 subject_row = payload.get("subject_row")
                 if subject_column is not None and 0 <= int(subject_column) < grid.column_count:
-                    plan.subject_column = int(subject_column)
+                    column_index = int(subject_column)
+                    header = grid.header_paths[column_index] if column_index < len(grid.header_paths) else ""
+                    if _visual_subject_has_names(table, "horizontal", column_index, plan.data_start_row, header):
+                        plan.subject_column = column_index
+                        plan.subject_header = header
                 if subject_row is not None and 0 <= int(subject_row) < grid.row_count:
-                    plan.subject_row = int(subject_row)
+                    row_index = int(subject_row)
+                    header = str(grid.matrix[row_index][0] or "")
+                    if _visual_subject_has_names(table, "vertical", row_index, plan.data_start_col, header):
+                        plan.subject_row = row_index
+                        plan.subject_header = header
                 plan.subject_type = str(payload.get("subject_type") or "TableRow")
                 plan.subject_type_zh = str(payload.get("subject_type_zh") or "表格行")
                 if plan.subject_column is not None or plan.subject_row is not None:
@@ -241,7 +348,7 @@ def infer_semantic_plan(table: RecognizedTable, llm_client: Any | None = None) -
                     plan.reasons.append("LLM 补充主键计划")
         except Exception as exc:
             plan.reasons.append(f"LLM 主键判断失败，保留规则计划：{exc}")
-    return plan
+    return _finalize_generated_key_plan(table, plan, visual)
 
 
 class _GraphAssembler:
@@ -605,6 +712,30 @@ def _normalize_record_text(value: Any) -> str:
     )
 
 
+def _row_subject_cell(table: RecognizedTable, plan: TableSemanticPlan, row_index: int) -> tuple[str, int]:
+    """读取行主键；地层表发生 OCR 列漂移时只从邻近原始单元格恢复地层单位名。"""
+
+    column_index = plan.subject_column
+    if column_index is None:
+        return "", -1
+    row = table.grid.matrix[row_index]
+    name = _normalize_record_text(row[column_index])
+    if _normalize_record_text(plan.subject_header) not in {"地层", "地层名称"}:
+        return name, column_index
+    unit_name = re.compile(r"^[\u3400-\u9fffA-Za-z0-9·]{1,20}(?:组|段|层|群|系)$")
+    if unit_name.fullmatch(name):
+        return name, column_index
+    # 中文说明：只查看地层列右侧一列及其左侧的层级列，避免把厚度数字和远端描述当作主键。
+    candidate_columns = [column_index + 1, *range(column_index - 1, -1, -1)]
+    for candidate_index in candidate_columns:
+        if candidate_index >= len(row):
+            continue
+        candidate_name = _normalize_record_text(row[candidate_index])
+        if unit_name.fullmatch(candidate_name):
+            return candidate_name, candidate_index
+    return "", column_index
+
+
 def _attribute_key(header: Any, fallback: str) -> str:
     """把视觉表头规范为稳定、紧凑的 JSON 属性名。"""
 
@@ -678,13 +809,74 @@ def _vertical_attributes(
     return attributes
 
 
+def _build_generated_record_entities(
+    table: RecognizedTable,
+    plan: TableSemanticPlan,
+    assembler: _GraphAssembler,
+) -> list[Entity]:
+    """为无原文主键的数据行或数据列生成可重复、可定位的记录实体键。"""
+
+    records: list[Entity] = []
+    if plan.orientation == "vertical":
+        body_start = max(table.grid.header_rows, default=-1) + 1
+        for column_index in range(plan.data_start_col, table.grid.column_count):
+            if not any(_clean_name(table.grid.matrix[row_index][column_index]) for row_index in range(body_start, table.grid.row_count)):
+                continue
+            record_number = column_index - plan.data_start_col + 1
+            key = f"{table.source.task_id}::C{record_number:04d}"
+            entity = assembler.add_entity(
+                _stable_id("generated_table_record", table.source.document_id, table.source.task_id, "column", column_index),
+                key,
+                plan.subject_type,
+                attributes=_vertical_attributes(
+                    table,
+                    column_index,
+                    plan.data_start_col,
+                    plan.headers if len(plan.headers) == table.grid.row_count else None,
+                ),
+                provenance=f"{_cell_provenance(table)} | column={column_index}",
+                metadata={
+                    "table_record_axis": "column",
+                    "column_index": column_index,
+                    "record_number": record_number,
+                    "generated_key": True,
+                    "generated_key_basis": "task_id+column_number",
+                },
+            )
+            records.append(entity)
+    else:
+        for row_index in range(plan.data_start_row, table.grid.row_count):
+            if not any(_clean_name(value) for value in table.grid.matrix[row_index]):
+                continue
+            record_number = row_index - plan.data_start_row + 1
+            key = f"{table.source.task_id}::R{record_number:04d}"
+            entity = assembler.add_entity(
+                _stable_id("generated_table_record", table.source.document_id, table.source.task_id, "row", row_index),
+                key,
+                plan.subject_type,
+                attributes=_row_attributes(table, row_index),
+                provenance=f"{_cell_provenance(table)} | row={row_index}",
+                metadata={
+                    "table_record_axis": "row",
+                    "row_index": row_index,
+                    "record_number": record_number,
+                    "generated_key": True,
+                    "generated_key_basis": "task_id+row_number",
+                },
+            )
+            records.append(entity)
+    return records
+
+
 def _build_record_entities(
     table: RecognizedTable,
     plan: TableSemanticPlan,
     assembler: _GraphAssembler,
 ) -> list[Entity]:
-    """严格按数据行或数据列创建记录实体，不拆分任何表格结构或上下文节点。"""
+    """按原文主键或程序生成键创建记录实体，不拆分表格结构节点。"""
 
+    if plan.generated_key:
+        return _build_generated_record_entities(table, plan, assembler)
     record_entities: list[Entity] = []
     if plan.orientation == "vertical" and plan.subject_row is not None:
         for column_index in range(plan.data_start_col, table.grid.column_count):
@@ -716,10 +908,24 @@ def _build_record_entities(
             record_entities.append(entity)
     elif plan.subject_column is not None:
         for row_index in range(plan.data_start_row, table.grid.row_count):
-            name = _normalize_record_text(table.grid.matrix[row_index][plan.subject_column])
+            name, subject_column_index = _row_subject_cell(table, plan, row_index)
             if not name:
                 continue
-            cell = _cell_at(table, row_index, plan.subject_column)
+            cell = _cell_at(table, row_index, subject_column_index)
+            recovered = subject_column_index != plan.subject_column
+            # 中文说明：列漂移行只确认地层名称；其余 OCR 值保留在元数据中，避免错误配给厚度等字段。
+            attributes = (
+                {_attribute_key(plan.subject_header, "主键"): name}
+                if recovered else _row_attributes(table, row_index)
+            )
+            metadata = {
+                "table_record_axis": "row",
+                "row_index": row_index,
+                "subject_column_index": subject_column_index,
+                "subject_column_recovered": recovered,
+            }
+            if recovered:
+                metadata["ocr_row_values"] = list(table.grid.matrix[row_index])
             entity = assembler.add_entity(
                 _stable_id(
                     "domain_record",
@@ -732,9 +938,9 @@ def _build_record_entities(
                 ),
                 name,
                 plan.subject_type,
-                attributes=_row_attributes(table, row_index),
+                attributes=attributes,
                 provenance=_cell_provenance(table, cell),
-                metadata={"table_record_axis": "row", "row_index": row_index},
+                metadata=metadata,
             )
             record_entities.append(entity)
     return record_entities
@@ -783,6 +989,7 @@ def build_table_graph(
         "visual_semantics": table.details.get("visual_semantics"),
         "schema_selection": schema.to_dict(),
         "record_entity_count": len(record_entities),
+        "generated_key_entity_count": len(record_entities) if plan.generated_key else 0,
         "record_only": True,
         "validation": validation,
     })

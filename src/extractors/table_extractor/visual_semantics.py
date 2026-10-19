@@ -25,6 +25,7 @@ def build_table_visual_semantic_prompt(table: RecognizedTable) -> str:
 - horizontal：顶部是列头，每一行是一条记录；subject_header 是用来给该行记录命名的列头。
 - vertical：左侧是行头，每一列是一条记录；subject_header 是用来给该列记录命名的行头。
 - headers 必须按数据轴顺序返回最终字段名。横向表按列返回，纵向表按行返回。
+- HTML 逻辑网格共有 {grid.column_count} 列、{grid.row_count} 行；横向表必须返回恰好 {grid.column_count} 个 headers，纵向表必须返回恰好 {grid.row_count} 个 headers。即使末尾是 OCR 多识别的空列，也保留其占位字段名（例如“列9”），不要移动其他字段的索引。
 - subject_index 是 subject_header 在原始 HTML 逻辑网格中的索引：横向表为列索引，纵向表为行索引，从 0 开始。
 - data_start_index 是第一条记录的索引：横向表为行索引，纵向表为列索引，从 0 开始。
 - 只依据图片中可见内容判断，不补写图片中不存在的字段。
@@ -66,6 +67,24 @@ def _clean_headers(value: Any) -> list[str]:
     return headers
 
 
+def _align_headers(table: RecognizedTable, orientation: str, headers: list[str]) -> tuple[list[str], str]:
+    """仅为原图表头为空的尾部虚列补齐占位名，保持 VLM 与 HTML 的列索引一致。"""
+
+    axis_size = table.grid.column_count if orientation == "horizontal" else table.grid.row_count
+    if len(headers) == axis_size:
+        return headers, "exact"
+    if orientation != "horizontal" or not 0 < len(headers) < axis_size:
+        raise ValueError(f"VLM headers 数量 {len(headers)} 与 {orientation} 表字段轴长度 {axis_size} 不一致")
+    first_row = table.grid.matrix[0] if table.grid.matrix else []
+    if any(str(first_row[index] or "").strip() for index in range(len(headers), axis_size)):
+        raise ValueError("VLM 漏掉了有内容的表头列，无法安全补齐索引")
+    padding = [
+        table.grid.header_paths[index] if index < len(table.grid.header_paths) else f"列{index + 1}"
+        for index in range(len(headers), axis_size)
+    ]
+    return headers + padding, "trailing_blank_header_columns"
+
+
 def analyze_table_visual_semantics(
     table: RecognizedTable,
     vlm_client: Any,
@@ -85,7 +104,7 @@ def analyze_table_visual_semantics(
         raise ValueError("VLM 表格语义响应必须是 JSON 对象")
 
     orientation = _orientation(payload.get("orientation"))
-    headers = _clean_headers(payload.get("headers"))
+    headers, header_alignment = _align_headers(table, orientation, _clean_headers(payload.get("headers")))
     axis_size = table.grid.column_count if orientation == "horizontal" else table.grid.row_count
     subject_index = int(payload.get("subject_index"))
     data_start_index = int(payload.get("data_start_index"))
@@ -96,11 +115,6 @@ def analyze_table_visual_semantics(
         raise ValueError(
             f"VLM data_start_index={data_start_index} 超出记录轴范围 0..{record_axis_size - 1}"
         )
-    if len(headers) != axis_size:
-        raise ValueError(
-            f"VLM headers 数量 {len(headers)} 与 {orientation} 表字段轴长度 {axis_size} 不一致"
-        )
-
     subject_header = " ".join(str(payload.get("subject_header") or "").split())
     if not subject_header:
         subject_header = headers[subject_index] if subject_index < len(headers) else ""
@@ -112,6 +126,7 @@ def analyze_table_visual_semantics(
         "subject_index": subject_index,
         "data_start_index": data_start_index,
         "confidence": confidence,
+        "header_alignment": header_alignment,
         "reason": str(payload.get("reason") or "").strip(),
         "raw_response": dict(payload),
     }

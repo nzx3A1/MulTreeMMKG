@@ -1,4 +1,6 @@
-"""AMarkdownParser 图片表格识别的离线回归测试。"""
+"""AMarkdownParser 表格识别与非表格 HTML 标签清理的离线回归测试。"""
+
+import json
 
 from src.parser.AMarkdownParser import AMarkdownParser
 
@@ -96,3 +98,32 @@ def test_chinese_caption_without_space_is_supported() -> None:
     )
 
     assert [table["path"] for table in section["table"]] == ["images/table-1.jpg"]
+
+
+def test_inline_html_tags_are_removed_but_html_table_is_preserved() -> None:
+    """第一阶段清理正文与图注标签，同时原样保留 HTML 表格供下游解析。"""
+
+    table_html = "<table><tr><th>层位</th><th>厚度</th></tr><tr><td>长<sup>8</sup></td><td>10</td></tr></table>"
+    markdown = (
+        "# 题<sup>目</sup>\n\n"
+        "摘 要：长<sub>8</sub>油层组。\n\n"
+        "## 1 <i>结果</i>\n\n"
+        "长<sup>8</sup>油层组见图1。\n\n"
+        f"表1 地层<sup>厚度</sup>\n{table_html}\n\n"
+        "![](images/figure.jpg)\n图1 沉积<sub>相</sub>\n\n"
+        "$$x<sup>2</sup>$$\n\n"
+        "## 参考文献\n文献<sup>1</sup>\n"
+    )
+    result = AMarkdownParser().parse_text(markdown)
+    section = result["toc"][0]
+
+    assert result["title"] == "题目"
+    assert result["basicInformation"]["abstract"] == "长8油层组。"
+    assert result["basicInformation"]["references"].endswith("文献1")
+    assert section["content"] == "长8油层组见图1。"
+    assert section["table"][0]["content"] == table_html
+    assert section["table"][0]["caption"] == "表1 地层厚度"
+    assert section["images"][0]["caption"] == "图1 沉积相"
+    assert section["formulas"][0]["content"] == "x2"
+    without_tables = json.dumps(result, ensure_ascii=False).replace(table_html, "")
+    assert "<sup>" not in without_tables and "<sub>" not in without_tables and "<i>" not in without_tables

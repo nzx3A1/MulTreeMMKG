@@ -8,6 +8,8 @@ import re
 import requests
 import zipfile
 import io
+import shutil
+import tempfile
 from pathlib import Path
 from pypdf import PdfReader, PdfWriter
 
@@ -146,7 +148,7 @@ def find_pdf_files_recursive(root_dir):
                 pdf_files.append(os.path.join(root, file))
     return pdf_files
 
-def filter_pdffiles(file_paths, output_root):
+def filter_pdffiles(file_paths, output_root, force=False):
     """过滤已经解析过的 PDF，并跳过 MinerU 中间文件命名格式，避免重复提交。"""
     #过滤pdf文件，判断当前文件所在文件夹下是否已经存在同名的文件夹，如果存在则认为该pdf文件已经处理过了，无需再次提交
     #同时也过滤掉类似97b6dde8-a3bb-4464-8c2c-ec8f849c68ba_origin.pdf，72beb496-99a3-4928-b39b-ea14747f3c47_origin.pdf'这种命名格式的文件，避免误提交
@@ -163,7 +165,7 @@ def filter_pdffiles(file_paths, output_root):
 
         folder_name = os.path.splitext(file_name)[0]
         folder_path = os.path.join(str(output_root), folder_name)
-        if not has_mineru_result(folder_path):
+        if force or not has_mineru_result(folder_path):
             filtered_files.append(path)
         else:
             print(f"文件 {file_name} 已经处理过了，跳过提交")
@@ -176,6 +178,53 @@ def has_mineru_result(folder_path):
         return False
     required_candidates = ("full.md", "content_list.json", "layout.json")
     return any(os.path.exists(os.path.join(folder_path, name)) for name in required_candidates)
+
+
+def merge_mineru_output(staging_dir, target_dir):
+    """覆盖 MinerU 产物并清理旧版残留，同时保留目录中的其他用户文件。"""
+    incoming_paths = set()
+    ensure_directory(target_dir)
+    for source_root, _, file_names in os.walk(staging_dir):
+        relative_dir = os.path.relpath(source_root, staging_dir)
+        destination_root = target_dir if relative_dir == "." else os.path.join(target_dir, relative_dir)
+        ensure_directory(destination_root)
+        for file_name in file_names:
+            source_path = os.path.join(source_root, file_name)
+            destination_path = os.path.join(destination_root, file_name)
+            incoming_paths.add(os.path.normcase(os.path.relpath(destination_path, target_dir)))
+            if os.path.exists(destination_path):
+                try:
+                    os.chmod(to_windows_long_path(destination_path), 0o666)
+                except OSError:
+                    pass
+            shutil.copy2(
+                to_windows_long_path(source_path),
+                to_windows_long_path(destination_path),
+            )
+
+    old_id_file = re.compile(
+        r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-"
+        r"[0-9a-fA-F]{4}-[0-9a-fA-F]{12}_(?:origin\.pdf|content_list(?:_v2)?\.json|model\.json)$"
+    )
+    for current_root, _, file_names in os.walk(target_dir):
+        for file_name in file_names:
+            current_path = os.path.join(current_root, file_name)
+            relative_path = os.path.normcase(os.path.relpath(current_path, target_dir))
+            relative_parts = Path(relative_path).parts
+            is_old_id_file = len(relative_parts) == 1 and old_id_file.match(file_name)
+            is_stale_image = relative_parts and relative_parts[0] == "images" and relative_path not in incoming_paths
+            if (is_old_id_file or is_stale_image) and relative_path not in incoming_paths:
+                try:
+                    os.chmod(to_windows_long_path(current_path), 0o666)
+                except OSError:
+                    pass
+                os.remove(to_windows_long_path(current_path))
+
+    images_dir = os.path.join(target_dir, "images")
+    if os.path.isdir(images_dir):
+        for current_root, dir_names, file_names in os.walk(images_dir, topdown=False):
+            if not dir_names and not file_names:
+                os.rmdir(to_windows_long_path(current_root))
 
 
 def clean_md_tags(md_path):
@@ -233,8 +282,8 @@ def download_with_retries(url, retries=3, timeout=120):
 
 
 
-def submit_files_and_upload(pdf_paths_or_items):
-    """提交文件列表获取上传URL，并执行上传，返回 batch_id"""
+def submit_files_and_upload(pdf_paths_or_items, enable_table=True):
+    """提交 PDF 获取上传 URL、上传文件，并按参数开启 MinerU 表格识别。"""
     if not pdf_paths_or_items:
         print("未找到需要处理的PDF文件")
         return None
@@ -277,8 +326,10 @@ def submit_files_and_upload(pdf_paths_or_items):
     data = {
         "files": files_list,
         "model_version": "vlm",
-        # 关闭 MinerU 表格识别，避免将表格内容解析为结构化表格。
-        "enable_table": False,
+        # 启用 MinerU 表格识别，让结果包包含表格结构化内容。
+        "enable_table": enable_table,
+        "enable_formula": True,
+        "language": "ch",
     }
 
     print(f"正在提交 {len(valid_upload_items)} 个文件进行处理...")
@@ -372,11 +423,18 @@ def download_completed_files(extract_results, output_root, file_origin_map=None)
                         for chunk in zip_resp.iter_content(chunk_size=8192):
                             f.write(chunk)
                     
-                    # 解压
-                    print(f"  正在解压到: {target_dir}")
-                    ensure_directory(target_dir)
-                    with zipfile.ZipFile(to_windows_long_path(zip_save_path), 'r') as z:
-                        z.extractall(to_windows_long_path(target_dir))
+                    # 先完整解压到临时目录，再覆盖本次产物，避免目录重命名权限问题。
+                    print(f"  正在解压并覆盖解析文件: {target_dir}")
+                    ensure_directory(save_root)
+                    staging_dir = tempfile.mkdtemp(prefix=f".{folder_name}_staging_", dir=save_root)
+                    try:
+                        with zipfile.ZipFile(to_windows_long_path(zip_save_path), 'r') as z:
+                            z.extractall(to_windows_long_path(staging_dir))
+
+                        merge_mineru_output(staging_dir, target_dir)
+                    finally:
+                        if os.path.exists(staging_dir):
+                            shutil.rmtree(to_windows_long_path(staging_dir))
                         
                     # 清理 full.md 中的标签
                     full_md_path = os.path.join(target_dir, "full.md")
@@ -429,10 +487,10 @@ def download_existing_batch(batch_id, output_root):
     download_completed_files(extract_results, str(output_root))
 
 
-def check_status_loop(batch_id, output_dir, file_origin_map=None):
+def check_status_loop(batch_id, output_dir, file_origin_map=None, poll_interval=60):
     """
     轮询检查批次状态：
-    1. 每隔1分钟调用一次查询接口
+    1. 按 poll_interval 秒间隔查询接口
     2. 判断所有文件是否都已完成 (done 或 failed)
     3. 如果全部完成，则下载结果并结束
     4. 否则继续等待
@@ -442,9 +500,8 @@ def check_status_loop(batch_id, output_dir, file_origin_map=None):
     print("\n进入状态轮询阶段...")
     
     while True:
-        # 等待 1 分钟
-        print("等待 1 分钟后检查状态...")
-        time.sleep(60)
+        print(f"等待 {poll_interval:g} 秒后检查状态...")
+        time.sleep(poll_interval)
         
         try:
             res = requests.get(url, headers=HEADER)
@@ -561,6 +618,9 @@ def main():
     parser.add_argument("--output", type=Path, default=MINERU_OUTPUT_DIR, help="MinerU 结果输出目录")
     parser.add_argument("--batch-id", default=None, help="已有 MinerU batch_id；提供后只重试查询和下载结果")
     parser.add_argument("--clean-only", action="store_true", help="仅清理所有 full.md 文件中的标签，不提交新任务")
+    parser.add_argument("--disable-table", action="store_true", help="关闭 MinerU 表格识别")
+    parser.add_argument("--force", action="store_true", help="重新解析全部输入 PDF，并在新结果就绪后替换旧结果目录")
+    parser.add_argument("--poll-interval", type=float, default=60, help="查询 MinerU 任务状态的间隔秒数")
     args = parser.parse_args()
 
     input_dir = args.input
@@ -584,8 +644,12 @@ def main():
 
     # 递归查找 PDF 文件，并以 data/mineru_output 中的同名目录作为已处理判断依据。
     print(f"正在扫描 PDF 目录: {input_dir}")
-    pdf_files = find_pdf_files_recursive(str(input_dir))
-    pdf_files = filter_pdffiles(pdf_files, output_dir)
+    pdf_files = (
+        [str(input_dir)]
+        if input_dir.is_file() and input_dir.suffix.lower() == ".pdf"
+        else find_pdf_files_recursive(str(input_dir))
+    )
+    pdf_files = filter_pdffiles(pdf_files, output_dir, force=args.force)
 
     if not pdf_files:
         print("未找到需要提交的 PDF 文件")
@@ -605,11 +669,11 @@ def main():
 
     for batch_index, batch_items in enumerate(batch_groups, start=1):
         print(f"\n===== 第 {batch_index}/{len(batch_groups)} 轮提交 =====")
-        batch_id = submit_files_and_upload(batch_items)
+        batch_id = submit_files_and_upload(batch_items, enable_table=not args.disable_table)
 
         if batch_id:
             # 轮询状态并统一下载到 data/mineru_output，而不是写回 raw_pdf 目录。
-            check_status_loop(batch_id, str(output_dir))
+            check_status_loop(batch_id, str(output_dir), poll_interval=args.poll_interval)
         else:
             print(f"第 {batch_index} 轮提交失败，跳过后续轮询")
 

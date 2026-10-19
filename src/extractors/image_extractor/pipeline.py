@@ -17,6 +17,7 @@ from .classification import (
     VLMImageClassificationProvider,
 )
 from .factory import build_default_registry
+from .postprocess import merge_same_name_entities
 from .registry import ImageExtractorRegistry
 from .router import ImageExtractorRouter
 from .schema_models import (
@@ -374,7 +375,7 @@ def extract_from_images(
                     f"[图片抽取/单图] 模型调用存在错误：chunk={task.chunk_id}，"
                     f"image_index={task.image_index}，status={task_status}，errors={model_errors}"
                 )
-        merged_graph = _merge_task_graphs(chunk, task_graphs)
+        merged_graph = merge_same_name_entities(_merge_task_graphs(chunk, task_graphs))
         results.append(merged_graph)
         logger.info(
             f"[图片抽取/Chunk] 完成 {chunk_index}/{total_chunks}：chunk={chunk_id}，"

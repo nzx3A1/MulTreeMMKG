@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 
-from model import Graph
+from model import Entity, Event, Graph, Relation, SourceModality
 from src.extractors.image_extractor import (
     BaseImageExtractor,
     ImageExtractorKind,
@@ -15,6 +15,7 @@ from src.extractors.image_extractor import (
     extract_from_images,
 )
 from src.extractors.image_extractor.pipeline import _merge_task_graphs
+from src.extractors.image_extractor.postprocess import merge_same_name_entities
 from src.extractors.extractor_init import InitExtractor
 
 
@@ -182,3 +183,70 @@ def test_merge_task_graphs_preserves_model_errors() -> None:
 
     assert merged.metadata.extra["status"] == "model_error"
     assert merged.metadata.extra["routes"][0]["model_errors"] == ["PP-StructureV3 模型目录不可读"]
+
+
+def test_same_name_postprocess_preserves_sources_and_rewrites_references() -> None:
+    """中文说明：同名节点合并后保留原始记录，并修复关系及事件的引用。"""
+
+    graph = Graph.from_chunk(
+        "doc-1", "chunk-1", SourceModality.IMAGE,
+        entities=[
+            Entity(id="e1", name="延长组", type="stratum", attributes={"深度": "100"}, provenance="证据一"),
+            Entity(id="e2", name=" 延长组 ", type="interval", attributes={"深度": "200", "颜色": "灰色"}, provenance="证据二"),
+            Entity(id="e3", name="长7段", type="stratum"),
+        ],
+        relations=[
+            Relation(id="r1", type="contains", source_id="e2", target_id="e3"),
+            Relation(id="r2", type="same_as", source_id="e1", target_id="e2"),
+        ],
+        events=[Event(id="v1", type="observation", name="观察", participants=["e1", "e2", "e3"])],
+    )
+
+    result = merge_same_name_entities(graph)
+
+    assert [entity.id for entity in result.entities] == ["e1", "e3"]
+    assert [entity.id for entity in graph.entities] == ["e1", "e2", "e3"]
+    assert result.entities[0].attributes == {"深度": "100", "颜色": "灰色"}
+    assert result.entities[0].provenance == "证据一\n证据二"
+    sources = result.entities[0].metadata["same_name_merge"]["source_entities"]
+    assert [source["id"] for source in sources] == ["e1", "e2"]
+    assert sources[1]["type"] == "interval"
+    assert sources[1]["attributes"]["深度"] == "200"
+    assert result.relations[0].source_id == "e1"
+    assert result.relations[0].source_name == "延长组"
+    assert result.relations[1].source_id == result.relations[1].target_id == "e1"
+    assert result.events[0].participants == ["e1", "e3"]
+    assert result.validate_references() == []
+    assert result.metadata.extra["same_name_entity_id_map"] == {"e2": "e1"}
+    assert merge_same_name_entities(result) is result
+
+
+def test_cached_image_result_is_postprocessed_before_save(tmp_path) -> None:
+    """中文说明：复用含旧版 metadata 字段的图片结果时，也应合并同名节点。"""
+
+    from src.extractors.image_extractor.main import extract_images_from_summary_file
+
+    input_path = tmp_path / "input.json"
+    output_path = tmp_path / "output.json"
+    input_path.write_text(
+        json.dumps({"document": {"id": "doc-1", "sections": [
+            {"id": "section-1", "chunks": [{"id": "chunk-1", "modality": "image", "image_path": ["a.png"]}]}
+        ]}}, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    graph = Graph.from_chunk(
+        "doc-1", "chunk-1", SourceModality.IMAGE,
+        entities=[Entity(id="e1", name="延长组", type="stratum"), Entity(id="e2", name="延长组", type="stratum")],
+        relations=[Relation(id="r1", type="contains", source_id="e1", target_id="e2")],
+    )
+    cached = graph.to_dict()
+    cached["metadata"]["model_config"] = {"extra": "forbid"}
+    output_path.write_text(json.dumps({"graphs": [cached]}, ensure_ascii=False), encoding="utf-8")
+
+    results = extract_images_from_summary_file(input_path, output_path, show_progress=False)
+    saved = json.loads(output_path.read_text(encoding="utf-8"))
+
+    assert len(results[0].entities) == 1
+    assert results[0].relations[0].target_id == "e1"
+    assert saved["statistics"]["entity_count"] == 1
+    assert saved["graphs"][0]["relations"][0]["target_id"] == "e1"

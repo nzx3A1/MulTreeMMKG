@@ -414,7 +414,19 @@ def _call_model(
         )
         try:
             if isinstance(client, SummaryModelRouter):
-                result = client.retry_after_empty(messages)
+                retry_messages = [dict(message) for message in messages]
+                retry_content = list(retry_messages[-1].get("content", []))
+                retry_content.append({
+                    "type": "text",
+                    "text": (
+                        "上一次响应未通过程序校验。请重新阅读上方材料，只输出符合指定格式的 JSON；"
+                        "summary 必须非空，ConceptCategories 必须从提示中给出的 Neo4j 候选名称中"
+                        f"原样选择恰好 {expected_category_count} 个且不得重复。不要省略该字段，"
+                        "也不要输出候选列表之外的名称。"
+                    ),
+                })
+                retry_messages[-1]["content"] = retry_content
+                result = client.retry_after_empty(retry_messages)
             else:
                 result = client.chat(messages)
         except Exception as exc:
