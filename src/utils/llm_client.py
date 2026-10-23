@@ -10,6 +10,7 @@ import logging
 import os
 import re
 import time
+from collections import deque
 from typing import Any, Optional, Sequence
 
 from config.model_config import OpenAICompatibleConfig, settings
@@ -41,6 +42,9 @@ def _extract_json_fragment(content: str) -> str:
     text = _strip_code_fences(content)
     if not text or text[0] in "[{":
         return text
+    # 中文说明：缺少根对象左括号时保留首个属性名，避免误取其内部数组而丢失外层字段。
+    if re.match(r'^"(?:[^"\\]|\\.)*"\s*:', text):
+        return text
     starts = [index for index in (text.find("{"), text.find("[")) if index >= 0]
     if not starts:
         return text
@@ -49,13 +53,133 @@ def _extract_json_fragment(content: str) -> str:
     return text[start : end + 1].strip() if end > start else text
 
 
+def _normalize_json_punctuation(content: str) -> str:
+    """仅转换字符串外的全角结构符号，保留证据、名称及转义字符串的原始内容。"""
+
+    punctuation = str.maketrans("｛｝［］，：", "{}[],:")
+    output: list[str] = []
+    in_string = escaped = False
+    for char in content.lstrip("\ufeff"):
+        if in_string:
+            output.append(char)
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+        else:
+            output.append(char.translate(punctuation))
+            if char == '"':
+                in_string = True
+    return "".join(output)
+
+
+def _json_structure_tokens(content: str) -> tuple[str, ...] | None:
+    """提取完整 JSON 词元；遇到截断字符串、非法字面量等内容错误时放弃修复。"""
+
+    pattern = re.compile(
+        r'\s*("(?:[^"\\]|\\.)*"|-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?'
+        r'|true|false|null|[{}\[\],:])'
+    )
+    tokens: list[str] = []
+    position = 0
+    while position < len(content):
+        match = pattern.match(content, position)
+        if match is None:
+            return tuple(tokens) if not content[position:].strip() else None
+        token = match.group(1)
+        # 中文说明：不能把 01、1e 等非法或截断数值拆成新字段来伪造修复结果。
+        if token[0] not in '"{}[],:' and match.end() < len(content):
+            if content[match.end()] not in ' \t\r\n{}[],:"':
+                return None
+        tokens.append(token)
+        position = match.end()
+    return tuple(tokens)
+
+
+def _repair_json_structure(content: str) -> tuple[str, int] | None:
+    """在有限搜索内只增删结构符号，修复多余或遗漏括号及分隔符，不改写任何数据词元。"""
+
+    tokens = _json_structure_tokens(content)
+    if not tokens:
+        return None
+    closing = {"{": "}", "[": "]"}
+    pending = deque([(tokens, 0)])
+    visited = {tokens}
+    # 中文说明：限制编辑次数和候选数量，避免严重损坏的长输出耗尽解析时间。
+    max_edits, max_candidates = 6, 128
+    examined = 0
+    while pending and examined < max_candidates:
+        current, edits = pending.popleft()
+        examined += 1
+        candidate = " ".join(current)
+        try:
+            json.loads(candidate)
+            return candidate, edits
+        except json.JSONDecodeError as exc:
+            if edits >= max_edits:
+                continue
+            offset = 0
+            positions: dict[int, int] = {}
+            for index, token in enumerate(current):
+                positions[offset] = index
+                offset += len(token) + 1
+            positions[len(candidate)] = len(current)
+            index = positions.get(exc.pos)
+            if index is None:
+                # 中文说明：错误位于字符串或数值内部，不靠更改括号来掩盖内容错误。
+                continue
+            proposals: list[tuple[str, ...]] = []
+            token = current[index] if index < len(current) else ""
+            previous = current[index - 1] if index else ""
+            # 中文说明：在值位置出现“字符串 :”时，可确定缺少对象左括号。
+            if token == ":" and previous.startswith('"'):
+                proposals.append(current[:index - 1] + ("{",) + current[index - 1:])
+            if token in ("{", "}", "[", "]"):
+                proposals.append(current[:index] + current[index + 1:])
+            if previous in ("{", "["):
+                proposals.append(current[:index - 1] + current[index:])
+            stack: list[str] = []
+            for structural in current[:index]:
+                if structural in closing:
+                    stack.append(structural)
+                elif stack and structural == closing[stack[-1]]:
+                    stack.pop()
+            if stack and (index == len(current) or token in ("}", "]")):
+                proposals.append(current[:index] + (closing[stack[-1]],) + current[index:])
+            if previous == "," and (index == len(current) or token in ("}", "]")):
+                proposals.append(current[:index - 1] + current[index:])
+            if exc.msg == "Expecting ',' delimiter" and token and token not in ("}", "]", ":", ","):
+                proposals.append(current[:index] + (",",) + current[index:])
+            if exc.msg == "Expecting ':' delimiter" and token and token not in ("}", "]", ":", ","):
+                proposals.append(current[:index] + (":",) + current[index:])
+            for proposal in proposals:
+                if proposal not in visited and len(visited) < max_candidates:
+                    visited.add(proposal)
+                    pending.append((proposal, edits + 1))
+    return None
+
+
 def safe_json_loads(content: str) -> Any:
-    """安全解析模型 JSON；无法解析时返回空对象供上游按无结果处理。"""
+    """优先正常解析，再保守修复 JSON 结构；缺失数据或无法修复时仍返回空对象。"""
 
     try:
-        return json.loads(_extract_json_fragment(content))
-    except (TypeError, ValueError, json.JSONDecodeError):
-        return {}
+        fragment = _extract_json_fragment(_normalize_json_punctuation(_strip_code_fences(content)))
+        try:
+            return json.loads(fragment)
+        except json.JSONDecodeError as exc:
+            repaired = _repair_json_structure(fragment)
+            if repaired is not None:
+                repaired_text, edits = repaired
+                logger.warning(
+                    "[LLM] 已自动修复 JSON 结构：编辑 %s 处，原解析错误：%s（第 %s 行，第 %s 列）",
+                    edits, exc.msg, exc.lineno, exc.colno,
+                )
+                return json.loads(repaired_text)
+    except (TypeError, ValueError, RecursionError):
+        pass
+    return {}
 
 
 class LLMClient:
@@ -175,10 +299,19 @@ class LLMClient:
         return self.call_json(prompt, task_name=task_name)
 
     def chat_json(self, messages: list[dict[str, Any]], **kwargs: Any) -> dict[str, Any] | list[Any]:
-        """请求并安全解析 JSON，模型未遵循格式时返回空对象。"""
+        """请求并解析 JSON，自动修复可恢复的结构错误，修复失败时返回空对象。"""
+
+        payload, _ = self.chat_json_with_raw(messages, **kwargs)
+        return payload
+
+    def chat_json_with_raw(
+        self, messages: list[dict[str, Any]], **kwargs: Any,
+    ) -> tuple[dict[str, Any] | list[Any], str]:
+        """返回解析后的 JSON 和原始文本，供抽取校验失败时定位模型输出问题。"""
 
         kwargs.setdefault("response_format", {"type": "json_object"})
-        return safe_json_loads(self.chat(messages, **kwargs))
+        raw_response = self.chat(messages, **kwargs)
+        return safe_json_loads(raw_response), raw_response
 
 
 # 中文说明：旧抽取脚本可继续使用 LLMJsonClient 名称，无需改动调用点。

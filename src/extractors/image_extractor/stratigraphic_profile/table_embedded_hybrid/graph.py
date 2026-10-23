@@ -69,6 +69,21 @@ def _confidence(value: Any, default: float = 0.8) -> float:
     return round(max(0.0, min(1.0, number)), 3)
 
 
+def _track_entity_header(track: Mapping[str, Any]) -> str:
+    """中文说明：优先选择真实语义表头，只有 pp_ 内部编号的轨道不生成实体。"""
+
+    for value in (
+        track.get("header"),
+        track.get("semantic_header_text"),
+        track.get("ppstructure_header_text"),
+        track.get("id"),
+    ):
+        header = str(value or "").strip()
+        if header and not header.casefold().startswith("pp_"):
+            return header
+    return ""
+
+
 class TableEmbeddedHybridGraphBuilder:
     """把中间结果中的区间、曲线和井标注装配为统一 Graph。"""
 
@@ -115,12 +130,10 @@ class TableEmbeddedHybridGraphBuilder:
             track_id = str(track.get("id") or "").strip()
             if not track_id:
                 continue
-            header = str(
-                track.get("header")
-                or track.get("semantic_header_text")
-                or track.get("ppstructure_header_text")
-                or track_id
-            )
+            header = _track_entity_header(track)
+            if not header:
+                # 中文说明：保留中间结果中的几何轨道及内容，仅跳过编号实体和附属轨道关系。
+                continue
             track_graph_id = self._add_entity(
                 f"track::{track_id}",
                 header,

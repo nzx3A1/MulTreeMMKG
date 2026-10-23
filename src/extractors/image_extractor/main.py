@@ -21,6 +21,7 @@ from src.extractors.image_extractor.classification import (
 )
 from src.extractors.image_extractor.pipeline import extract_from_images, write_image_extraction_result
 from src.extractors.image_extractor.postprocess import merge_same_name_entities
+from src.extractors.image_extractor.panel_splitter import PANEL_PREPROCESSING_VERSION
 from src.extractors.image_extractor.schema_models import as_string_tuple
 from src.utils.json_io import read_json
 from src.utils.llm_client import LLMClient
@@ -72,7 +73,7 @@ def _parse_saved_graph(raw_graph: Mapping[str, Any]) -> Graph:
 
 
 def _load_reusable_graphs(output_path: str | Path) -> dict[str, Graph]:
-    """读取已有结果，只复用同时含实体和关系的图片 Chunk Graph。"""
+    """只复用已完成当前版本子图检查且同时含实体和关系的 Chunk Graph。"""
 
     path = Path(output_path)
     if not path.is_file():
@@ -95,6 +96,11 @@ def _load_reusable_graphs(output_path: str | Path) -> dict[str, Graph]:
             continue
         metadata = raw_graph.get("metadata")
         if not isinstance(metadata, Mapping):
+            continue
+        extra = metadata.get("extra")
+        if not isinstance(extra, Mapping) or extra.get("panel_preprocessing_version") != PANEL_PREPROCESSING_VERSION:
+            continue
+        if extra.get("status") != "completed":
             continue
         chunk_id = str(metadata.get("chunk_id") or "").strip()
         entities = raw_graph.get("entities")
@@ -158,6 +164,7 @@ def extract_images_from_summary_file(
             active_llm,
             active_vlm,
             classification_provider=provider,
+            context_options={"panel_output_dir": resolved_output.parent / "image_panels"},
             output_path=None,
             show_progress=show_progress,
         )

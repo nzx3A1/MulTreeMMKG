@@ -112,18 +112,23 @@ class RecordImageClassificationProvider:
 class VLMImageClassificationProvider:
     """通过项目 VLM 对每张原图执行 A01-A20 真实视觉分类。"""
 
-    def __init__(self, vlm_client: Any, classifier: VLMImageClassifier | None = None) -> None:
+    def __init__(
+        self, vlm_client: Any, classifier: VLMImageClassifier | None = None, *,
+        raise_on_error: bool = False, require_single_type: bool = False,
+    ) -> None:
         """中文说明：保存模型客户端和逐图审计记录，分类失败时仍允许批处理继续。"""
 
         self.vlm_client = vlm_client
         self.classifier = classifier or VLMImageClassifier()
         self.records: list[dict[str, Any]] = []
+        self.raise_on_error = raise_on_error
+        self.require_single_type = require_single_type
 
     def resolve(self, chunk: Mapping[str, Any], image_path: str, image_index: int) -> ImageClassification:
         """中文说明：构造最小单图任务调用真实分类 API，并记录成功结果或可追踪错误。"""
 
         chunk_id = str(chunk.get("id") or chunk.get("chunk_id") or "")
-        image_id = f"{chunk_id}:image:{image_index}"
+        image_id = str(chunk.get("image_id") or f"{chunk_id}:image:{image_index}")
         task = ImageExtractionTask(
             document_id=str(chunk.get("document_id") or chunk_id.split(":section:", 1)[0]),
             chunk_id=chunk_id,
@@ -138,6 +143,8 @@ class VLMImageClassificationProvider:
         )
         try:
             result = self.classifier.classify(task, self.vlm_client)
+            if self.require_single_type and result.secondary_codes:
+                raise ValueError("单子图分类仍检测到多个独立类型，禁止继续抽取")
         except Exception as exc:
             # 中文说明：分类失败统一路由到不处理的 A20，同时在 records 中保留原始错误供批量重试。
             self.records.append(
@@ -150,6 +157,8 @@ class VLMImageClassificationProvider:
                     "error": str(exc),
                 }
             )
+            if self.raise_on_error:
+                raise
             return ImageClassification(code="A20", type_name="其他石油地质综合图")
         payload = result.to_dict()
         self.records.append(

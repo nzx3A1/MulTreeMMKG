@@ -781,6 +781,55 @@ def test_every_track_cell_becomes_entity_and_only_aligns_with_left_neighbor(tmp_
     assert sum(relation.type == "located_in_track" for relation in graph.relations) >= 6
 
 
+@pytest.mark.parametrize(
+    ("headers", "expected_header"),
+    [
+        ({}, None),
+        ({"header": "pp_track_002"}, None),
+        ({"header": "  PP_track_002  ", "semantic_header_text": " ", "ppstructure_header_text": "pp_track_002"}, None),
+        ({"header": "pp_track_002", "semantic_header_text": "沉积相"}, "沉积相"),
+        ({"header": " ", "ppstructure_header_text": " 沉积相 "}, "沉积相"),
+        ({"header": " 沉积相 "}, "沉积相"),
+    ],
+)
+def test_pp_numbered_track_without_semantic_header_is_not_an_entity(
+    headers: dict[str, str], expected_header: str | None,
+) -> None:
+    """中文说明：过滤 PP 编号轨道及其关系，同时保留内容实体、地质关系和有真实表头的轨道。"""
+
+    task = ImageExtractionTask(
+        document_id="doc", chunk_id="chunk", image_id="image", image_index=0, image_path="table.png",
+    )
+    intermediate = {
+        "diagram": {"id": "profile", "name": "长8油层组层序"},
+        "tracks": [
+            {"id": "pp_track_000", "header": "地层"},
+            {"id": "pp_track_002", **headers},
+        ],
+        "parsed": {
+            "stratigraphic_intervals": [{"id": "unit", "name": "长8油层组", "track_id": "pp_track_000"}],
+            "point_markers": [{"id": "well", "name": "HH42", "track_id": "pp_track_002"}],
+        },
+        "alignment_relations": [{"source_id": "well", "target_id": "unit", "relation_type": "located_in"}],
+    }
+    graph = build_table_embedded_hybrid_graph(task, intermediate)
+    tracks = [entity for entity in graph.entities if entity.type == "diagram_track"]
+    assert {entity.name for entity in tracks} == {"地层", *([expected_header] if expected_header else [])}
+    assert all(not entity.name.casefold().startswith("pp_") for entity in graph.entities)
+    assert {entity.name for entity in graph.entities} >= {"HH42", "长8油层组"}
+    triples = {(relation.source_name, relation.type, relation.target_name) for relation in graph.relations}
+    assert ("HH42", "located_in", "长8油层组") in triples
+    assert ("长8油层组", "located_in_track", "地层") in triples
+    assert sum(relation.type == "has_track" for relation in graph.relations) == len(tracks)
+    well_track_relations = [
+        relation for relation in graph.relations
+        if relation.type == "located_in_track" and relation.source_name == "HH42"
+    ]
+    assert [relation.target_name for relation in well_track_relations] == ([expected_header] if expected_header else [])
+    assert len(intermediate["tracks"]) == 2
+    assert graph.validate_references() == []
+
+
 def test_measurement_track_ocr_noise_is_not_promoted_to_graph_entities() -> None:
     """中文说明：孔隙度、渗透率图形中的伪文字不得被 PP 文本兜底升级为图谱实体，地质分类文字仍需保留。"""
 

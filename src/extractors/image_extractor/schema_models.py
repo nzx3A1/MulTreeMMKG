@@ -33,6 +33,8 @@ class ImageExtractionTask:
     section_id: str = ""
     section_title: str = ""
     raw_chunk: Mapping[str, Any] = field(default_factory=dict, repr=False, compare=False)
+    # 中文说明：记录原图、递归裁剪及遮蔽坐标，坐标始终相对于原图像素。
+    panel_metadata: Mapping[str, Any] = field(default_factory=dict, repr=False, compare=False)
 
 
 @dataclass(frozen=True)

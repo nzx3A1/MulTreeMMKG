@@ -40,5 +40,8 @@ tests/*
 !eval/dataset_split/manifest.json
 !eval/mvp/**/*.json
 !tests/test_mvp_eval_dataset.py
+!tests/test_image_panel_splitter.py
+!tests/test_llm_image_panel_rerun.py
 *.log
 logs/
+.codex-tmp/*

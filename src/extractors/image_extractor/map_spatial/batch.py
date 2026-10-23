@@ -25,6 +25,7 @@ def extract_map_spatial_chunks(
     *,
     output_path: str | Path | None = None,
     show_progress: bool = True,
+    split_subfigures: bool = True,
 ) -> list[Graph]:
     """不依赖预先分类记录，直接抽取一组已知为地图的 chunk。"""
 
@@ -36,7 +37,7 @@ def extract_map_spatial_chunks(
         llm_client=None,
         vlm_client=vlm_client,
         classification_provider=MapSpatialClassificationProvider(),
-        context_options={"allowed_extractor_kinds": ["map_spatial"]},
+        context_options={"allowed_extractor_kinds": ["map_spatial"], "split_subfigures": split_subfigures},
         output_path=output_path,
         show_progress=show_progress,
     )

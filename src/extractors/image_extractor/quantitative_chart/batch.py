@@ -24,6 +24,7 @@ def extract_quantitative_chart_chunks(
     output_path: str | Path | None = None,
     show_progress: bool = True,
     max_points_per_series: int = 24,
+    split_subfigures: bool = True,
 ) -> list[Graph]:
     """不依赖预先分类记录，直接抽取一组已知为定量图表的 chunk。"""
 
@@ -38,6 +39,7 @@ def extract_quantitative_chart_chunks(
         context_options={
             "allowed_extractor_kinds": ["quantitative_chart"],
             "quantitative_chart_max_points_per_series": max_points_per_series,
+            "split_subfigures": split_subfigures,
         },
         output_path=output_path,
         show_progress=show_progress,

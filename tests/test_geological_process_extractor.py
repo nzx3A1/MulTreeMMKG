@@ -199,7 +199,8 @@ def test_geological_process_extractor_builds_lithology_spatial_and_temporal_grap
 def test_pipeline_routes_a09_chunk_to_completed_geological_process_extractor() -> None:
     """图片统一入口应把 A09 Chunk 交给已实现的专用抽取器。"""
 
-    graph = extract_from_images([_chunk()], MockLLM(), MockVLM(), show_progress=False)[0]
+    graph = extract_from_images([_chunk()], MockLLM(), MockVLM(),
+                                 context_options={"split_subfigures": False}, show_progress=False)[0]
     assert graph.metadata.extra["routes"][0]["extractor_kind"] == "geological_process"
     assert graph.metadata.extra["routes"][0]["status"] == "completed"
     assert graph.metadata.extra["model_called"] is True

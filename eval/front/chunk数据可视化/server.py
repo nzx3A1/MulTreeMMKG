@@ -30,6 +30,7 @@ BASELINE_FILES: dict[str, Path] = {
     modality: BASELINE_DIR / f"{modality}_extraction.json"
     for modality in ("text", "image", "table")
 }
+SCHEMA_FILES = {"text": BASELINE_DIR / "text_schema_extrction.json"}
 ASSET_TYPES = {
     ".png": "image/png",
     ".jpg": "image/jpeg",
@@ -37,6 +38,50 @@ ASSET_TYPES = {
     ".webp": "image/webp",
     ".gif": "image/gif",
 }
+
+
+def find_table_image_path(document_id: str, markdown: str) -> str | None:
+    """按表格 Markdown 在 MinerU content_list_v2 中匹配原表格图片。"""
+    try:
+        document_dir = (ASSET_ROOT / document_id).resolve(strict=True)
+        document_dir.relative_to(ASSET_ROOT.resolve(strict=True))
+    except (OSError, RuntimeError, ValueError):
+        return None
+    content_files = sorted(document_dir.glob("*_content_list_v2.json"))
+    if len(content_files) != 1:
+        return None
+    try:
+        content_list = json.loads(content_files[0].read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+    def visit(value: object):
+        """递归遍历 MinerU 内容列表中的表格记录。"""
+        if isinstance(value, dict):
+            if value.get("type") == "table" and isinstance(value.get("content"), dict):
+                yield value["content"]
+            for child in value.values():
+                yield from visit(child)
+        elif isinstance(value, list):
+            for child in value:
+                yield from visit(child)
+
+    for table in visit(content_list):
+        if table.get("html") != markdown:
+            continue
+        image_source = table.get("image_source")
+        relative_path = image_source.get("path") if isinstance(image_source, dict) else None
+        if not isinstance(relative_path, str) or not relative_path.strip():
+            return None
+        try:
+            candidate = (document_dir / relative_path).resolve(strict=True)
+            candidate.relative_to(ASSET_ROOT.resolve(strict=True))
+        except (OSError, RuntimeError, ValueError):
+            return None
+        if candidate.suffix.lower() not in ASSET_TYPES or not candidate.is_file():
+            return None
+        return str(candidate)
+    return None
 
 
 class ChunkViewerHandler(BaseHTTPRequestHandler):
@@ -90,9 +135,28 @@ class ChunkViewerHandler(BaseHTTPRequestHandler):
                 return
             try:
                 body = (CHUNK_DIR / filename).read_bytes()
-                json.loads(body)
+                payload = json.loads(body)
             except (OSError, ValueError):
                 self.send_json({"error": f"{filename} 无法读取"}, 500)
+                return
+            if modality == "table" and isinstance(payload, list):
+                for sample in payload:
+                    if not isinstance(sample, dict):
+                        continue
+                    content = sample.get("content")
+                    sample_id = sample.get("sample_id")
+                    if not isinstance(content, dict) or not isinstance(sample_id, str):
+                        continue
+                    if content.get("table_path"):
+                        continue
+                    markdown = content.get("markdown")
+                    if not isinstance(markdown, str) or "<table" not in markdown.lower():
+                        continue
+                    document_id = sample_id.split("::", 1)[0]
+                    image_path = find_table_image_path(document_id, markdown)
+                    if image_path:
+                        content["table_path"] = [image_path]
+                self.send_json(payload)
                 return
             self.send_bytes(body, "application/json; charset=utf-8")
             return
@@ -100,12 +164,13 @@ class ChunkViewerHandler(BaseHTTPRequestHandler):
         if request.path == "/api/extractions":
             modality = params.get("modality", [""])[0]
             method = params.get("method", [""])[0]
-            if modality not in CHUNK_FILES or method not in {"algorithm", "baseline"}:
+            if modality not in CHUNK_FILES or method not in {"algorithm", "baseline", "schema"}:
                 self.send_json({"error": "未知抽取结果类型"}, 400)
                 return
-            path = EXTRACTION_FILES.get(modality) if method == "algorithm" else BASELINE_FILES[modality]
+            files = {"algorithm": EXTRACTION_FILES, "baseline": BASELINE_FILES, "schema": SCHEMA_FILES}
+            path = files[method].get(modality)
             if path is None:
-                self.send_json({"error": "该模态尚无算法抽取结果"}, 404)
+                self.send_json({"error": "该模态尚无对应方法的抽取结果"}, 404)
                 return
             try:
                 body = path.read_bytes()
@@ -134,6 +199,7 @@ def main() -> None:
     parser.add_argument("--baseline-text", type=Path, help="纯 LLM 文本 Chunk 抽取结果 JSON")
     parser.add_argument("--baseline-image", type=Path, help="纯 LLM 图像 Chunk 抽取结果 JSON")
     parser.add_argument("--baseline-table", type=Path, help="纯 LLM 表格 Chunk 抽取结果 JSON")
+    parser.add_argument("--schema-text", type=Path, help="带 Schema 约束的文本 Chunk 抽取结果 JSON")
     args = parser.parse_args()
     if args.baseline_text is not None:
         BASELINE_FILES["text"] = args.baseline_text
@@ -141,6 +207,8 @@ def main() -> None:
         BASELINE_FILES["image"] = args.baseline_image
     if args.baseline_table is not None:
         BASELINE_FILES["table"] = args.baseline_table
+    if args.schema_text is not None:
+        SCHEMA_FILES["text"] = args.schema_text
     server = ThreadingHTTPServer(("127.0.0.1", args.port), ChunkViewerHandler)
     print(f"打开 http://127.0.0.1:{args.port}")
     print("按 Ctrl+C 停止服务")

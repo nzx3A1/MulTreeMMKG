@@ -1,6 +1,7 @@
 """ImageChunk 到专用图片抽取器的统一调度流水线。"""
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
 from time import perf_counter
 from typing import Any, Mapping, Sequence
@@ -18,6 +19,7 @@ from .classification import (
 )
 from .factory import build_default_registry
 from .postprocess import merge_same_name_entities
+from .panel_splitter import PANEL_PREPROCESSING_VERSION, VLMPanelSplitter
 from .registry import ImageExtractorRegistry
 from .router import ImageExtractorRouter
 from .schema_models import (
@@ -62,55 +64,170 @@ def write_image_extraction_result(
     )
 
 
-def build_image_tasks(
-    chunk: Mapping[str, Any],
-    classification_provider: ImageClassificationProvider | None = None,
-) -> list[ImageExtractionTask]:
-    """中文说明：把一个可含多路径的 ImageChunk 展开为单图片任务列表。"""
+def _unclassified_image_tasks(chunk: Mapping[str, Any]) -> list[ImageExtractionTask]:
+    """展开原图任务但不提前分类，保证子图检测发生在分类之前。"""
 
     chunk_id = str(chunk.get("id") or chunk.get("chunk_id") or "")
     if not chunk_id:
         raise ValueError("ImageChunk 缺少 id/chunk_id")
     paths = as_string_tuple(chunk.get("image_path"))
     references = as_string_tuple(chunk.get("references"))
-    provider = classification_provider or InlineImageClassificationProvider()
-    classifications = []
-    for index, image_path in enumerate(paths):
-        logger.info(
-            f"[图片抽取/分类] 开始：chunk={chunk_id}，image={index + 1}/{len(paths)}，path={image_path}"
-        )
-        classification_started_at = perf_counter()
-        try:
-            classification = provider.resolve(chunk, image_path, index)
-        except Exception:
-            logger.exception(
-                f"[图片抽取/分类] 失败：chunk={chunk_id}，image_index={index}，path={image_path}，"
-                f"耗时={perf_counter() - classification_started_at:.2f}s"
-            )
-            raise
-        classifications.append(classification)
-        logger.info(
-            f"[图片抽取/分类] 完成：chunk={chunk_id}，image_index={index}，"
-            f"code={classification.code or '未分类'}，type={classification.type_name or '未知'}，"
-            f"耗时={perf_counter() - classification_started_at:.2f}s"
-        )
     return [
         ImageExtractionTask(
             document_id=str(chunk.get("document_id") or chunk_id.split(":section:", 1)[0]),
-            chunk_id=chunk_id,
-            image_id=f"{chunk_id}:image:{index}",
-            image_index=index,
-            image_path=image_path,
-            caption=str(chunk.get("caption") or ""),
-            references=references,
-            classification_code=classifications[index].code,
-            classification_type=classifications[index].type_name,
+            chunk_id=chunk_id, image_id=f"{chunk_id}:image:{index}",
+            image_index=index, image_path=image_path,
+            caption=str(chunk.get("caption") or ""), references=references,
             section_id=str(chunk.get("section_id") or ""),
-            section_title=str(chunk.get("section_title") or ""),
-            raw_chunk=chunk,
+            section_title=str(chunk.get("section_title") or ""), raw_chunk=chunk,
         )
         for index, image_path in enumerate(paths)
     ]
+
+
+def _classify_task(task: ImageExtractionTask, provider: ImageClassificationProvider) -> ImageExtractionTask:
+    """分类当前实际输入图片，并将调用次数与子图身份保存在任务中。"""
+
+    logger.info(f"[图片抽取/分类] 开始：chunk={task.chunk_id}，image={task.image_id}，path={task.image_path}")
+    started_at = perf_counter()
+    classification_path = task.image_path
+    if not isinstance(provider, VLMImageClassificationProvider) and not task.panel_metadata.get("panel_path"):
+        classification_path = str(task.panel_metadata.get("source_image_path") or task.image_path)
+    classification = provider.resolve(
+        {**dict(task.raw_chunk), "image_id": task.image_id}, classification_path, task.image_index,
+    )
+    logger.info(
+        f"[图片抽取/分类] 完成：chunk={task.chunk_id}，image={task.image_id}，"
+        f"code={classification.code or '未分类'}，type={classification.type_name or '未知'}，"
+        f"耗时={perf_counter() - started_at:.2f}s"
+    )
+    return replace(task, classification_code=classification.code, classification_type=classification.type_name,
+                   panel_metadata={**dict(task.panel_metadata),
+                                   "classification_vlm_call_count": int(isinstance(provider, VLMImageClassificationProvider))})
+
+
+def build_image_tasks(
+    chunk: Mapping[str, Any],
+    classification_provider: ImageClassificationProvider | None = None,
+) -> list[ImageExtractionTask]:
+    """中文说明：兼容离线调用，将多路径 Chunk 展开并读取逐图片分类。"""
+
+    provider = classification_provider or InlineImageClassificationProvider()
+    return [_classify_task(task, provider) for task in _unclassified_image_tasks(chunk)]
+
+
+def _prepare_panel_tasks(
+    chunk: Mapping[str, Any], splitter: VLMPanelSplitter,
+    provider: ImageClassificationProvider | None, vlm_client: Any,
+) -> tuple[list[ImageExtractionTask], list[dict[str, Any]]]:
+    """检测并复核每个叶子图，再独立分类；失败分支保留错误且不进入专业抽取器。"""
+
+    tasks: list[ImageExtractionTask] = []
+    audits: list[dict[str, Any]] = []
+    visual_provider = VLMImageClassificationProvider(vlm_client, raise_on_error=True, require_single_type=True)
+    for source in _unclassified_image_tasks(chunk):
+        prepared = splitter.prepare(source)
+        audits.append({"source_image_id": source.image_id, "source_image_path": source.image_path,
+                       "vlm_call_count": prepared.call_count, "audit": prepared.audit})
+        for task in prepared.tasks:
+            if task.panel_metadata.get("status") == "failed":
+                tasks.append(task)
+                continue
+            # 中文说明：切分后的子图必须重新看图分类，外部整图分类只允许用于未切分的单图。
+            active_provider = (
+                visual_provider if task.panel_metadata.get("panel_path") or isinstance(provider, VLMImageClassificationProvider)
+                else provider or visual_provider
+            )
+            try:
+                tasks.append(_classify_task(task, active_provider))
+            except Exception as exc:
+                tasks.append(replace(task, panel_metadata={
+                    **dict(task.panel_metadata), "status": "failed", "error": f"子图分类失败：{exc}",
+                    "classification_vlm_call_count": int(isinstance(active_provider, VLMImageClassificationProvider)),
+                }))
+    return tasks, audits
+
+
+def _panel_failed_graph(task: ImageExtractionTask) -> Graph:
+    """返回包含子图错误和来源的空 Graph，确保混合图不会回退到整图抽取。"""
+
+    graph = Graph.from_chunk(task.document_id, task.chunk_id, SourceModality.IMAGE,
+                             stage="stage_04_image_panel_preparation")
+    graph.metadata.extra.update({
+        "status": "model_error", "extractor_kind": "panel_preparation",
+        "image_id": task.image_id, "image_index": task.image_index, "image_path": task.image_path,
+        "model_called": False, "model_errors": [str(task.panel_metadata.get("error") or "子图复核失败")],
+    })
+    return graph
+
+
+def _attach_panel_provenance(graph: Graph, task: ImageExtractionTask) -> None:
+    """在路由和图元素中保留原图与裁剪坐标，不改动抽取器已有的局部坐标。"""
+
+    if not task.panel_metadata:
+        return
+    graph.metadata.extra.update({
+        "image_panel": dict(task.panel_metadata),
+        "source_image_path": task.panel_metadata.get("source_image_path", task.image_path),
+        "classification_vlm_call_count": task.panel_metadata.get("classification_vlm_call_count", 0),
+        "model_called": bool(graph.metadata.extra.get("model_called")) or bool(task.panel_metadata.get("classification_vlm_call_count")),
+    })
+    for item in [*graph.entities, *graph.relations, *graph.events]:
+        item.metadata["image_panel"] = {"image_id": task.image_id, "image_path": task.image_path,
+                                        **dict(task.panel_metadata)}
+
+
+def _aggregate_image_status(statuses: Sequence[str]) -> str:
+    """统一计算子图到原图及原图到 Chunk 的完成状态，保留部分失败。"""
+
+    if statuses and all(status == "completed" for status in statuses):
+        return "completed"
+    if statuses and all(status.startswith("skipped_") for status in statuses):
+        return "skipped_non_target"
+    if statuses and all(status == "completed" or status.startswith("skipped_") for status in statuses):
+        return "completed"
+    if any(status == "model_error" for status in statuses):
+        return "model_error" if all(status == "model_error" for status in statuses) else "partial"
+    return "not_implemented"
+
+
+def _summarize_source_images(graph: Graph, task_graphs: Sequence[Graph]) -> None:
+    """按原图汇总子图结果，引用合并后实体 ID，避免把子图当成独立最终图片。"""
+
+    groups: dict[str, list[Graph]] = {}
+    for task_graph in task_graphs:
+        extra = task_graph.metadata.extra
+        panel = extra.get("image_panel") or {}
+        source_id = str(panel.get("source_image_id") or extra.get("image_id") or "")
+        groups.setdefault(source_id, []).append(task_graph)
+    remap = graph.metadata.extra.get("same_name_entity_id_map", {})
+    summaries = []
+    for source_id, children in groups.items():
+        first = children[0].metadata.extra
+        source = first.get("image_panel") or {}
+        entity_ids = list(dict.fromkeys(remap.get(entity.id, entity.id) for child in children for entity in child.entities))
+        relation_ids = list(dict.fromkeys(relation.id for child in children for relation in child.relations))
+        event_ids = list(dict.fromkeys(event.id for child in children for event in child.events))
+        summaries.append({
+            "source_image_id": source_id,
+            "source_image_index": source.get("source_image_index", first.get("image_index")),
+            "source_image_path": source.get("source_image_path") or first.get("image_path"),
+            "status": _aggregate_image_status([str(child.metadata.extra.get("status") or "unknown") for child in children]),
+            "split_into_subfigures": any(bool((child.metadata.extra.get("image_panel") or {}).get("panel_path")) for child in children),
+            "panel_count": len(children),
+            "panel_image_ids": [child.metadata.extra.get("image_id") for child in children],
+            "classification_codes": list(dict.fromkeys(
+                child.metadata.extra["classification_code"] for child in children if child.metadata.extra.get("classification_code")
+            )),
+            "descriptions": [
+                {"image_id": child.metadata.extra.get("image_id"), "description": child.metadata.extra["description"]}
+                for child in children if child.metadata.extra.get("description")
+            ],
+            "entity_ids": entity_ids, "relation_ids": relation_ids, "event_ids": event_ids,
+            "statistics": {"entity_count": len(entity_ids), "relation_count": len(relation_ids), "event_count": len(event_ids)},
+        })
+    graph.metadata.extra["source_image_count"] = len(summaries)
+    graph.metadata.extra["source_image_results"] = summaries
 
 
 def _merge_task_graphs(chunk: Mapping[str, Any], task_graphs: Sequence[Graph]) -> Graph:
@@ -121,11 +238,15 @@ def _merge_task_graphs(chunk: Mapping[str, Any], task_graphs: Sequence[Graph]) -
         {
             "image_id": graph.metadata.extra.get("image_id"),
             "image_path": graph.metadata.extra.get("image_path"),
+            "source_image_path": graph.metadata.extra.get("source_image_path"),
+            "image_panel": graph.metadata.extra.get("image_panel"),
+            "classification_vlm_call_count": int(graph.metadata.extra.get("classification_vlm_call_count") or 0),
             "extractor_kind": graph.metadata.extra.get("extractor_kind"),
             "status": graph.metadata.extra.get("status"),
             "model_called": graph.metadata.extra.get("model_called", False),
             "classification_code": graph.metadata.extra.get("classification_code"),
             "classification_type": graph.metadata.extra.get("classification_type"),
+            "description": graph.metadata.extra.get("description"),
             "vlm_call_count": int(graph.metadata.extra.get("vlm_call_count") or 0),
             "vlm_stages": list(graph.metadata.extra.get("vlm_stages") or []),
             "stratigraphic_subtype": graph.metadata.extra.get("stratigraphic_subtype"),
@@ -138,14 +259,7 @@ def _merge_task_graphs(chunk: Mapping[str, Any], task_graphs: Sequence[Graph]) -
         for graph in task_graphs
     ]
     statuses = [str(route.get("status") or "unknown") for route in task_routes]
-    if statuses and all(status == "completed" for status in statuses):
-        aggregate_status = "completed"
-    elif statuses and all(status.startswith("skipped_") for status in statuses):
-        aggregate_status = "skipped_non_target"
-    elif any(status == "model_error" for status in statuses):
-        aggregate_status = "model_error" if all(status == "model_error" for status in statuses) else "partial"
-    else:
-        aggregate_status = "not_implemented"
+    aggregate_status = _aggregate_image_status(statuses)
     model_called = any(bool(route.get("model_called")) for route in task_routes)
     map_relation_details = [
         graph.metadata.extra.get("relation_generation")
@@ -222,7 +336,7 @@ def _merge_task_graphs(chunk: Mapping[str, Any], task_graphs: Sequence[Graph]) -
         "image_task_count": len(task_graphs),
         "routes": task_routes,
         "model_called": model_called,
-        "vlm_call_count": sum(int(route.get("vlm_call_count") or 0) for route in task_routes),
+        "vlm_call_count": sum(int(route.get("vlm_call_count") or 0) + route["classification_vlm_call_count"] for route in task_routes),
     }
     if relation_generation is not None:
         extra["relation_generation"] = relation_generation
@@ -303,7 +417,7 @@ def extract_from_images(
     output_path: str | Path | None = None,
     show_progress: bool = True,
 ) -> list[Graph]:
-    """中文说明：接收 extractor_init 的图片 Chunk，完成展开、路由和骨架 Graph 汇总。"""
+    """接收图片 Chunk，默认先检测和隔离子图，再分类、路由并汇总可追溯 Graph。"""
 
     active_registry = registry or build_default_registry()
     active_router = router or ImageExtractorRouter()
@@ -312,6 +426,15 @@ def extract_from_images(
         vlm_client=vlm_client,
         options=dict(context_options or {}),
     )
+    splitter = None
+    if vlm_client is not None and context.options.get("split_subfigures", True):
+        default_panel_dir = Path(output_path).parent / "image_panels" if output_path else Path("output/image_panels")
+        splitter = VLMPanelSplitter(
+            vlm_client, context.options.get("panel_output_dir", default_panel_dir),
+            max_depth=int(context.options.get("panel_max_depth", 3)),
+            max_panels=int(context.options.get("panel_max_panels", 32)),
+            max_calls=int(context.options.get("panel_max_calls", 64)),
+        )
     allowed_kinds = {
         str(value)
         for value in context.options.get("allowed_extractor_kinds", [])
@@ -332,11 +455,20 @@ def extract_from_images(
         logger.info(
             f"[图片抽取/Chunk] 开始 {chunk_index}/{total_chunks}：chunk={chunk_id}，section={section_title}"
         )
-        tasks = build_image_tasks(chunk, classification_provider=classification_provider)
+        panel_audits: list[dict[str, Any]] = []
+        if splitter is not None:
+            tasks, panel_audits = _prepare_panel_tasks(chunk, splitter, classification_provider, vlm_client)
+        else:
+            tasks = build_image_tasks(chunk, classification_provider=classification_provider)
         if not tasks:
             logger.warning(f"[图片抽取/Chunk] 未找到图片路径，将生成空 Graph：chunk={chunk_id}")
         task_graphs: list[Graph] = []
         for task in tasks:
+            if task.panel_metadata.get("status") == "failed":
+                task_graph = _panel_failed_graph(task)
+                _attach_panel_provenance(task_graph, task)
+                task_graphs.append(task_graph)
+                continue
             kind = active_router.route(task)
             task_started_at = perf_counter()
             logger.info(
@@ -361,6 +493,7 @@ def extract_from_images(
                         f"耗时={perf_counter() - task_started_at:.2f}s"
                     )
                     raise
+            _attach_panel_provenance(task_graph, task)
             task_graphs.append(task_graph)
             task_status = str(task_graph.metadata.extra.get("status") or "unknown")
             logger.info(
@@ -376,6 +509,16 @@ def extract_from_images(
                     f"image_index={task.image_index}，status={task_status}，errors={model_errors}"
                 )
         merged_graph = merge_same_name_entities(_merge_task_graphs(chunk, task_graphs))
+        _summarize_source_images(merged_graph, task_graphs)
+        if splitter is not None:
+            detection_calls = sum(audit["vlm_call_count"] for audit in panel_audits)
+            merged_graph.metadata.extra.update({
+                "panel_preprocessing_version": PANEL_PREPROCESSING_VERSION,
+                "panel_preprocessing": panel_audits,
+                "panel_detection_vlm_call_count": detection_calls,
+                "vlm_call_count": merged_graph.metadata.extra["vlm_call_count"] + detection_calls,
+                "model_called": merged_graph.metadata.extra["model_called"] or detection_calls > 0,
+            })
         results.append(merged_graph)
         logger.info(
             f"[图片抽取/Chunk] 完成 {chunk_index}/{total_chunks}：chunk={chunk_id}，"

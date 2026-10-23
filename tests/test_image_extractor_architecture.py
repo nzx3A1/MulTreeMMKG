@@ -84,6 +84,7 @@ def test_chunk_with_multiple_paths_expands_and_merges_without_model_calls(tmp_pa
         ExplodingClient(),
         ExplodingClient(),
         output_path=output_path,
+        context_options={"split_subfigures": False},
         show_progress=False,
     )
     assert len(results) == 1
@@ -106,7 +107,8 @@ def test_images_in_same_chunk_can_use_individual_mock_classifications() -> None:
         {"image_index": 0, "classification": {"primary_code": "A01", "primary_type": "构造图"}},
         {"image_index": 1, "classification": {"primary_code": "A12", "primary_type": "扫描电镜"}},
     ]
-    result = extract_from_images([chunk], ExplodingClient(), ExplodingClient(), show_progress=False)[0]
+    result = extract_from_images([chunk], ExplodingClient(), ExplodingClient(),
+                                 context_options={"split_subfigures": False}, show_progress=False)[0]
     assert [route["extractor_kind"] for route in result.metadata.extra["routes"]] == ["map_spatial", "rock_micro"]
 
 
@@ -135,19 +137,21 @@ def test_mock_record_provider_matches_parent_chunk_and_image_index() -> None:
         ExplodingClient(),
         ExplodingClient(),
         classification_provider=provider,
+        context_options={"split_subfigures": False},
         show_progress=False,
     )[0]
     assert [route["extractor_kind"] for route in result.metadata.extra["routes"]] == ["map_spatial", "rock_micro"]
 
 
-def test_init_extractor_is_the_image_chunk_integration_entry(tmp_path) -> None:
-    """InitExtractor 应把分组后的图片 Chunk 原样交给图片架构，且不触发模型调用。"""
+def test_init_extractor_blocks_missing_image_before_model_calls(tmp_path) -> None:
+    """InitExtractor 默认接入子图检查，图片路径不存在时禁止继续分类抽取。"""
 
     extractor = InitExtractor(llm_client=ExplodingClient(), vlm_client=ExplodingClient(), show_progress=False)
     results = extractor.extract([_chunk("A01")], output_dir=tmp_path)
     assert len(results["image"]) == 1
     route = results["image"][0].metadata.extra["routes"][0]
-    assert route["extractor_kind"] == "map_spatial"
+    assert route["extractor_kind"] == "panel_preparation"
+    assert route["status"] == "model_error"
     assert route["model_called"] is False
     assert (tmp_path / "stage_04_image_extraction.json").is_file()
 
@@ -239,6 +243,7 @@ def test_cached_image_result_is_postprocessed_before_save(tmp_path) -> None:
         entities=[Entity(id="e1", name="延长组", type="stratum"), Entity(id="e2", name="延长组", type="stratum")],
         relations=[Relation(id="r1", type="contains", source_id="e1", target_id="e2")],
     )
+    graph.metadata.extra.update(panel_preprocessing_version=1, status="completed")
     cached = graph.to_dict()
     cached["metadata"]["model_config"] = {"extra": "forbid"}
     output_path.write_text(json.dumps({"graphs": [cached]}, ensure_ascii=False), encoding="utf-8")
